@@ -1,0 +1,18 @@
+# .gitignore
+
+# Entorno virtual
+venv/
+
+# Variables de entorno, se reemplazan en .env.example para compartir
+.env
+
+# Archivos de Python
+*.pyc
+__pycache__/
+
+# Archivos de VS Code
+.vscode/
+
+# Carpeta de media para archivos subidos por usuarios
+# En desarrollo local, esta carpeta contendrá las imágenes y otros archivos subidos.
+media/
