@@ -1,0 +1,138 @@
+:root {
+    --blanco: #ffffff;
+    --azul-oscuro: #1f3c5a;
+    --azul-claro: #49a3a3;
+    --beige: #f7eedb;
+    --gris: #7d7d7d;
+    --gris-transparente: rgba(125,125,125,0.26);
+}
+html {
+    font-size: 62.5%;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+    text-align: center;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+body {
+    font-size: 16px; /* 1rem = 10px */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.container {
+    padding: 1rem;
+    width: 80rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--azul-oscuro);
+}
+form {
+    width: 40rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+form > div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+form label {
+    flex-shrink: 0;
+    height: 3rem;
+    text-align: left;
+    font-size: 1.5rem;
+}
+form input {
+    flex-grow: 1;
+    min-width: 0;
+    height: 5rem;
+    padding: 1rem;
+    font: inherit;
+    background-color: var(--gris-transparente);
+    border-radius: 4px;
+    border: 0.6px solid var(--gris-transparente);
+    transition: 150ms ease;
+    color: #1f3c5a;
+    font-size: 1.3rem;
+}
+form input:hover{
+    border-color: var(--azul-oscuro);
+}
+form input:focus{
+    outline: none;
+}
+form input::placeholder {
+    color: var(--azul-oscuro);
+}
+form button {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 4px;
+    padding: 10px;
+    width: 100%;
+    background-color: var(--azul-claro);
+    color: var(--blanco);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.boton-google {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 4px;
+    padding: 10px;
+    width: 40rem;
+    background-color: var(--azul-claro);
+    color: var(--blanco);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.boton-facebook {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 4px;
+    padding: 10px;
+    width: 40rem;
+    background-color: rgb(0, 119, 255);
+    color: var(--blanco);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+a {
+    text-decoration: none;
+    color: var(--azul-claro);
+}
+h2 {
+    width: 40rem;
+    margin-bottom: 4rem;
+    text-align: left;
+    font-weight: 200;
+}
+
+
+/* Errores */
+form div.error label {
+    color: red;
+}
+form div.error input {
+    border-color: red;
+}
+form div.incorrect input {
+    border-color: red;
+}
+#mensaje-errores {
+    color: red;
+}
