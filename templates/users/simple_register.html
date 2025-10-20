@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrarse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+</head>
+<body>
+    <div class="container">
+        <h1>Únete para acceder a lo mejor de MexTur</h1>
+        <div id="mensaje-simple-registro" style="margin-bottom: 1em;"></div>
+        <form id="form-simple-register" method="post">
+            {% csrf_token %}
+            <div>
+                <label for="{{ form.first_name.id_for_label }}">Nombre</label>
+                <input type="text" name="first_name" id="id_first_name" placeholder="Escribe tu nombre"> 
+            </div>
+            <div>
+                <label for="{{ form.last_name.id_for_label }}">Apellido</label>
+                <input type="text" name="last_name" id="id_last_name" placeholder="Escribe tu apellido">
+            </div>
+            <div>
+                <label for="{{ form.username.id_for_label }}">Nombre de Usuario</label> 
+                <input type="text" name="username" id="id_username" required placeholder="Elige un nombre de usuario"> 
+            </div>
+            <div>
+                <label for="{{ form.birth_date.id_for_label }}">Fecha de nacimiento</label>
+                <input type="date" name="birth_date" id="id_birth_date">
+            </div>
+            <div>
+                <label for="{{ form.email.id_for_label }}">Dirección de correo electrónico</label>
+                <input type="email" name="email" id="id_email" placeholder="Escribe tu correo electrónico">
+            </div>
+            <div>
+                <label for="{{ form.password.id_for_label }}">Contraseña</label>
+                <input type="password" name="password1" id="id_password1" placeholder="Escribe tu contraseña"> 
+            </div>
+            <div>
+                <label for="{{ form.password2.id_for_label }}">Confirma tu contraseña</label>
+                <input type="password" name="password2" id="id_password2" placeholder="Confirma tu contraseña">
+            </div>
+            <button type="submit">Unirse</button>
+        </form>
+        <p>¿Ya tienes una cuenta? <a href="{% url 'account_login' %}">Inicia sesión</a></p>
+    </div>
+</body>
+    <script src="{% static 'js/auth.js' %}"></script>
+</html>

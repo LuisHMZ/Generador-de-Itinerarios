@@ -1,10 +1,15 @@
 # apps/users/urls.py
 
+from django.urls import path, include
 from rest_framework import routers
 from .api import UserViewSet
+from . import views
 
-routers = routers.DefaultRouter()
+router = routers.DefaultRouter()
 
-routers.register('', UserViewSet, basename='users')
+# Registrar el ViewSet de usuarios
+router.register('', UserViewSet, basename='users')
 
-urlpatterns = routers.urls
+urlpatterns = [
+    path('', include(router.urls)),
+    ]
