@@ -1,6 +1,7 @@
 # apps/users/views.py
 
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.http import JsonResponse
 from django.contrib import messages
 from .forms import SimpleSignupForm
@@ -61,7 +62,7 @@ def simple_login_view(request):
         if is_ajax:
             return JsonResponse({'status': 'already_authenticated', 'message': 'Ya has iniciado sesión.'})
         else:
-            return redirect('home')  # Redirige a la página principal u otra página adecuada
+            return redirect('simple_register')  # Aún no tenemos home, se redirige al registro
     
     # Manejo del formulario de login aquí
     if request.method == 'POST':
@@ -79,7 +80,12 @@ def simple_login_view(request):
             # Responde según si es fetch o no
             if is_ajax:
                 # Si es AJAX, devuelve JSON de éxito y redirige
-                redirect_url = request.session.get('next', '/')  # Intenta obtener la URL previa o usa '/'
+                # ANTES SE TENÍA:
+                # redirect_url = request.session.get('next', '/')  # Intenta obtener la URL previa o usa '/'
+                # VERSIÓN MODIFICADA
+                # Obtenemos la URL a la que redirigir si el usuario vino de otra página,
+                # y si no, usamos reverse() para obtener la URL real de 'home'
+                redirect_url = request.session.get('next', reverse('home'))
                 return JsonResponse({'status': 'success', 'message': '¡Inicio de sesión exitoso!', 'redirect_url': redirect_url})
             else:
                 # Si no es AJAX, redirige a la página principal u otra página adecuada
@@ -101,10 +107,13 @@ def simple_login_view(request):
 
 # Vista para cerrar sesión
 def simple_logout_view(request):
+    """
+    Cierra la sesión del usuario actual.
+    """
     # Detectar si es una petición AJAX/Fetch (usa la cabecera X-Requested-With)
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     auth_logout(request)
     if is_ajax:
         return JsonResponse({'status': 'success', 'message': 'Sesión cerrada.'})
     else:
-        return redirect('/')  # Redirige a la página principal u otra página adecuada
+        return redirect('home')  

@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from apps.users import views as user_views
+from apps.itineraries import views as itinerary_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,6 +33,7 @@ urlpatterns = [
     path('register/', user_views.simple_register_view, name='simple_register'),
     path('login/', user_views.simple_login_view, name='simple_login'),
     path('logout/', user_views.simple_logout_view, name='simple_logout'),
+    path('home/', itinerary_views.home_view, name='home'),
 
     # Pagina principal
     # path('', include('apps.itineraries.urls_home')),  # Asumiendo que la app itineraries maneja la home

@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a MexTur</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Enlazamos la misma hoja de estilos que usas en el registro -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <!-- Estilos adicionales solo para esta página -->
+    <style>
+        .welcome-header {
+            font-weight: 600;
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            color: var(--azul-oscuro);
+        }
+
+        .user-greeting {
+            font-size: 2.2rem;
+            font-weight: 400;
+            color: var(--gris);
+            margin-bottom: 3rem;
+        }
+
+        .auth-links {
+            display: flex;
+            gap: 2rem;
+            width: 40rem;
+        }
+
+        /* Reutilizamos el estilo del botón del formulario para nuestros enlaces */
+        .btn {
+            display: block;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            padding: 1.5rem 1rem;
+            width: 100%;
+            background-color: var(--azul-claro);
+            color: var(--blanco);
+            font: inherit;
+            font-size: 1.6rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #3a8a8a; /* Un tono un poco más oscuro de --azul-claro */
+        }
+        
+        .btn-logout {
+            background-color: var(--azul-oscuro);
+        }
+
+        .btn-logout:hover {
+            background-color: #162c44; /* Un tono un poco más oscuro */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="welcome-header">Bienvenido a MexTur</h1>
+
+        {% if user.is_authenticated %}
+            <!-- Contenido para usuarios que han iniciado sesión -->
+            <p class="user-greeting">Hola, {{ user.username }}</p>
+
+            <div class="auth-links">
+                <a href="{% url 'simple_logout' %}" class="btn btn-logout">Cerrar Sesión</a>
+            </div>
+
+        {% else %}
+            <!-- Contenido para visitantes -->
+            <p class="user-greeting">Inicia sesión o regístrate para planear tu próxima aventura.</p>
+
+            <div class="auth-links">
+                <a href="{% url 'simple_login' %}" class="btn">Iniciar Sesión</a>
+                <a href="{% url 'simple_register' %}" class="btn">Registrarse</a>
+            </div>
+        {% endif %}
+
+    </div>
+</body>
+</html>
