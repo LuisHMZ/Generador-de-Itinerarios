@@ -46,7 +46,10 @@ class Report(models.Model):
     ) 
 
     # Motivo/Descripción del reporte.
-    reason = models.TextField(help_text="Motivo del reporte.") 
+    reason = models.TextField(
+        help_text="Motivo del reporte.",
+        default=""
+    )
 
     # Fecha de creación: establecida automáticamente al crear el objeto.
     created_at = models.DateTimeField(auto_now_add=True) 
