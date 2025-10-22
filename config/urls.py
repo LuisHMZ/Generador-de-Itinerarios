@@ -30,4 +30,9 @@ urlpatterns = [
     path('api/posts/', include('apps.posts.urls')),
     path('api/reports/', include('apps.reports.urls')),
     path('register/', user_views.simple_register_view, name='simple_register'),
+    path('login/', user_views.simple_login_view, name='simple_login'),
+    path('logout/', user_views.simple_logout_view, name='simple_logout'),
+
+    # Pagina principal
+    # path('', include('apps.itineraries.urls_home')),  # Asumiendo que la app itineraries maneja la home
 ]

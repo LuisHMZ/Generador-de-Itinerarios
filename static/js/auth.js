@@ -58,7 +58,7 @@ if (formSimpleRegister && mensajeSimpleRegisterDiv) { // Verifica que ambos elem
                 mensajeSimpleRegisterDiv.textContent = data.message;
                 mensajeSimpleRegisterDiv.style.color = 'green';
                 formSimpleRegister.reset(); // Limpia el formulario
-                // Podrías redirigir después de un momento
+                // Redireccionamiento, aun no implementado
                 // setTimeout(() => { window.location.href = '/accounts/login/'; }, 2000);
             } else {
                  // Esto no debería pasar si la respuesta fue 'ok', pero por si acaso
@@ -93,4 +93,74 @@ if (formSimpleRegister && mensajeSimpleRegisterDiv) { // Verifica que ambos elem
     // Ayuda para depurar si los elementos no se encuentran
     if (!formSimpleRegister) console.error("Formulario con ID 'form-simple-register' no encontrado.");
     if (!mensajeSimpleRegisterDiv) console.error("Div con ID 'mensaje-simple-registro' no encontrado.");
+}
+
+/******************************************************************************************/
+/*************************Inicio de sesión simple con fetch API****************************/
+/******************************************************************************************/
+const formSimpleLogin = document.getElementById('form-simple-login'); // ID del nuevo form
+const mensajeSimpleLoginDiv = document.getElementById('mensaje-login'); // Div para mensajes
+
+if (formSimpleLogin && mensajeSimpleLoginDiv) {
+    formSimpleLogin.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        mensajeSimpleLoginDiv.textContent = ''; // Limpia mensajes
+        mensajeSimpleLoginDiv.style.color = 'black';
+
+        const formData = new FormData(formSimpleLogin);
+        const csrftoken = getCookie('csrftoken');
+        const loginUrl = '/login/'; // URL de la vista de login definida en settings/urls.py
+
+        fetch(loginUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                 return response.json().then(errData => {
+                     throw { status: response.status, data: errData };
+                 });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                mensajeSimpleLoginDiv.textContent = data.message;
+                mensajeSimpleLoginDiv.style.color = 'green';
+                // Redirige después del login exitoso
+                window.location.href = data.redirect_url || '/'; // Redirige a la URL proporcionada o a la raíz
+            } else if (data.status === 'info') {
+                 // Caso: Ya estaba logueado
+                 mensajeSimpleLoginDiv.textContent = data.message;
+                 mensajeSimpleLoginDiv.style.color = 'blue';
+                 window.location.href = data.redirect_url || '/';
+            }
+        })
+        .catch(error => {
+            console.error('Error en el inicio de sesión:', error);
+            if (error.status === 400 && error.data && error.data.errors) {
+                // Muestra errores de validación (ej. contraseña incorrecta)
+                let errorMsg = '';
+                if (error.data.errors.__all__) { // Error general de AuthenticationForm
+                     errorMsg = error.data.errors.__all__[0];
+                } else { // Errores por campo (es raro en login, pero por si acaso)
+                     for (const field in error.data.errors) {
+                         errorMsg += `${field}: ${error.data.errors[field][0]} `;
+                     }
+                }
+                mensajeSimpleLoginDiv.textContent = errorMsg.trim() || 'Usuario o contraseña incorrectos.';
+            } else {
+                mensajeSimpleLoginDiv.textContent = 'Ocurrió un error inesperado.';
+            }
+            mensajeSimpleLoginDiv.style.color = 'red';
+        });
+    });
+} else {
+     if (!formSimpleLogin) console.error("Formulario con ID 'form-simple-login' no encontrado.");
+     if (!mensajeSimpleLoginDiv) console.error("Div con ID 'mensaje-login' no encontrado.");
 }

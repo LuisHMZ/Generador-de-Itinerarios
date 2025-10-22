@@ -1,20 +1,20 @@
 # apps/users/forms.py
 
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import BaseUserCreationForm
 from django.contrib.auth.models import User
 
-class SimpleSignupForm(UserCreationForm):
+class SimpleSignupForm(BaseUserCreationForm):
     # Añade los campos que UserCreationForm no tiene por defecto
     first_name = forms.CharField(max_length=30, required=True, label='Nombre(s)')
     last_name = forms.CharField(max_length=150, required=True, label='Apellidos')
     email = forms.EmailField(max_length=254, required=True, help_text='Obligatorio.')
     birth_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label='Fecha de Nacimiento', required=False)
 
-    class Meta(UserCreationForm.Meta):
+    class Meta(BaseUserCreationForm.Meta):
         model = User
         # Añade los campos extra a los que ya maneja UserCreationForm (username, password1, password2)
-        fields = UserCreationForm.Meta.fields + ('first_name', 'last_name', 'email', 'birth_date')
+        fields = BaseUserCreationForm.Meta.fields + ('first_name', 'last_name', 'email', 'birth_date')
 
     def signup(self, request, user):
         """
