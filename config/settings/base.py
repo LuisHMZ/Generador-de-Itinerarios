@@ -99,7 +99,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
+# Configuración del Backend de Email (para desarrollo)
+# Mostrará los emails en la consola en lugar de enviarlos realmente.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 
@@ -137,7 +139,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
@@ -154,12 +156,20 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-
+ACCOUNT_EMAIL_CONFIRMATION_HMAC = False
 SITE_ID = 1 # Necesario para django-allauth
-
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "http"
+ACCOUNT_CONFIRM_EMAIL_ON_GET = False
+ACCOUNT_ADAPTER = 'apps.users.adapters.CustomAccountAdapter'
 # Configuración opcional de Allauth
 # Descomentar en caso de usarse
-#ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*', 'first_name', 'last_name', 'birth_date']
+ACCOUNT_LOGIN_METHODS = {'username', 'email'} # Permite iniciar sesión con username O email
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+#Opción 1. Mandar a nuestro login
+#ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = '/login/'
+#LOGIN_URL = 'simple_login'
 #LOGIN_REDIRECT_URL = '/'
 
 #ACCOUNT_SIGNUP_FIELDS = ("username", "email*")

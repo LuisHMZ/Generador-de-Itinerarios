@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # URLs de autenticación (allauth)
     path('accounts/', include('allauth.urls')),
+    
 
     # Include las URLs de las aplicaciones
     path('api/users/', include('apps.users.urls')),

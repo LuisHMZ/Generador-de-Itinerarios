@@ -14,7 +14,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'MexTur',   # El nombre que le diste en pgAdmin
         'USER': 'postgres',             # El usuario por defecto de PostgreSQL
-        'PASSWORD': 'MexturPWD', # La que pusiste al instalar PostgreSQL
+        'PASSWORD': 'zxcv4321', # La que pusiste al instalar PostgreSQL
         'HOST': 'localhost',              # O '127.0.0.1'
         'PORT': '5432',
     }

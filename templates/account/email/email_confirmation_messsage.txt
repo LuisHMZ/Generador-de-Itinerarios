@@ -1,0 +1,10 @@
+{% load account %}
+{% user_display user as user_display %}
+{% blocktrans with site_name=current_site.name site_domain=current_site.domain username=user_display %}¡Hola de parte de {{ site_name }}!
+
+Estás recibiendo este correo electrónico porque el usuario {{ username }} ha facilitado tu dirección de correo electrónico para registrar una cuenta en {{ site_domain }}.
+
+Para confirmar que esto es correcto, vete a {{ activate_url }}
+
+¡Gracias por usar {{ site_name }}!
+{{ site_domain }}{% endblocktrans %}
