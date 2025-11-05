@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from apps.itineraries.models import Category
 
 # --- Modelos de la App `users` ---
 
@@ -13,6 +14,13 @@ class Profile(models.Model):
     bio = models.CharField(max_length=255, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     last_password_update = models.DateTimeField(default=timezone.now)
+
+    # Preferencias del usuario (ejemplo: categorías favoritas).
+    preferred_categories = models.ManyToManyField(
+        Category,
+        blank=True, # Permite que un usuario no tenga preferencias
+        related_name="user_profiles" # Nombre para acceder desde Category si es necesario
+    )
 
     def __str__(self):
         return f'Perfil de {self.user.username}'
