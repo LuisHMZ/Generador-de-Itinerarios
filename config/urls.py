@@ -25,8 +25,9 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
 
     # Include las URLs de las aplicaciones
-    path('api/users/', include('apps.users.urls')),
-    path('api/itineraries/', include('apps.itineraries.urls')),
+    path('api/', include('apps.users.urls')),
+    # Montamos las API de itineraries bajo /api/
+    path('api/', include('apps.itineraries.api_urls')),
     path('api/messaging/', include('apps.messaging.urls')),
     path('api/posts/', include('apps.posts.urls')),
     path('api/reports/', include('apps.reports.urls')),
@@ -34,6 +35,9 @@ urlpatterns = [
     path('login/', user_views.simple_login_view, name='simple_login'),
     path('logout/', user_views.simple_logout_view, name='simple_logout'),
     path('home/', itinerary_views.home_view, name='home'),
+
+    # Rutas web de la app itineraries (p.ej. /itineraries/create/)
+    path('', include('apps.itineraries.urls')),
 
     # Pagina principal
     # path('', include('apps.itineraries.urls_home')),  # Asumiendo que la app itineraries maneja la home
