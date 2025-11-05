@@ -1,0 +1,188 @@
+/* CSS Específico para ver-itinerario-final.html */
+
+body {
+    background-color: #f8f9fa; /* Fondo gris claro */
+}
+
+.itinerary-card {
+    max-width: 800px; /* Ancho máximo de la tarjeta principal */
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+}
+
+.itinerary-title {
+    color: #1F3C5A; /* Azul oscuro */
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.itinerary-location {
+    font-size: 0.9em;
+    color: #6c757d; /* Gris */
+}
+
+.itinerary-tags .badge {
+    margin-right: 5px;
+    font-size: 0.75em;
+    padding: 0.4em 0.7em;
+    border-radius: 6px;
+    color: #fff;
+}
+.tag-cultura { background-color: #f39c12; } /* Naranja */
+.tag-museos { background-color: #3498db; } /* Azul claro */
+.tag-actividades { background-color: #9b59b6; } /* Morado */
+.tag-naturaleza { background-color: #2ecc71; } /* Verde */
+.tag-cultural { background-color: #f39c12; } /* Naranja */
+
+
+.itinerary-main-image img {
+    max-height: 300px; /* Limita altura de imagen principal */
+    object-fit: cover;
+    width: 100%;
+}
+
+.itinerary-description p {
+    color: #555;
+    line-height: 1.6;
+}
+
+/* Estilos de los Días */
+.day-section .day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1F3C5A; /* Azul oscuro */
+    color: #ffffff;
+    padding: 10px 15px;
+    border-radius: 8px 8px 0 0;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+.day-section .day-date {
+    font-size: 0.9em;
+    font-weight: 400;
+    color: #bdcde0;
+}
+
+.day-stops {
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    background-color: #ffffff;
+}
+
+.stop-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 15px;
+}
+/* Quita borde inferior del último item */
+.list-group-flush > .list-group-item:last-child {
+    border-bottom-width: 0;
+}
+
+.stop-number {
+    font-weight: 600;
+    color: #49A3A3; /* Teal */
+    font-size: 1em;
+    min-width: 20px;
+    text-align: center;
+}
+
+.stop-image {
+    width: 50px;
+    height: 35px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.stop-name {
+    flex-grow: 1;
+    font-weight: 500;
+    color: #333;
+    font-size: 0.95em;
+}
+
+.stop-actions .btn {
+    font-size: 0.75em;
+    padding: 0.2rem 0.5rem;
+}
+
+/* Sección Rutas */
+.route-section .route-header {
+    color: #1F3C5A;
+}
+.route-section .form-select-sm {
+    font-size: 0.8em;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+}
+.mapa-placeholder-final {
+    background-color: #e9ecef;
+    min-height: 250px; /* Altura mínima para el mapa */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.mapa-placeholder-final img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Botones Finales */
+.final-actions .boton-atras {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+.final-actions .boton-atras:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+.final-actions .boton-guardar-cambios {
+    background-color: #48bbbb; /* Teal */
+    border-color: #48bbbb;
+}
+.final-actions .boton-guardar-cambios:hover {
+    background-color: #3a9a9a;
+    border-color: #3a9a9a;
+}
+.final-actions .btn {
+     padding: 0.5rem 1.5rem;
+     font-weight: 500;
+     border-radius: 8px;
+}
+
+/* Media Queries */
+@media (max-width: 576px) {
+    .itinerary-card .card-body {
+        padding: 20px;
+    }
+    .itinerary-title {
+        font-size: 1.5rem;
+    }
+    .stop-item {
+        gap: 10px;
+        flex-wrap: wrap; /* Permite que los botones bajen si no caben */
+    }
+    .stop-image {
+        width: 40px;
+        height: 30px;
+    }
+    .stop-name {
+        font-size: 0.9em;
+        flex-basis: 100%; /* Nombre ocupa toda la línea bajo la imagen */
+        margin-top: -10px; /* Ajuste visual */
+        margin-left: 30px; /* Alineación con el texto superior */
+    }
+    .stop-actions {
+       margin-left: 30px;
+    }
+     .final-actions {
+        flex-direction: column-reverse; /* Apila botones */
+        gap: 10px;
+        align-items: stretch; /* Ancho completo */
+    }
+}

@@ -1,0 +1,282 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Añadir Paradas - MexTur</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/itineraries/header-footer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/itineraries/añadir-paradas.css' %}">
+    <link rel="stylesheet" href="{% static 'css/itineraries/modal-styles.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body {% if itinerary %} data-itinerary-id="{{ itinerary.id }}" {% endif %}>
+
+    <header class="header-global">
+        <div class="header-contenido">
+            <a href="index.html" class="logo-link">
+                <img src="{% static 'img/logo.png' %}" alt="Logo MexTur" class="logo-img">
+                <div class="logo-texto">
+                    <span class="logo-mex">MEX</span><span class="logo-tur">TUR</span>
+                </div>
+            </a>
+            <nav class="navegacion-principal">
+                <a href="{% url 'home' %}">Inicio</a>
+                <a href="#">Destinos</a>
+                <a href="#">Contacto</a>
+                <a href="{% url 'simple_login' %}">Iniciar sesión</a>
+            </nav>
+            <button class="boton-menu-hamburguesa" aria-label="Abrir menú">
+                <div class="icono-hamburguesa">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </button>
+        </div>
+    </header>
+
+    <main class="container-fluid my-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="itinerario-titulo-container mb-4">
+                    <h1 class="h3">Itinerario: <span id="nombre-itinerario-actual">{% if itinerary %}{{ itinerary.title }}{% else %}Nuevo Itinerario{% endif %}</span></h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="row flex-lg-nowrap">
+            <div class="col-lg-7 mb-4 mb-lg-0">
+                <section class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="card-title-lg"><i class="fas fa-star text-warning me-2"></i> Recomendaciones</h2>
+                        <div id="recomendaciones-aleatorias-container" class="row row-cols-1 row-cols-md-3 g-3 mb-3">
+                            <!-- Contenedor: puede renderizarse dinámicamente desde static/js/add_stops.js -->
+                            <!--
+                            Ejemplo estático de referencia (NO se usa en producción):
+                            Los elementos reales deben generarse dinámicamente desde JS/Django.
+                            -->
+                            <!--
+                            <div class="col">
+                                <div class="card lugar-card">
+                                    <img src="{% static 'img/alameda.jpg' %}" class="card-img-top" alt="Parque Alameda 2000">
+                                    <div class="card-body">
+                                        <h5 class="card-title-sm">Parque Alameda 2000</h5>
+                                        <span class="badge categoria-badge categoria-naturaleza">Naturaleza</span>
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <button class="btn btn-sm btn-outline-info btn-ver" data-id="1">Ver</button>
+                                            <button class="btn btn-sm btn-outline-success btn-add" data-id="1" data-nombre="Parque Alameda 2000" data-categoria="Naturaleza" data-img="{% static 'img/alameda.jpg' %}">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            -->
+                        </div>
+                        <div class="d-flex justify-content-center mt-3">
+                            <button class="btn btn-sm btn-light me-2"><i class="fas fa-chevron-left"></i></button>
+                            <button class="btn btn-sm btn-light"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title-lg"><i class="fas fa-fire text-danger me-2"></i> Popular Entre Amigos</h2>
+                        <div id="popular-amigos-container" class="row row-cols-1 row-cols-md-3 g-3 mb-3">
+                            <!-- Contenedor: puede renderizarse dinámicamente desde static/js/add_stops.js -->
+                            <!--
+                            Ejemplo estático de referencia (NO se usa en producción):
+                            -->
+                            <!--
+                            <div class="col">
+                                <div class="card lugar-card">
+                                    <img src="{% static 'img/portales.jpg' %}" class="card-img-top" alt="Portales de Toluca">
+                                    <div class="card-body">
+                                        <h5 class="card-title-sm">Portales de Toluca</h5>
+                                        <span class="badge categoria-badge categoria-cultural">Cultural</span>
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <button class="btn btn-sm btn-outline-info btn-ver" data-id="4">Ver</button>
+                                            <button class="btn btn-sm btn-outline-success btn-add" data-id="4" data-nombre="Portales de Toluca" data-categoria="Cultural" data-img="{% static 'img/portales.jpg' %}">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            -->
+                        </div>
+                        <div class="d-flex justify-content-center mt-3">
+                            <button class="btn btn-sm btn-light me-2"><i class="fas fa-chevron-left"></i></button>
+                            <button class="btn btn-sm btn-light"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="d-flex justify-content-start mt-4">
+                    <button class="btn btn-secondary boton-atras">Atrás</button>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <section class="card shadow-sm sticky-top" style="top: 20px;">
+                    <div class="card-header bg-white border-bottom-0 d-flex align-items-center">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" placeholder="Busca un lugar" id="buscador-lugares-itinerario">
+                        </div>
+                        <div class="dropdown ms-2">
+                            <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                Día: 1
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                <li><a class="dropdown-item" href="#" onclick="cambiarDia(1)">Día: 1</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="cambiarDia(2)">Día: 2</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="cambiarDia(3)">Día: 3</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" onclick="anadirDia()"><i class="fas fa-plus me-1"></i>Añadir Día</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Buscador Avanzado: caja y botón (compatible con búsquedas locales o API) -->
+                        <div class="buscador-turistico-container mb-3">
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control" id="searchBox" placeholder="Ej. Museo Frida Kahlo, Ciudad de México">
+                                <button class="btn btn-primary" type="button" id="btnBuscarLugar">
+                                    <i class="fas fa-search me-1"></i>Buscar
+                                </button>
+                            </div>
+                            <div id="results" class="resultados-busqueda"></div>
+                        </div>
+
+                        <!-- Contenedor donde el JS mostrará resultados de búsqueda alternativos -->
+                        <div id="search-results-container" class="mt-2"></div>
+
+                        <!-- Lista del itinerario (por días) -->
+                        <div id="mi-itinerario-lugares-lista" class="list-group list-group-flush mb-3">
+                            <!-- La lista se rellena desde static/js/add_stops.js -->
+                        </div>
+
+                        <!-- Sección única dinámica para mostrar el día seleccionado -->
+                        <div class="seccion-dias" id="seccion-dias">
+                            <div class="header-dia">
+                                <h6 class="titulo-dia" id="titulo-dia"><i class="fas fa-sun me-2 text-warning"></i>Día 1</h6>
+                            </div>
+                            <div id="lugares-dia" class="lugares-container">
+                                <!-- El contenido de este contenedor se actualiza desde static/js/itineraries/add_stops.js -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Mapa del itinerario -->
+                <section class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3"><i class="fas fa-map-marked-alt me-2 text-primary"></i>Mapa del Itinerario</h6>
+                        <div id="mapa-buscador" style="height:280px;"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12 d-flex justify-content-end">
+                <button id="btn-siguiente" class="btn btn-primary boton-siguiente-paso">Siguiente</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para detalles del lugar -->
+    <div class="modal fade" id="modalDetallesLugar" tabindex="-1" aria-labelledby="modalDetallesLugarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalDetallesLugarLabel"><i class="fas fa-info-circle me-2"></i>Detalles del Lugar</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalDetallesBody">
+                    <!-- Contenido del modal se insertará aquí -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-success" id="btnAgregarDesdeModal">Agregar al Itinerario</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles de lugares agregados -->
+    <div class="modal fade" id="modalDetallesAgregado" tabindex="-1" aria-labelledby="modalDetallesAgregadoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="modalDetallesAgregadoLabel"><i class="fas fa-map-pin me-2"></i>Información del Lugar</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalDetallesAgregadoBody">
+                    <!-- Contenido del modal se insertará aquí -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para confirmar eliminación -->
+    <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="textoConfirmacionEliminar">¿Estás seguro de que quieres eliminar este lugar del itinerario?</p>
+                    <p class="text-muted small">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminar"><i class="fas fa-trash me-1"></i>Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer-global">
+        <div class="footer-contenido">
+             <div class="footer-seccion footer-logo-tagline">
+                <h3 class="footer-logo"><span class="footer-logo-mex">MEX</span><span class="footer-logo-tur">TUR</span></h3>
+                <p>Explora los destinos más increíbles de México con nosotros</p>
+            </div>
+            <div class="footer-seccion footer-enlaces">
+                <h3>Enlaces</h3>
+                <nav>
+                    <a href="{% url 'home' %}">Inicio</a>
+                    <a href="#">Destinos</a>
+                    <a href="#">Paquetes</a>
+                </nav>
+            </div>
+            <div class="footer-seccion footer-contacto">
+                <h3>Contacto</h3>
+                <p>+525572345678</p>
+                <p>info@mextur.com</p>
+                <p>ciudad de méxico</p>
+            </div>
+        </div>
+        <div class="copyright">© 2025 MexTur. Todos los derechos reservados</div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Aseguramos que add_stops.js se ejecute antes de cargar la API de Google Maps
+        para que window.initMap esté definida cuando la API invoque el callback. -->
+    <script src="{% static 'js/itineraries/add_stops.js' %}"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}" defer></script>
+</body>
+</html>

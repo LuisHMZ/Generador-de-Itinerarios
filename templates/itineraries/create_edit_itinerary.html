@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ mode|default:"Crear" }} Itinerario - MexTur{% endblock %}
+
+{% block extra_css %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/itineraries/estilos-base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/itineraries/header-footer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/itineraries/editar-itinerario.css' %}">
+{% endblock %}
+
+{% block content %}
+    <main class="container my-5">
+        <div class="titulo-editar mb-4">
+            <h1 class="h3">{{ mode|default:"Crear" }} Itinerario:
+                <span id="nombre-itinerario-titulo">{% if itinerary %}{{ itinerary.title|default:"[Nombre del Itinerario]"|escape }}{% else %}[Nombre del Itinerario]{% endif %}</span>
+                <input type="text" id="input-editar-titulo" class="form-control d-none" value="" style="display: inline-block; width: auto; font-size: inherit; margin-left: 5px;">
+            </h1>
+            <a href="#" class="edit-icon-link" id="boton-editar-titulo"><i class="fas fa-pencil-alt"></i></a>
+            <a href="#" class="edit-icon-link d-none" id="boton-guardar-titulo"><i class="fas fa-check"></i></a>
+        </div>
+
+        <form id="form-editar-itinerario" class="card shadow-sm p-4 p-md-5 bg-white" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="itinerary_id" value=""> <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="nombre-itinerario" class="form-label">Nombre:</label>
+                        <input type="text" class="form-control" id="nombre-itinerario" name="title" placeholder="Dale un nombre a tu viaje" required value="{% if itinerary %}{{ itinerary.title|escape }}{% endif %}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcion-itinerario" class="form-label">Descripción:</label>
+                        <textarea class="form-control" id="descripcion-itinerario" name="description" rows="6" placeholder="Describe brevemente tu itinerario...">{% if itinerary %}{{ itinerary.description|escape }}{% endif %}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoria-itinerario" class="form-label">Categoría:</label>
+                        <select class="form-select" id="categoria-itinerario" name="category">
+                            <option value="" selected disabled>Selecciona una categoría</option>
+                            <option value="aventura" {% if itinerary and itinerary.category == 'aventura' %}selected{% endif %}>Aventura</option>
+                            <option value="cultural" {% if itinerary and itinerary.category == 'cultural' %}selected{% endif %}>Cultural</option>
+                            <option value="relax" {% if itinerary and itinerary.category == 'relax' %}selected{% endif %}>Relax</option>
+                            <option value="gastronomia" {% if itinerary and itinerary.category == 'gastronomia' %}selected{% endif %}>Gastronomía</option>
+                            <option value="naturaleza" {% if itinerary and itinerary.category == 'naturaleza' %}selected{% endif %}>Naturaleza</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="start_date" class="form-label">Fecha de inicio:</label>
+                        <input type="date" class="form-control" id="fecha-inicio" name="start_date" value="{% if itinerary and itinerary.start_date %}{{ itinerary.start_date }}{% endif %}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">Fecha de termino:</label>
+                        <input type="date" class="form-control" id="fecha-termino" name="end_date" value="{% if itinerary and itinerary.end_date %}{{ itinerary.end_date }}{% endif %}">
+                        <div class="invalid-feedback">
+                            La fecha de término no puede ser anterior a la fecha de inicio.
+                        </div>
+                    </div>
+                    <div class="mb-3 position-relative"> <label for="location" class="form-label">Ubicación:</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                            <select class="form-select" id="ubicacion-principal" name="location">
+                                <option value="" selected disabled>Selecciona un estado</option>
+                                <option value="Estado de México" {% if itinerary and itinerary.location == 'Estado de México' %}selected{% endif %}>Estado de México</option>
+                                <option value="CDMX" {% if itinerary and itinerary.location == 'CDMX' %}selected{% endif %}>CDMX</option>
+                                <option value="Morelos" {% if itinerary and itinerary.location == 'Morelos' %}selected{% endif %}>Morelos</option>
+                                <option value="Hidalgo" {% if itinerary and itinerary.location == 'Hidalgo' %}selected{% endif %}>Hidalgo</option>
+                                <option value="Tlaxcala" {% if itinerary and itinerary.location == 'Tlaxcala' %}selected{% endif %}>Tlaxcala</option>
+                                <option value="Puebla" {% if itinerary and itinerary.location == 'Puebla' %}selected{% endif %}>Puebla</option>
+                            </select>
+                        </div>
+                        <div id="suggestions-ubicacion" class="list-group position-absolute w-100 mt-1" style="z-index: 10;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="banner-pic" class="form-label">Foto de portada:</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-camera"></i></span>
+                            <input type="text" class="form-control file-name-display" placeholder="Ningún archivo seleccionado" readonly value="{% if itinerary and itinerary.banner_pic %}{{ itinerary.banner_pic.name }}{% endif %}">
+                            <input type="file" class="form-control file-input-hidden" id="banner-pic" name="banner_pic" accept="image/*">
+                            <label class="btn btn-outline-secondary file-browse-btn" for="banner-pic">Cambiar</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-5">
+                <button type="button" class="btn btn-secondary boton-cancelar">Cancelar</button>
+                <button type="submit" class="btn btn-primary boton-siguiente">Siguiente</button>
+            </div>
+        </form>
+    </main>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/itineraries/edit_title.js' %}" defer></script>
+    <!-- <script src="{% static 'js/itineraries/autofill_location.js' %}" defer></script> -->
+    <script src="{% static 'js/itineraries/date_validation.js' %}" defer></script>
+    <script src="{% static 'js/itineraries/cancel_button.js' %}" defer></script>
+    <script src="{% static 'js/itineraries/post_itinerary.js' %}" defer></script>
+
+    <script>
+        const fileInput = document.getElementById('banner-pic');
+        const fileNameDisplay = document.querySelector('.file-name-display');
+
+        if (fileInput && fileNameDisplay) {
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const fileName = e.target.files[0].name;
+                    fileNameDisplay.value = fileName;
+                } else {
+                    fileNameDisplay.placeholder = 'Ningún archivo seleccionado';
+                    fileNameDisplay.value = '';
+                }
+            });
+        }
+    </script>
+{% endblock %}
