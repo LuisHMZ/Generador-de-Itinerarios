@@ -21,8 +21,10 @@ class TouristicPlace(models.Model):
     website = models.URLField(max_length=255, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
     opening_hours = models.TextField(blank=True)
+    photo = models.ImageField(upload_to='place_photos/', null=True, blank=True, help_text="Imagen representativa del lugar turístico.")
     # La tabla intermedia Place_Category se crea con esta relación
     categories = models.ManyToManyField(Category, related_name="places")
+
 
     def __str__(self):
         return self.name
@@ -32,6 +34,11 @@ class Itinerary(models.Model):
     title = models.CharField(max_length=100)
     description = models.CharField(max_length=255, blank=True) # Corregido para no tener dos descripciones
     banner_pic = models.ImageField(upload_to='itinerary_banners/', null=True, blank=True)
+    # Campos adicionales para creación/edición desde la UI
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    category = models.CharField(max_length=50, blank=True)
+    location = models.CharField(max_length=255, blank=True)
     creation_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -42,6 +49,9 @@ class ItineraryStop(models.Model):
     touristic_place = models.ForeignKey(TouristicPlace, on_delete=models.CASCADE)
     day_number = models.PositiveSmallIntegerField()
     placement = models.PositiveSmallIntegerField() # El orden dentro del día
+    lat = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    long = models.DecimalField(max_digits=11, decimal_places=8, null=True, blank=True)
+    photo = models.ImageField(upload_to='itinerary_stop_photos/', null=True, blank=True, help_text="Imagen representativa de la parada en el itinerario.")
 
     class Meta:
         unique_together = ('itinerary', 'day_number', 'placement')
