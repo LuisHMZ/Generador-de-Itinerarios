@@ -8,7 +8,7 @@ from . import views
 router = routers.DefaultRouter()
 
 # Registrar el ViewSet de usuarios
-router.register('', UserViewSet, basename='users')
+router.register(r'users', UserViewSet, basename='users')
 
 urlpatterns = [
     path('', include(router.urls)),
