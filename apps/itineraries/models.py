@@ -49,9 +49,6 @@ class ItineraryStop(models.Model):
     touristic_place = models.ForeignKey(TouristicPlace, on_delete=models.CASCADE)
     day_number = models.PositiveSmallIntegerField()
     placement = models.PositiveSmallIntegerField() # El orden dentro del día
-    lat = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    long = models.DecimalField(max_digits=11, decimal_places=8, null=True, blank=True)
-    photo = models.ImageField(upload_to='itinerary_stop_photos/', null=True, blank=True, help_text="Imagen representativa de la parada en el itinerario.")
 
     class Meta:
         unique_together = ('itinerary', 'day_number', 'placement')
