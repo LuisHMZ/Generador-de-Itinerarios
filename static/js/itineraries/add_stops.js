@@ -1,3 +1,93 @@
+
+// Tipos de lugares para buscar (comida, turísticos, etc.)
+const TIPOS_LUGARES = [
+    'restaurant', 'cafe', 'bar', 'bakery', // Comida y bebida
+    'tourist_attraction', 'museum', 'art_gallery', // Turísticos
+    'park', 'shopping_mall', 'movie_theater', // Entretenimiento
+    'point_of_interest', 'establishment' // Generales
+];
+
+// Sistema de categorías principales
+const CATEGORIAS_PRINCIPALES = [
+    'Museos', 'Galerías de Arte', 'Puntos de Interés', 'Atracciones Turísticas', 
+    'Sitios Históricos', 'Iglesias y Templos', 'Teatros', 'Parques de Diversiones',
+    'Zoológicos', 'Acuarios', 'Estadios', 'Cines', 'Vida Nocturna', 'Parques y Plazas',
+    'Maravillas Naturales', 'Zonas de Acampar', 'Restaurantes', 'Cafeterías', 
+    'Bares y Cantinas', 'Panaderías'
+];
+
+// Mapeo de tipos de Google Places a categorías principales
+const MAPEO_CATEGORIAS = {
+    'museum': 'Museos',
+    'art_gallery': 'Galerías de Arte',
+    'tourist_attraction': 'Atracciones Turísticas',
+    'point_of_interest': 'Puntos de Interés',
+    'landmark': 'Puntos de Interés',
+    'church': 'Iglesias y Templos',
+    'hindu_temple': 'Iglesias y Templos',
+    'mosque': 'Iglesias y Templos',
+    'synagogue': 'Iglesias y Templos',
+    'place_of_worship': 'Iglesias y Templos',
+    'historic_site': 'Sitios Históricos',
+    'amusement_park': 'Parques de Diversiones',
+    'aquarium': 'Acuarios',
+    'zoo': 'Zoológicos',
+    'stadium': 'Estadios',
+    'movie_theater': 'Cines',
+    'night_club': 'Vida Nocturna',
+    'bar': 'Vida Nocturna',
+    'casino': 'Vida Nocturna',
+    'park': 'Parques y Plazas',
+    'natural_feature': 'Maravillas Naturales',
+    'campground': 'Zonas de Acampar',
+    'restaurant': 'Restaurantes',
+    'cafe': 'Cafeterías',
+    'bakery': 'Panaderías',
+    'shopping_mall': 'Centros Comerciales'
+};
+
+/**
+ * FUNCIÓN: Determinar Categoría Principal
+ * Propósito: Mapea los tipos de Google Places a categorías personalizadas
+ * Parámetros: types - Array de tipos del lugar
+ * Retorno: String con la categoría principal
+ */
+function determinarCategoriaPrincipal(types) {
+    if (!types || !Array.isArray(types)) return 'Puntos de Interés';
+
+    for (let type of types) {
+        if (MAPEO_CATEGORIAS[type]) {
+            return MAPEO_CATEGORIAS[type];
+        }
+    }
+
+    // Si no encuentra coincidencia, buscar en tipos más genéricos
+    if (types.includes('park') || types.includes('natural_feature')) {
+        return 'Parques y Plazas';
+    } else if (types.includes('restaurant') || types.includes('food')) {
+        return 'Restaurantes';
+    } else if (types.includes('cafe') || types.includes('bakery')) {
+        return 'Cafeterías';
+    } else if (types.includes('bar') || types.includes('night_club')) {
+        return 'Bares y Cantinas';
+    } else if (types.includes('store') || types.includes('shopping_mall')) {
+        return 'Comercios';
+    } else {
+        return 'Puntos de Interés';
+    }
+}
+
+// Exponer la función en el scope global para que otras partes del frontend puedan usarla
+try {
+    if (typeof window !== 'undefined') {
+        window.determinarCategoriaPrincipal = determinarCategoriaPrincipal;
+        // Alias para compatibilidad con versiones anteriores que usaban determinarCategoria
+        window.determinarCategoria = determinarCategoriaPrincipal;
+    }
+} catch (e) {
+    // En entornos donde window no existe, ignorar silenciosamente
+}
+
 // 1. DESCOMENTA Y ASEGÚRATE QUE ESTA FUNCIÓN ESTÉ DISPONIBLE
 function getCookie(name) {
     let cookieValue = null;
@@ -15,6 +105,46 @@ function getCookie(name) {
 }
 
 /**
+ * FUNCIÓN CENTRALIZADA: Añadir Lugar al Itinerario
+ * Propósito: Añade un lugar al 'miItinerarioActual[currentDay]'
+ * validando duplicados.
+ * Parámetros: placeData (un objeto JS con {id, nombre, categoria, imagen, lat, lng})
+ */
+function addPlaceToItineraryFromData(placeData) {
+    const nuevoLugar = {
+        id: parseInt(placeData.id, 10),
+        nombre: placeData.nombre,
+        categoria: placeData.categoria,
+        imagen: placeData.imagen,
+        lat: placeData.lat || null,
+        lng: placeData.lng || null,
+    };
+
+    // Asegura que exista el array del día seleccionado
+    if (!miItinerarioActual[currentDay]) {
+        miItinerarioActual[currentDay] = [];
+    }
+
+    // Validación básica: id y nombre son obligatorios
+    if (!nuevoLugar.id || !nuevoLugar.nombre || nuevoLugar.nombre.toString().trim() === '') {
+        alert('No se puede añadir un lugar vacío. Asegúrate de que el lugar tenga nombre e ID válidos.');
+        return; // No añadir
+    }
+
+    // Validación de duplicados
+    if (miItinerarioActual[currentDay].some(l => parseInt(l.id, 10) === nuevoLugar.id)) {
+        alert('Este lugar ya está en tu itinerario para este día.');
+        return; // No añadir
+    }
+
+    miItinerarioActual[currentDay].push(nuevoLugar);
+    actualizarListaItinerario(); // Refresca la UI
+    
+    // (Opcional) Notificación de éxito
+    // alert(`${nuevoLugar.nombre} ha sido agregado.`);
+}
+
+/**
  * 2. Lógica para el mapa
  */
 // Variables globales del mapa
@@ -25,20 +155,27 @@ let markers = [];
  * Código del mapa
  */
 
-//Función para inicializar el mapa
-window.initMap = async function(){
-    // Coordenadas de la CDMX (para centrar el mapa)
-    const cdmx = { lat: 19.4326, lng: -99.1332 }; 
-    
-    map = new google.maps.Map(document.getElementById("mapa-buscador"), { // Apunta al div de tu HTML
+// Ejemplo seguro y sencillo:
+window.initMap = function() {
+    const el = document.getElementById('mapa-buscador');
+    if (!el) {
+        console.warn('Elemento #mapa-buscador no encontrado. No se inicializa el mapa.');
+        return;
+    }
+
+    const cdmx = { lat: 19.4326, lng: -99.1332 };
+    map = new google.maps.Map(el, {
         zoom: 10,
-        center: cdmx,
+        center: cdmx
     });
-    
-    // Intenta actualizar los marcadores tan pronto como el mapa esté listo
-    // (Puede que miItinerarioActual aún no esté cargado, por eso también lo llamamos después)
-    actualizarMarcadores(); 
-}
+
+    // Evita variables globales implícitas — explícitas en window si necesitas acceso desde otras partes
+    window.placesService = new google.maps.places.PlacesService(map);
+    window.detailsService = new google.maps.places.PlacesService(map);
+
+    // Actualiza marcadores si ya hay datos cargados
+    actualizarMarcadores();
+};
 
 // Función para actualizar los marcadores en el mapa
 function actualizarMarcadores() {
@@ -425,7 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Manejo de Eventos ---
 
     // --- 4. MODIFICADO: Lógica de Búsqueda ---
-    buscadorLugares.addEventListener('input', () => {
+    function buscarLugares(){
         clearTimeout(searchTimeout);
         const query = buscadorLugares.value.trim();
         searchResultsContainer.innerHTML = ''; // Limpia resultados
@@ -444,7 +581,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchResultsContainer.innerHTML = '<p class="text-danger">Error al buscar.</p>';
             }
         }, 500);
+    }
+    buscadorLugares.addEventListener('input', () => {
+        buscarLugares();
     });
+    
+    /**
+     * FUNCIÓN CENTRALIZADA: Añadir Lugar al Itinerario
+     * Propósito: Añade un lugar al 'miItinerarioActual[currentDay]'
+     * validando duplicados.
+     * Parámetros: placeData (un objeto JS con {id, nombre, categoria, imagen, lat, lng})
+     */
+    function addPlaceToItineraryFromData(placeData) {
+        const nuevoLugar = {
+            id: parseInt(placeData.id, 10),
+            nombre: placeData.nombre,
+            categoria: placeData.categoria,
+            imagen: placeData.imagen,
+            lat: placeData.lat || null,
+            lng: placeData.lng || null,
+        };
+
+        // Asegura que exista el array del día seleccionado
+        if (!miItinerarioActual[currentDay]) {
+            miItinerarioActual[currentDay] = [];
+        }
+
+        // Validación básica: id y nombre son obligatorios
+        if (!nuevoLugar.id || !nuevoLugar.nombre || nuevoLugar.nombre.toString().trim() === '') {
+            alert('No se puede añadir un lugar vacío. Asegúrate de que el lugar tenga nombre e ID válidos.');
+            return; // No añadir
+        }
+
+        // Validación de duplicados
+        if (miItinerarioActual[currentDay].some(l => parseInt(l.id, 10) === nuevoLugar.id)) {
+            alert('Este lugar ya está en tu itinerario para este día.');
+            return; // No añadir
+        }
+
+        miItinerarioActual[currentDay].push(nuevoLugar);
+        actualizarListaItinerario(); // Refresca la UI
+        
+        // (Opcional) Notificación de éxito
+        // alert(`${nuevoLugar.nombre} ha sido agregado.`);
+    }
 
     // NUEVA FUNCIÓN: Mostrar Resultados de Búsqueda
     function mostrarResultadosBusqueda(results) {
@@ -462,20 +642,61 @@ document.addEventListener('DOMContentLoaded', () => {
             // Preferimos 'photo_url' (proporcionado por el serializer); si no existe, usamos placeholder
             const imagenUrl = lugar.photo_url || lugar.photo || '/static/img/placeholder.png';
 
+            // Construir HTML con imagen, categoría, dirección, rating y botones
+            const imagenHTML = imagenUrl ? `<img src="${imagenUrl}" alt="${lugar.name || ''}" class="imagen-resultado">` : '<div class="imagen-placeholder"></div>';
+
             div.innerHTML = `
-                <div>
-                    <strong>${lugar.name || 'Sin nombre'}</strong><br>
-                    <small>${lugar.address || 'Dirección no disponible'}</small>
+                <div class="d-flex align-items-start">
+                    ${imagenHTML}
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <span class="badge categoria-badge" style="background: #e3f2fd; color: #1976d2; font-size: 0.7rem; margin-bottom: 5px;">
+                                    ${categoriaNombre}
+                                </span>
+                                <h6 class="text-primary mb-0">${lugar.name || 'Sin nombre'}</h6>
+                            </div>
+                        </div>
+                        <p class="mb-2 text-muted small">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            ${lugar.address || 'Dirección no disponible'}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-star text-warning me-1"></i>
+                                ${lugar.rating || 'N/A'}
+                            </span>
+                            <div>
+                                <!-- Hemos añadido data-description, data-phone, data-website, etc. -->
+                                <!-- Nota: Usamos encodeURIComponent para datos que pueden tener comillas o caracteres especiales. -->
+                                <button class="btn btn-outline-primary btn-sm me-1 btn-ver" 
+                                        data-id="${lugar.id}"
+                                        data-nombre="${lugar.name || 'Sin nombre'}"
+                                        data-direccion="${lugar.address || 'Dirección no disponible'}"
+                                        data-descripcion="${encodeURIComponent(lugar.description || 'Descripción no disponible.')}"
+                                        data-website="${lugar.website || ''}"
+                                        data-phone="${lugar.phone_number || ''}"
+                                        data-rating="${lugar.external_api_rating || 'N/A'}"
+                                        data-img="${imagenUrl}"
+                                        
+                                        data-categoria="${(categoriaNombre || 'General').toString().replace(/'/g, "\\'") }"
+                                        data-lat="${lugar.lat || ''}"
+                                        data-lng="${lugar.long || ''}">
+                                    <i class="fas fa-info-circle me-1"></i>Info
+                                </button>
+                                <button class="btn btn-success btn-sm btn-add"
+                                        data-id="${lugar.id}"
+                                        data-nombre="${(lugar.name || 'Sin nombre').toString().replace(/'/g, "\\'") }"
+                                        data-categoria="${(categoriaNombre || 'General').toString().replace(/'/g, "\\'") }"
+                                        data-img="${imagenUrl}"
+                                        data-lat="${lugar.lat || ''}"
+                                        data-lng="${lugar.long || ''}">
+                                    <i class="fas fa-plus me-1"></i>Agregar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button class="btn btn-sm btn-outline-success btn-add"
-                        data-id="${lugar.id}"
-                        data-nombre="${lugar.name || 'Sin nombre'}"
-                        data-categoria="${categoriaNombre}"
-                        data-img="${imagenUrl}"
-                        data-lat="${lugar.lat || ''}"
-                        data-lng="${lugar.long || ''}">
-                    <i class="fas fa-plus"></i>
-                </button>
             `;
             searchResultsContainer.appendChild(div);
         });
@@ -483,37 +704,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Evento para añadir un lugar a "Mi Itinerario"
     document.addEventListener('click', async (event) => {
-        // Evento para añadir un lugar
+        // Evento para añadir un lugar (desde la tarjeta de búsqueda)
         if (event.target.classList.contains('btn-add') || event.target.closest('.btn-add')) {
             const btn = event.target.closest('.btn-add');
             
-            const nuevoLugar = {
-                id: parseInt(btn.dataset.id, 10),
+            // Simplemente extrae los datos y llama a la función central
+            addPlaceToItineraryFromData({
+                id: btn.dataset.id,
                 nombre: btn.dataset.nombre,
                 categoria: btn.dataset.categoria,
                 imagen: btn.dataset.img,
-                lat: btn.dataset.lat || null,
-                lng: btn.dataset.lng || null,
-            };
-
-            // Asegura que exista el array del día seleccionado
-            if (!miItinerarioActual[currentDay]) {
-                miItinerarioActual[currentDay] = [];
-            }
-
-            // Validación básica: id y nombre son obligatorios
-            if (!nuevoLugar.id || !nuevoLugar.nombre || nuevoLugar.nombre.toString().trim() === '') {
-                alert('No se puede añadir un lugar vacío. Asegúrate de que el lugar tenga nombre e ID válidos.');
-                return;
-            }
-
-            if (miItinerarioActual[currentDay].some(l => parseInt(l.id, 10) === nuevoLugar.id)) {
-                alert('Este lugar ya está en tu itinerario para este día.');
-                return;
-            }
-
-            miItinerarioActual[currentDay].push(nuevoLugar);
-            actualizarListaItinerario();
+                lat: btn.dataset.lat,
+                lng: btn.dataset.lng
+            }, miItinerarioActual);
         }
 
         // Evento para eliminar un lugar de "Mi Itinerario"
@@ -546,11 +749,115 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Evento para ver detalles del lugar
         if (event.target.classList.contains('btn-ver') || event.target.closest('.btn-ver')) {
-            const btn = event.target.closest('.btn-ver');
-            const lugarId = btn.dataset.id;
-            alert(`Ver detalles del lugar ID: ${lugarId}`); // Reemplazar con redirección a página de detalles
-            // window.location.href = `/lugares/${lugarId}/`;
+        const btn = event.target.closest('.btn-ver');
+        const dataset = btn.dataset;
+
+        // Leemos los datos que guardamos en el botón
+        const nombre = dataset.nombre;
+        const direccion = dataset.direccion;
+        const descripcion = decodeURIComponent(dataset.descripcion); // Decodificamos
+        const website = dataset.website;
+        const phone = dataset.phone;
+        const rating = dataset.rating;
+        const img = dataset.img;
+        const lugarId = dataset.id; // ID interno
+
+        // Referencias a tu modal (ya existen en tu HTML)
+        const modalBody = document.getElementById('modalDetallesBody');
+        const modalEl = document.getElementById('modalDetallesLugar');
+        const btnAgregarModal = document.getElementById('btnAgregarDesdeModal');
+
+        if (!modalBody || !modalEl) {
+            alert(`Detalles para: ${nombre}\n${direccion}`); // Fallback
+            return;
         }
+
+        // 1. Construir el HTML interno del modal
+        const imagenHTML = (img && img !== '/static/img/placeholder.png') 
+            ? `<img src="${img}" class="imagen-principal" alt="${nombre}">` 
+            : '';
+
+        const websiteHTML = website 
+            ? `<div class="contacto-item">
+                <i class="fas fa-globe"></i>
+                <span><a href="${website}" target="_blank">${website}</a></span>
+            </div>` 
+            : '';
+        
+        const phoneHTML = phone
+            ? `<div class="contacto-item">
+                <i class="fas fa-phone"></i>
+                <span>${phone}</span>
+            </div>`
+            : '';
+
+        const content = `
+            <div class="detalle-lugar-card" data-place-id="${lugarId}">
+                ${imagenHTML}
+                <div class="detalle-lugar-body">
+                    <div class="info-basica">
+                        <div class="titulo-categoria-container">
+                            <h3 class="titulo-lugar" data-place-id="${lugarId}">${nombre}</h3>
+                        </div>
+                        <div class="rating-container">
+                            <div class="rating-numero">${rating}</div>
+                            <div class="reseñas-count">Rating (API)</div>
+                        </div>
+                    </div>
+                    <div class="direccion-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>${direccion}</span>
+                    </div>
+                    ${phoneHTML}
+                    ${websiteHTML}
+                    <hr>
+                    <p class="descripcion-lugar">${descripcion}</p>
+                </div>
+            </div>
+        `;
+
+        // 2. Inyectar el HTML en el modal
+        modalBody.innerHTML = content;
+
+        // 3. Configurar el botón "Agregar" del modal (si existe)
+        // (Tu función 'agregarAItinerario' usa el SDK de Google para
+        // obtener la 'categoria', lat/lng. Sería mejor pasarle esto también)
+        if (btnAgregarModal && modalEl) {
+            
+            // Recolecta los datos para la función de añadir
+            const placeDataParaModal = {
+                id: dataset.id,
+                nombre: dataset.nombre,
+                categoria: dataset.categoria, // <-- ¡Ahora existe!
+                imagen: dataset.img,
+                lat: dataset.lat,             // <-- ¡Ahora existe!
+                lng: dataset.lng              // <-- ¡Ahora existe!
+            };
+
+            // 1. Quita cualquier listener 'onclick' anterior para evitar bugs
+            btnAgregarModal.onclick = null; 
+            
+            // 2. Asigna el nuevo listener
+            btnAgregarModal.onclick = function() {
+                // 3. Llama a la MISMA función central
+                addPlaceToItineraryFromData(placeDataParaModal,miItinerarioActual);
+                
+                // 4. Cierra el modal
+                try {
+                    const bsModal = bootstrap.Modal.getInstance(modalEl);
+                    if (bsModal) bsModal.hide();
+                } catch (e) {}
+            };
+        }
+
+        // 4. Mostrar el modal
+        try {
+            const bsModal = new bootstrap.Modal(modalEl);
+            bsModal.show();
+        } catch (e) {
+            console.error("Error al mostrar modal de Bootstrap", e);
+        }
+}
 
         // Evento para botón Atrás
         if (event.target.classList.contains('boton-atras')) {
