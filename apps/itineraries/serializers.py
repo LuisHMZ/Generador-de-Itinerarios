@@ -206,6 +206,24 @@ class ItineraryStopDetailSerializer(serializers.ModelSerializer):
     """
     touristic_place = TouristicPlaceSerializer(read_only=True)
 
+    # Exponer lat/long/photo desde el TouristicPlace anidado pero mantener
+    # la respuesta "plana" para compatibilidad con el frontend.
+    lat = serializers.FloatField(source='touristic_place.lat', read_only=True)
+    long = serializers.FloatField(source='touristic_place.long', read_only=True)
+    photo = serializers.SerializerMethodField()
+
     class Meta:
         model = ItineraryStop
         fields = ['touristic_place', 'day_number', 'placement', 'lat', 'long', 'photo']
+
+    def get_photo(self, obj):
+        """Devuelve la URL de la foto del `touristic_place` si existe."""
+        tp = getattr(obj, 'touristic_place', None)
+        if not tp:
+            return None
+        try:
+            if hasattr(tp, 'photo') and tp.photo and hasattr(tp.photo, 'url'):
+                return tp.photo.url
+        except Exception:
+            pass
+        return None
