@@ -123,16 +123,39 @@
                 </div>
             </div>
 
-            <div class="col-lg-5">
-                <section class="card shadow-sm sticky-top" style="top: 20px;">
-                    <div class="card-header bg-white border-bottom-0 d-flex align-items-center">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" placeholder="Busca un lugar" id="buscador-lugares-itinerario">
+            <!-- Columna de búsqueda y filtros -->
+            <!-- Sección mia, estilo y elementos antiguos, debe reemplazarse por lo nuevo-->
+
+            <!-- Cambios nuevos -->
+            <!-- Debe reemplazar la sección anterior marcada por el comentario -->
+             <div class="col-lg-5">
+                <!-- Sección del buscador turístico con API -->
+                <section class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="fas fa-search me-2"></i> Buscar Lugares Turísticos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="buscador-turistico-container">
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="buscador-lugares-itinerario" placeholder="Ej. Museo Frida Kahlo, Ciudad de México">
+                                <button class="btn btn-primary" onclick="buscarLugar()">
+                                    <i class="fas fa-search me-1"></i>Buscar
+                                </button>
+                            </div>
+                            
+                            <div id="results" class="resultados-busqueda"></div>
+                            <!-- Contenedor donde el JS mostrará resultados de búsqueda alternativos -->
+                            <div id="search-results-container" class="mt-2"></div>
                         </div>
-                        <div class="dropdown ms-2">
+                    </div>
+                </section>
+                
+                <!-- Sección del itinerario (entre buscador y mapa) -->
+                <section class="card shadow-sm mb-4">
+                    <div class="card-header d-flex align-items-center">
+                        <div class="dropdown">
                             <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                                Día: 1
+                                <i class="fas fa-calendar-day me-2"></i>Día: 1
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                                 <li><a class="dropdown-item" href="#" onclick="cambiarDia(1)">Día: 1</a></li>
@@ -144,9 +167,6 @@
                         </div>
                     </div>
                     <div class="card-body">
-
-                        <!-- Contenedor donde el JS mostrará resultados de búsqueda alternativos -->
-                        <div id="search-results-container" class="mt-2"></div>
 
                         <!-- Lista del itinerario (por días) -->
                         <div id="mi-itinerario-lugares-lista" class="list-group list-group-flush mb-3">
@@ -165,11 +185,11 @@
                     </div>
                 </section>
 
-                <!-- Mapa del itinerario -->
-                <section class="card shadow-sm mt-3">
+                <!-- Mapa abajo -->
+                <section class="card shadow-sm">
                     <div class="card-body">
                         <h6 class="card-title mb-3"><i class="fas fa-map-marked-alt me-2 text-primary"></i>Mapa del Itinerario</h6>
-                        <div id="mapa-buscador" style="height:280px;"></div>
+                        <div id="mapa-buscador"></div>
                     </div>
                 </section>
             </div>
