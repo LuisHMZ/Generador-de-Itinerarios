@@ -1,3 +1,8 @@
+/**
+ * JavaScript diseñado para usarse en la vista create_edit_itinerary.html
+ * Valida que la fecha de término no sea anterior a la fecha de inicio.
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
     const fechaInicioInput = document.getElementById('fecha-inicio');
     const fechaTerminoInput = document.getElementById('fecha-termino');
