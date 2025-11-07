@@ -8,6 +8,8 @@ from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required  # Para requerir login en vistas basadas en funciones
 
+from django.core.files.base import ContentFile # Para manejar archivos de imagen
+
 from rest_framework.response import Response    # Para devolver respuestas API
 from rest_framework.decorators import api_view, permission_classes  # Para definir vistas API y permisos
 from rest_framework import viewsets, permissions, status    # Para ViewSets y permisos
@@ -135,9 +137,18 @@ def search_places_api_view(request):
                         # La URL correcta es v1/{name}, donde {name} es 'places/ChIJ...'
                         details_url = f"https://places.googleapis.com/v1/{google_v1_id}"
                         
-                        # Máscara de campos v1 (sin 'placeId' legacy)
+                        # Máscara de campos para Place Details v1
                         fields_mask = (
-                            'id,displayName,formattedAddress,location,websiteUri,internationalPhoneNumber,regularOpeningHours,rating'
+                            'id,'
+                            'displayName,'
+                            'formattedAddress,'
+                            'location,'
+                            'websiteUri,'
+                            'internationalPhoneNumber,'
+                            'regularOpeningHours,'
+                            'rating,'
+                            'editorialSummary,'
+                            'photos'
                         )
                         
                         # 1. Mueve la máscara de campos a las cabeceras
@@ -151,15 +162,13 @@ def search_places_api_view(request):
 
 
                         try:
-                            
                             # 3. La llamada ahora es correcta
                             details_response = requests.get(
                                 details_url, 
-                                params=details_params,  # Solo ?languageCode=es
-                                headers=details_headers, # Envía la API Key Y la máscara de campos
+                                params=details_params,
+                                headers=details_headers,
                                 timeout=10
                             )
-                            
                             details_response.raise_for_status()
                             place_detail = details_response.json()
                             
@@ -167,13 +176,11 @@ def search_places_api_view(request):
 
                             # Mapea los campos v1 a los nombres de tu modelo
                             defaults = {
-                                'name': place_detail.get('displayName', {}).get('text', ''), # Correcto
+                                'name': place_detail.get('displayName', {}).get('text', ''),
                                 'address': place_detail.get('formattedAddress', ''),
-
-                                # ASÍ SE LEE LA RESPUESTA V1
+                                'description': place_detail.get('editorialSummary', {}).get('text', ''),
                                 'lat': place_detail.get('location', {}).get('latitude'),
                                 'long': place_detail.get('location', {}).get('longitude'),
-
                                 'website': place_detail.get('websiteUri', ''),
                                 'phone_number': place_detail.get('internationalPhoneNumber', ''),
                                 'opening_hours': str(place_detail.get('regularOpeningHours', {}).get('weekdayDescriptions', '[]')),
@@ -181,10 +188,45 @@ def search_places_api_view(request):
                             }
                             
                             # ¡CAMBIO CLAVE! Guardamos usando el ID v1 como clave única
+                            # Usamos update_or_create para obtener el objeto (creado o actualizado)
                             place_obj, created = TouristicPlace.objects.update_or_create(
-                                external_api_id=google_v1_id, # Guardamos 'places/ChIJ...'
+                                external_api_id=google_v1_id,
                                 defaults=defaults
                             )
+                            
+                            # --- INICIO: LÓGICA DE FOTOS ---
+                            # FOTO 1: Revisar si el lugar NO tiene foto y la API SÍ trajo
+                            if not place_obj.photo and 'photos' in place_detail and len(place_detail['photos']) > 0:
+                                # FOTO 2: Obtener el 'name' (resource name) de la primera foto
+                                photo_resource_name = place_detail['photos'][0].get('name')
+                                
+                                if photo_resource_name:
+                                    print(f"--- [DEBUG] Foto encontrada. Descargando desde: {photo_resource_name}")
+                                    # FOTO 3: Construir la URL de descarga (¡es un endpoint diferente!)
+                                    # Usamos 800px como un tamaño razonable
+                                    photo_url = (
+                                        f"https://places.googleapis.com/v1/{photo_resource_name}/media"
+                                        f"?key={api_key}&maxWidthPx=800"
+                                    )
+                                    
+                                    try:
+                                        # FOTO 4: Descargar la imagen
+                                        photo_response = requests.get(photo_url, timeout=10)
+                                        photo_response.raise_for_status()
+                                        
+                                        # FOTO 5: Obtener los bytes de la imagen
+                                        image_content = photo_response.content
+                                        
+                                        # FOTO 6: Guardar los bytes en el ImageField
+                                        # El nombre de archivo debe ser único
+                                        file_name = f"{google_v1_id.split('/')[-1]}.jpg" 
+                                        place_obj.photo.save(file_name, ContentFile(image_content), save=True)
+                                        print(f"--- [DEBUG] ¡ÉXITO! Foto guardada en {place_obj.photo.url}")
+                                        
+                                    except requests.exceptions.RequestException as e_photo:
+                                        print(f"!!! [ERROR] FOTO: No se pudo descargar: {e_photo}")
+                            # --- FIN: LÓGICA DE FOTOS ---
+
                             print(f"--- [DEBUG] ¡ÉXITO! Lugar guardado/creado: {place_obj.name}")
 
                         except requests.exceptions.RequestException as e_details:
@@ -442,3 +484,47 @@ def itinerary_stops_api_view(request, itinerary_id):
     except Exception as e:
         print(f"Error obteniendo lugares del itinerario: {e}")
         return Response({"error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+# Vista para visualizar el itinerario antes de ser creado definitivamente
+# itineraries/<int:itinerary_id>/preview/
+@login_required
+def itinerary_preview_view(request, itinerary_id):
+    """
+    Muestra una vista previa del itinerario (no lo publica ni lo guarda).
+    El usuario debe ser el propietario del itinerario.
+    Contexto enviado a la plantilla:
+      - itinerary: objeto Itinerary
+      - stops_by_day: lista de tuplas (day_number, [stops ordenadas por placement])
+    """
+    # Obtiene el itinerario asegurando que pertenece al usuario autenticado
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+
+    # Obtén las paradas ordenadas (el modelo ya define ordering por day_number, placement)
+    stops_qs = ItineraryStop.objects.filter(itinerary=itinerary).select_related('touristic_place')
+
+    # Agrupar por día
+    stops_by_day = []
+    current_day = None
+    current_list = []
+    for stop in stops_qs:
+        if current_day is None:
+            current_day = stop.day_number
+            current_list = [stop]
+        elif stop.day_number == current_day:
+            current_list.append(stop)
+        else:
+            stops_by_day.append((current_day, current_list))
+            current_day = stop.day_number
+            current_list = [stop]
+
+    if current_day is not None:
+        stops_by_day.append((current_day, current_list))
+
+    context = {
+        'itinerary': itinerary,
+        'stops_by_day': stops_by_day,
+    }
+
+    return render(request, 'itineraries/preview_itinerary.html', context)
+
