@@ -1,3 +1,8 @@
+/**
+ * JavaScript diseñado para usarse en la vista create_edit_itinerary.html
+ * Permite la edición en línea del título del itinerario.
+ */
+
 // Espera a que el DOM esté completamente cargado
 document.addEventListener('DOMContentLoaded', () => {
     // Obtiene referencias a los elementos del DOM
