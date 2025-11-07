@@ -30,6 +30,14 @@ class TouristicPlace(models.Model):
         return self.name
 
 class Itinerary(models.Model):
+
+    # Opciones de status (Draft)
+    STATUS_CHOICES = [
+        ('draft', 'Borrador'),       # El usuario está creando
+        ('published', 'Publicado'),   # El usuario terminó y guardó
+        # ('archived', 'Archivado'), # Opcional a futuro
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     description = models.CharField(max_length=255, blank=True) # Corregido para no tener dos descripciones
@@ -40,6 +48,13 @@ class Itinerary(models.Model):
     category = models.CharField(max_length=50, blank=True)
     location = models.CharField(max_length=255, blank=True)
     creation_date = models.DateTimeField(auto_now_add=True)
+
+    # Status (Draft)
+    status = models.CharField(
+        max_length=10, 
+        choices=STATUS_CHOICES, 
+        default='draft'  # ¡Importante!
+    )
 
     def __str__(self):
         return self.title
