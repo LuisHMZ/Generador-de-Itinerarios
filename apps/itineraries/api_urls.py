@@ -2,13 +2,14 @@
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from . import api as APIviews
 from . import views
 
 # Router para los endpoints REST
 router = DefaultRouter()
-router.register(r'itineraries', views.ItineraryViewSet, basename='itinerary')
-router.register(r'places', views.TouristicPlaceViewSet, basename='touristicplace')
-router.register(r'categories', views.CategoryViewSet, basename='category')
+router.register(r'itineraries', APIviews.ItineraryViewSet, basename='itinerary')
+router.register(r'places', APIviews.TouristicPlaceViewSet, basename='touristicplace')
+router.register(r'categories', APIviews.CategoryViewSet, basename='category')
 
 urlpatterns = [
     # Endpoints API específicos
