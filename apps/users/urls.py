@@ -1,15 +1,10 @@
 # apps/users/urls.py
 
-from django.urls import path, include
-from rest_framework import routers
-from .api import UserViewSet
+from django.urls import path
 from . import views
 
-router = routers.DefaultRouter()
-
-# Registrar el ViewSet de usuarios
-router.register(r'users', UserViewSet, basename='users')
-
 urlpatterns = [
-    path('', include(router.urls)),
+    path('register/', views.simple_register_view, name='simple_register'),
+    path('login/', views.simple_login_view, name='simple_login'),
+    path('logout/', views.simple_logout_view, name='simple_logout'),
     ]

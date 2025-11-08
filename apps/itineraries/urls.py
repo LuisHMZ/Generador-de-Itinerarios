@@ -10,4 +10,6 @@ urlpatterns = [
     path('itineraries/<int:itinerary_id>/add-stops/', views.add_stops_view, name='add_stops'),
     path('itineraries/<int:itinerary_id>/preview/', views.itinerary_preview_view, name='preview_itinerary'),
     path('itineraries/<int:itinerary_id>/edit/', views.edit_itinerary_view, name='edit_itinerary'),
+
+    path('home/', views.home_view, name='home'),
 ]
