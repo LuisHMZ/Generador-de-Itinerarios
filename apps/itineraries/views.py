@@ -28,43 +28,6 @@ def home_view(request):
         # Muestra la página de bienvenida (que tiene los enlaces login/registro)
         return render(request, 'itineraries/provisional_home.html') # Tu plantilla de bienvenida
 
-class ItineraryViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet para listar, crear, ver, actualizar y borrar Itinerarios.
-    """
-    queryset = Itinerary.objects.all() # Define qué objetos maneja
-    serializer_class = ItinerarySerializer # Le dice qué "traductor" usar
-    
-    # Define quién puede hacer qué (ajusta según tus necesidades)
-    # IsAuthenticatedOrReadOnly: Cualquiera puede VER (GET), pero solo usuarios logueados pueden CREAR/EDITAR/BORRAR
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly] 
-
-    def perform_create(self, serializer):
-        """
-        Asigna automáticamente el usuario autenticado como el creador del itinerario.
-        """
-        serializer.save(user=self.request.user)
-
-
-# ViewSet para los lugares turísticos.
-class TouristicPlaceViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet de solo lectura para ver lugares turísticos.
-    Permite listar (GET /api/places/) y ver detalles (GET /api/places/{id}/).
-    """
-    queryset = TouristicPlace.objects.all().prefetch_related('categories') # Optimiza la consulta de categorías
-    serializer_class = TouristicPlaceSerializer
-    # Cualquiera puede ver los lugares turísticos
-    permission_classes = [permissions.AllowAny] 
-
-# ViewSet para Categorías si quieres un endpoint para listarlas
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet de solo lectura para listar categorías."""
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-    permission_classes = [permissions.AllowAny]
-
-
 # Vista API para buscar lugares turísticos usando Google Places API
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])  # Solo usuarios autenticados pueden usar esta vista
