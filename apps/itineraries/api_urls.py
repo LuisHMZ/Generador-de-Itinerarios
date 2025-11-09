@@ -17,6 +17,9 @@ urlpatterns = [
     path('itineraries/<int:itinerary_id>/stops/', views.itinerary_stops_api_view, name='itinerary_stops'),
     path('geocode/autocomplete/', views.geocode_autocomplete_api_view, name='geocode_autocomplete'),
 
+    # Vista API para optimizar el orden de las paradas de un día usando el algoritmo del "Vecino más Cercano"
+    path('itineraries/<int:itinerary_id>/stops/optimize/', views.optimize_stops_view, name='optimize_stops'),
+
     # Rutas registradas por el router (p.ej. api/itineraries/)
     path('', include(router.urls)),
 ]
