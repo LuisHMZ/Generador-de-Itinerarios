@@ -150,13 +150,15 @@ function addPlaceToItineraryFromData(placeData) {
 // Variables globales del mapa
 let map;
 let markers = [];
+let miItinerarioActual = {};    // { dia: [lugares], dia2: [lugares] }
+let currentDay = 1; // Día actual seleccionado
 
 /**
  * Código del mapa
  */
 
 // Ejemplo seguro y sencillo:
-window.initMap = function() {
+function initMap() {
     const el = document.getElementById('mapa-buscador');
     if (!el) {
         console.warn('Elemento #mapa-buscador no encontrado. No se inicializa el mapa.');
@@ -168,10 +170,6 @@ window.initMap = function() {
         zoom: 10,
         center: cdmx
     });
-
-    // Evita variables globales implícitas — explícitas en window si necesitas acceso desde otras partes
-    window.placesService = new google.maps.places.PlacesService(map);
-    window.detailsService = new google.maps.places.PlacesService(map);
 
     // Actualiza marcadores si ya hay datos cargados
     actualizarMarcadores();
@@ -227,7 +225,6 @@ function actualizarMarcadores() {
 document.addEventListener('DOMContentLoaded', () => {
 
 
-
     // Referencias a los contenedores
     const recomendacionesContainer = document.getElementById('recomendaciones-aleatorias-container');
     const popularAmigosContainer = document.getElementById('popular-amigos-container');
@@ -276,8 +273,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }    // Simulación de datos para demostración (el backend proporcionará esto)
     let lugaresRecomendadosData = []; // Esto se cargaría desde la API
     let lugaresPopularData = [];     // Esto se cargaría desde la API
-    let miItinerarioActual = {};    // { dia: [lugares], dia2: [lugares] }
-    let currentDay = 1; // Día actual seleccionado
+    // let miItinerarioActual = {};    // { dia: [lugares], dia2: [lugares] }
+    // let currentDay = 1; // Día actual seleccionado
     let searchTimeout;
 
     // ID del Itinerario (para cargar/guardar paradas)
@@ -895,6 +892,96 @@ document.addEventListener('DOMContentLoaded', () => {
 
     });
 
+    /**
+     * Botón para optimizar el orden de las paradas seleccionadas para el día actual
+     * Usando una llamada a la API de optimización (api/itineraries/<id>/stops/optimize/)
+     */
+    // --- Lógica para el botón "Optimizar Ruta" ---
+    // (Asegúrate de tener un botón en tu HTML con id="btn-optimizar-ruta")
+    const btnOptimizar = document.getElementById('btn-optimizar-ruta');
+    
+    if (btnOptimizar) {
+        btnOptimizar.addEventListener('click', async () => {
+            
+            // 1. Obtener las paradas del día actual
+            const currentStops = miItinerarioActual[currentDay] || [];
+            
+            if (currentStops.length < 3) {
+                alert("Necesitas al menos 3 paradas para optimizar la ruta.");
+                return;
+            }
+            
+            // 2. Preparar los datos para la API
+            const place_ids = currentStops.map(stop => stop.id);
+            const ITINERARY_ID = document.body.dataset.itineraryId; // Asume que esto existe
+            const csrftoken = getCookie('csrftoken');
+
+            // 3. Mostrar estado de carga
+            btnOptimizar.disabled = true;
+            btnOptimizar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Optimizando...';
+
+            try {
+                // 4. Llamar al nuevo endpoint
+                const response = await fetch(`/api/itineraries/${ITINERARY_ID}/stops/optimize/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        day_number: currentDay,
+                        place_ids: place_ids
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Error desconocido al optimizar.");
+                }
+
+                const data = await response.json();
+                
+                // 5. Mostrar advertencias (si las hay)
+                if (data.warnings && data.warnings.length > 0) {
+                    alert("Ruta optimizada con advertencias:\n\n" + data.warnings.join('\n'));
+                }
+
+                // 6. ¡ÉXITO! Reemplazar la lista actual con la optimizada
+                // "Traducimos" el formato del Serializer (name, photo_url, long)
+                // al formato que usa JavaScript (nombre, imagen, lng).
+                
+                const paradasOptimizadas = data.optimized_route.map(lugarDelSerializer => {
+                    return {
+                        id: lugarDelSerializer.id,
+                        nombre: lugarDelSerializer.name,          // Mapea 'name' -> 'nombre'
+                        imagen: lugarDelSerializer.photo_url,   // Mapea 'photo_url' -> 'imagen'
+                        lat: lugarDelSerializer.lat,
+                        lng: lugarDelSerializer.long,         // Miso 'long' -> 'lng'
+                        
+                        // Mapea la primera categoría (si existe) para consistencia
+                        categoria: (lugarDelSerializer.categories && lugarDelSerializer.categories.length > 0) 
+                                     ? lugarDelSerializer.categories[0].name 
+                                     : 'General'
+                    };
+                });
+        
+                miItinerarioActual[currentDay] = paradasOptimizadas;
+                // --- FIN DE LA CORRECCIÓN ---
+                
+                // 7. Re-renderizar la lista en la UI
+                actualizarListaItinerario();
+
+            } catch (error) {
+                console.error('Error al optimizar ruta:', error);
+                alert(`Error: ${error.message}`);
+            } finally {
+                // 8. Restaurar el botón
+                btnOptimizar.disabled = false;
+                btnOptimizar.innerHTML = 'Optimizar Ruta';
+            }
+        });
+    }
+
     // --- MODIFICADO: Guardado Final (Botón Siguiente) ---
     btnSiguiente.addEventListener('click', async () => {
         console.log("Guardando itinerario:", miItinerarioActual);
@@ -975,7 +1062,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // **DEFINE LA URL DE REDIRECCIÓN FINAL**
             // Por ejemplo, a una página que muestre el itinerario completo
-            window.location.href = `/itinerary/${ITINERARY_ID}/view/`; // Cambia '/view/' por tu URL real
+            window.location.href = `/itineraries/${ITINERARY_ID}/preview/`; // Cambia '/view/' por tu URL real
 
         } catch (error) {
             console.error('Error al guardar el itinerario:', error);

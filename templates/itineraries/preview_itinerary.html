@@ -27,6 +27,9 @@
                         {% for stop in stops %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
+                                    {% if stop.touristic_place.photo %}
+                                    <img src="{{ stop.touristic_place.photo.url }}" alt="{{ stop.touristic_place.name }}" class="img-fluid" style="max-height:120px; object-fit:cover;">
+                                    {% endif %}
                                     <strong>{{ stop.touristic_place.name }}</strong>
                                     {% if stop.touristic_place.address %}
                                         <div class="small text-muted">{{ stop.touristic_place.address }}</div>

@@ -183,6 +183,10 @@
                             </div>
                         </div>
                     </div>
+                    <button class="btn btn-outline-primary btn-sm me-2" id="btn-optimizar-ruta" 
+                            title="Optimizar ruta del día actual (se necesita un mínimo de 3 paradas)">
+                        <i class="fas fa-magic me-1"></i> Optimizar Ruta
+                    </button>
                 </section>
 
                 <!-- Mapa abajo -->
@@ -287,6 +291,6 @@
     <!-- Aseguramos que add_stops.js se ejecute antes de cargar la API de Google Maps
         para que window.initMap esté definida cuando la API invoque el callback. -->
     <script src="{% static 'js/itineraries/add_stops.js' %}"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}" defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=places&callback=initMap" defer></script>
 </body>
 </html>

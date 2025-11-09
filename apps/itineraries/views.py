@@ -17,6 +17,19 @@ from rest_framework import viewsets, permissions, status    # Para ViewSets y pe
 from .models import Itinerary, ItineraryStop, TouristicPlace, Category # Importa tus modelos
 from .serializers import ItinerarySerializer, TouristicPlaceSerializer, CategorySerializer, ItineraryStopDetailSerializer  # Importa tus serializers
 
+from .utils import haversine  # Importa la función de utilidad para calcular distancias
+
+# Tipos de Google Places v1 que SÍ queremos guardar
+# Basado en las llaves de MAPEO_CATEGORIAS de add_stops.js
+ALLOWED_GOOGLE_TYPES = {
+    'museum', 'art_gallery', 'tourist_attraction', 'point_of_interest', 
+    'landmark', 'church', 'hindu_temple', 'mosque', 'synagogue', 
+    'place_of_worship', 'historic_site', 'amusement_park', 'aquarium', 
+    'zoo', 'stadium', 'movie_theater', 'night_club', 'bar', 'casino', 
+    'park', 'natural_feature', 'campground', 'restaurant', 'cafe', 
+    'bakery', 'shopping_mall'
+}
+
 # Vista para la página principal (condicional)
 def home_view(request):
     if request.user.is_authenticated:
@@ -61,7 +74,26 @@ def search_places_api_view(request):
         else:
             # --- 2. Llamar a Google Text Search (v1) ---
             search_url = "https://places.googleapis.com/v1/places:searchText"
-            search_body = {'textQuery': query, 'languageCode': 'es', 'maxResultCount': 10}
+            search_body = {
+                'textQuery': query,
+                'languageCode': 'es',
+                'maxResultCount': 10,
+                # --- FILTRO DE UBICACIÓN CORREGIDO (Rectángulo) ---
+                'locationRestriction': {
+                    'rectangle': {
+                        # Esquina Suroeste (low)
+                        'low': {
+                            'latitude': 18.3,    # Sur de Morelos
+                            'longitude': -100.4   # Oeste de Edomex
+                        },
+                        # Esquina Noreste (high)
+                        'high': {
+                            'latitude': 21.3,    # Norte de Hidalgo
+                            'longitude': -96.7    # Este de Puebla
+                        }
+                    }
+                }
+            }
             
             # Pedimos el 'id' (v1) y 'displayName'
             search_headers = {
@@ -80,6 +112,7 @@ def search_places_api_view(request):
                 print(f"--- [DEBUG] Respuesta de Text Search v1: Lugares: {len(search_data.get('places', []))}")
 
                 for place_data_basic in search_data.get('places', []):
+
                     # Obtenemos el ID v1 (ej. 'places/ChIJ...')
                     google_v1_id = place_data_basic.get('name') # 'name' contiene el ID v1
                     if not google_v1_id:
@@ -111,7 +144,8 @@ def search_places_api_view(request):
                             'regularOpeningHours,'
                             'rating,'
                             'editorialSummary,'
-                            'photos'
+                            'photos,'
+                            'types'
                         )
                         
                         # 1. Mueve la máscara de campos a las cabeceras
@@ -134,6 +168,14 @@ def search_places_api_view(request):
                             )
                             details_response.raise_for_status()
                             place_detail = details_response.json()
+
+                            # --- ¡FILTRO DE TIPOS MOVIDO AQUÍ! ---
+                            # (Asegúrate de tener ALLOWED_GOOGLE_TYPES definido arriba en tu archivo)
+                            place_types = place_detail.get('types', [])
+                            if not place_types or not ALLOWED_GOOGLE_TYPES.intersection(set(place_types)):
+                                print(f"--- [DEBUG] Omitiendo '{place_detail.get('displayName', {}).get('text')}' (Tipo no deseado: {place_types})")
+                                continue # Salta al siguiente lugar en el 'for' loop
+                            # --- FIN DEL FILTRO ---
                             
                             print(f"--- [DEBUG] Respuesta de Place Details: OK")
 
@@ -195,7 +237,7 @@ def search_places_api_view(request):
                         except requests.exceptions.RequestException as e_details:
                             print(f"!!! [ERROR] llamando a Google Place Details v1: {e_details.response.text if e_details.response else e_details}")
                         except Exception as e_proc_details:
-                            print(f"!!! [ERROR] procesando detalles v1: {e_proc_details}")
+                            print(f"!!! [ERROR] procesando detalles v1: {e_proc_details.response.text if e_proc_details.response else e_proc_details}")
 
                     if place_obj and place_obj.id not in place_ids_found_locally:
                         serialized_place = TouristicPlaceSerializer(place_obj).data
@@ -422,31 +464,76 @@ def geocode_autocomplete_api_view(request):
 
 # Vista para los sitios turisticos de un itinerario en específico 
 # api/itineraries/<int:itinerary_id>/places/
-@api_view(['GET'])
+@api_view(['GET', 'PATCH'])
 @permission_classes([permissions.IsAuthenticated])
 def itinerary_stops_api_view(request, itinerary_id):
     """
-    Endpoint de API para obtener las paradas de un itinerario específico.
+    Endpoint de API para obtener (GET) o Actualizar (PATCH)
+    las paradas de un itinerario específico.
     """
+
     try:
         # Obtiene el itinerario asegurándose que pertenece al usuario autenticado
         itinerary = Itinerary.objects.get(id=itinerary_id, user=request.user)
-        
-        # Obtiene las paradas del itinerario (modelo intermedio) y los lugares turísticos asociados
-        # Usamos select_related para traer el objeto `touristic_place` en la misma consulta.
-        stops = ItineraryStop.objects.filter(itinerary=itinerary).select_related('touristic_place')
-
-        # Serializamos las paradas: cada parada incluye el `touristic_place` anidado
-        # y los campos `day_number` y `placement` que definen el orden.
-        serialized_stops = ItineraryStopDetailSerializer(stops, many=True).data
-
-        return Response(serialized_stops)
-    
     except Itinerary.DoesNotExist:
-        return Response({"error": "Itinerario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        print(f"Error obteniendo lugares del itinerario: {e}")
-        return Response({"error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Itinerario no encontrado o no te pertenece."}, status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == 'GET':
+        # Lógica del método GET: Obtener las paradas del itinerario
+        try:
+            stops = ItineraryStop.objects.filter(itinerary=itinerary).order_by('day_number','placement')
+            serialized_stops = ItineraryStopDetailSerializer(stops, many=True)
+            return Response(serialized_stops.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": f"Error al obtener paradas: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    elif request.method == 'PATCH':
+        # Lógica del método PATCH: Actualizar las paradas del itinerario
+        # Se encarga de borrar y re-crear las paradas según los datos recibidos
+        try:
+            stops_data_by_day = request.data.get('stops', [])
+            if not stops_data_by_day:
+                return Response({"error": "Datos de paradas no proporcionados."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Eliminar las paradas existentes del itinerario
+            ItineraryStop.objects.filter(itinerary=itinerary).delete()
+
+            # Re-crear las paradas según los datos recibidos
+            new_stops = []
+            """
+            Formato de stops_data_by_day:
+            [
+            {"touristic_place": X, "day_number": 1, "placement": 1},
+            ...
+            {"touristic_place": X, "day_number": 2, "placement": 1},
+            ...
+            ]
+            """
+            for stops_list in stops_data_by_day:
+                touristic_place_id = stops_list.get('touristic_place')
+                try:
+                    # Obtener el objeto TouristicPlace a partir del ID
+                    place = TouristicPlace.objects.get(id=touristic_place_id)
+                    new_stops.append(
+                        ItineraryStop(
+                            itinerary = itinerary,
+                            touristic_place = place,
+                            day_number = int(stops_list.get('day_number')),
+                            placement = int(stops_list.get('placement')) + 1
+                        )
+                    )
+                except TouristicPlace.DoesNotExist:
+                    print(f"Advertencia: No se encontró TouristicPlace con id {place_id}. Omitiendo.")
+            if new_stops:
+                ItineraryStop.objects.bulk_create(new_stops)
+                return Response({"message": "Itinerario actualizado con éxito."}, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({"error": f"Error al guardar: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            
+            
+
     
 
 # Vista para visualizar el itinerario antes de ser creado definitivamente
@@ -490,4 +577,92 @@ def itinerary_preview_view(request, itinerary_id):
     }
 
     return render(request, 'itineraries/preview_itinerary.html', context)
+
+# Vista API para optimizar el orden de las paradas de un día usando el algoritmo del "Vecino más Cercano"
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def optimize_stops_view(request, itinerary_id):
+    """
+    Endpoint de API para optimizar el orden de las paradas de un día
+    usando el algoritmo del "Vecino más Cercano".
+    Recibe: { "day_number": 1, "place_ids": [10, 45, 22, 5] }
+    Devuelve: { "optimized_route": [ ... (lista serializada) ... ], "warnings": [...] }
+    """
+    
+    # 1. Validar el itinerario y permisos
+    try:
+        itinerary = Itinerary.objects.get(id=itinerary_id, user=request.user, status='draft')
+    except Itinerary.DoesNotExist:
+        return Response({"error": "No se encontró el itinerario o no tienes permiso."}, status=status.HTTP_404_NOT_FOUND)
+
+    # 2. Obtener datos del POST
+    place_ids = request.data.get('place_ids', [])
+    day_number = request.data.get('day_number')
+
+    if not place_ids or len(place_ids) < 3:
+        return Response({"error": "Se necesitan al menos 3 paradas para optimizar."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # 3. Obtener los objetos TouristicPlace de la BD
+    # Usamos un dict para poder reordenar los objetos que ya tenemos
+    places_lookup = {
+        place.id: place for place in TouristicPlace.objects.filter(id__in=place_ids)
+    }
+    
+    # Asegurarnos de que los IDs recibidos existen
+    ordered_places = []
+    for pid in place_ids:
+        if pid in places_lookup:
+            ordered_places.append(places_lookup[pid])
+    
+    if len(ordered_places) < 3:
+        return Response({"error": "Paradas no válidas."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # 4. Implementar el Algoritmo "Vecino más Cercano"
+    
+    # (Regla de negocio: ej. 15km)
+    MAX_RANGE_KM = 15.0 
+    warnings = []
+    
+    optimized_route = []
+    remaining_places = ordered_places.copy() # Copia de la lista
+
+    # El punto de inicio es FIJO (el primero de la lista)
+    current_place = remaining_places.pop(0)
+    optimized_route.append(current_place)
+
+    while remaining_places:
+        nearest_neighbor = None
+        min_distance = float('inf')
+
+        # Encontrar el vecino más cercano
+        for next_place in remaining_places:
+            distance = haversine(
+                current_place.lat, current_place.long,
+                next_place.lat, next_place.long
+            )
+            if distance < min_distance:
+                min_distance = distance
+                nearest_neighbor = next_place
+        
+        # Validar la regla de negocio del "rango máximo"
+        if min_distance > MAX_RANGE_KM:
+            warnings.append(
+                f"Advertencia: El tramo de '{current_place.name}' a '{nearest_neighbor.name}' "
+                f"es de {min_distance:.1f} km, que supera el límite de {MAX_RANGE_KM} km."
+            )
+
+        # Moverse al vecino más cercano
+        current_place = nearest_neighbor
+        optimized_route.append(current_place)
+        remaining_places.remove(nearest_neighbor)
+
+    # 5. Devolver la ruta optimizada
+    # Usamos el mismo serializer que usa tu frontend para que los datos coincidan
+    serializer = TouristicPlaceSerializer(optimized_route, many=True)
+    
+    return Response({
+        "optimized_route": serializer.data,
+        "warnings": warnings
+    })
+
 
