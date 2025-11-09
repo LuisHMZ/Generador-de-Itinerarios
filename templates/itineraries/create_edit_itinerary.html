@@ -60,21 +60,6 @@
                             La fecha de término no puede ser anterior a la fecha de inicio.
                         </div>
                     </div>
-                    <div class="mb-3 position-relative"> <label for="location" class="form-label">Ubicación:</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                            <select class="form-select" id="ubicacion-principal" name="location">
-                                <option value="" selected disabled>Selecciona un estado</option>
-                                <option value="Estado de México" {% if itinerary and itinerary.location == 'Estado de México' %}selected{% endif %}>Estado de México</option>
-                                <option value="CDMX" {% if itinerary and itinerary.location == 'CDMX' %}selected{% endif %}>CDMX</option>
-                                <option value="Morelos" {% if itinerary and itinerary.location == 'Morelos' %}selected{% endif %}>Morelos</option>
-                                <option value="Hidalgo" {% if itinerary and itinerary.location == 'Hidalgo' %}selected{% endif %}>Hidalgo</option>
-                                <option value="Tlaxcala" {% if itinerary and itinerary.location == 'Tlaxcala' %}selected{% endif %}>Tlaxcala</option>
-                                <option value="Puebla" {% if itinerary and itinerary.location == 'Puebla' %}selected{% endif %}>Puebla</option>
-                            </select>
-                        </div>
-                        <div id="suggestions-ubicacion" class="list-group position-absolute w-100 mt-1" style="z-index: 10;"></div>
-                    </div>
                     <div class="mb-3">
                         <label for="banner-pic" class="form-label">Foto de portada:</label>
                         <div class="input-group">
