@@ -89,7 +89,7 @@ class ItinerarySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'user_username', 'title', 'description', 
             'banner_pic', 'creation_date', 'stops',
-            'start_date', 'end_date', 'category', 'location' # <-- Añadidos
+            'start_date', 'end_date', 'category'
         ]
         # user y creation_date siguen siendo solo lectura
         read_only_fields = ['id', 'user', 'user_username', 'creation_date'] 
