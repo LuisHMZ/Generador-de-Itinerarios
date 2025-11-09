@@ -14,8 +14,31 @@
     margin: 0 auto;
     padding: 0 20px;
     display: flex;
+    position: relative; /* allow absolutely positioned centered title */
     justify-content: space-between; /* Logo a la izquierda, menú a la derecha */
     align-items: center;
+}
+
+/* Título centrado dentro del header (responsivo) */
+.header-titulo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-weight: bold;
+    color: #1F3C5A;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none; 
+    white-space: nowrap;
+}
+
+.header-titulo .header-titulo-text {
+    margin: 0;
+    font-size: clamp(1.4rem, 2.5vw, 1.2rem); /* responsivo */
 }
 
 .logo-link {
@@ -52,36 +75,65 @@
     display: none;
 }
 
-/* Oculta la navegación principal por defecto (para mostrar hamburguesa) */
-.navegacion-principal {
-    display: none; /* Oculta los enlaces de texto */
-}
+/* ====================MENU  DESPLEGLABE ==================== */
 
-/* Estilos para el botón del menú hamburguesa */
-.boton-menu-hamburguesa {
-    display: block; /* Mostrar el botón */
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-}
+.dropdown {
+      position: relative;
+    }
 
-.icono-hamburguesa {
-    width: 30px; /* Ancho del icono */
-    height: 20px; /* Alto total (3 barras + espacios) */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; /* Espacio entre barras */
-}
+    /* Botón principal */
+    .dropdown .btn {
+      background-color: #49A3A3;
+      border-radius: 12px;
+      padding: 10px 14px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
 
-.icono-hamburguesa span {
-    display: block;
-    height: 3px; /* Grosor de cada barra */
-    width: 100%;
-    background-color: #ffffff; /* Color blanco de las barras */
-    border-radius: 3px;
-}
+    .dropdown .btn:hover {
+      background-color: #49A3A3;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
 
+    /* Icono de tres puntos */
+    .dropdown .bi-three-dots-vertical {
+      font-size: 1.3rem;
+      color: #495057;
+    }
+
+    /* Estilos del menú desplegable */
+    .dropdown-menu {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+      animation: fadeIn 0.25s ease-in-out;
+      overflow: hidden;
+    }
+
+    .dropdown-menu a {
+      display: block;
+      padding: 10px 18px;
+      color: #212529;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .dropdown-menu a:hover {
+      background-color: #49A3A3;
+      color: #fff;
+    }
+
+    /* Animación de aparición */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
 /* ==================== MEDIA QUERIES (Ajuste Básico) ==================== */
 /* Si quieres mostrar los enlaces en pantallas grandes en lugar de la hamburguesa */
@@ -105,6 +157,38 @@
         color: #e0f2f1;
     }
 }
+
+/* ==================== MENÚ RESPONSIVE (para pantallas pequeñas) ==================== */
+@media (max-width: 768px) {
+  .navegacion-principal {
+    position: absolute;
+    top: 70px; /* debajo del header */
+    right: 0;
+    width: 100%;
+    background-color: #49A3A3;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+    display: none; /* oculto por defecto */
+    transition: all 0.3s ease;
+  }
+
+  .navegacion-principal.activo {
+    display: flex; /* se muestra cuando se abre */
+  }
+
+  .navegacion-principal a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.2em;
+  }
+
+  .navegacion-principal a:hover {
+    color: #e0f2f1;
+  }
+}
+
 
 /* ==================== ESTILOS FOOTER GLOBAL (Teal con Títulos Azules) ==================== */
 .footer-global {
@@ -143,7 +227,6 @@
 .footer-logo-tur {
     color: #ffffff; /* Blanco */
 }
-
 
 .footer-logo-tagline p {
     font-size: 0.95em;
@@ -192,7 +275,6 @@
     display: none;
 }
 
-
 .copyright {
     text-align: center;
     font-size: 0.85em;
@@ -209,8 +291,9 @@
     .navegacion-principal {
         display: none;
     }
+    /* mantener logo a la izquierda y hamburguesa a la derecha en móvil */
     .header-contenido {
-        justify-content: center;
+        justify-content: space-between;
     }
     .footer-contenido {
        flex-direction: column;
@@ -225,5 +308,41 @@
 
      .footer-logo-tagline p {
         max-width: none;
+    }
+}
+
+/* ==================== REGLAS GLOBALES (NUEVO) ==================== */
+
+/* Asegurar footer siempre abajo (sticky footer) para todas las páginas */
+html, body {
+    height: 100%;
+}
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* garantiza altura mínima de ventana */
+}
+
+/* Hacer que el main ocupe el espacio disponible */
+main,
+.container-fluid.my-4, /* algunos archivos usan container-fluid como main visual */
+.container.my-5,
+.page-main {
+    flex: 1 0 auto;
+}
+
+/* Footer se empuja al fondo cuando el contenido es corto */
+.footer-global {
+    margin-top: auto;
+    width: 100%;
+    /* mantener comportamiento visual existente */
+    position: relative;
+    z-index: 1;
+}
+
+/* Si en alguna página se hubiese hecho footer position:fixed, forzamos comportamiento relativo en móvil */
+@media (max-width: 768px) {
+    .footer-global {
+        position: relative !important;
     }
 }
