@@ -285,28 +285,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para renderizar un lugar en la sección de recomendaciones/popular
     function renderLugarCard(container, lugar) {
-        const col = document.createElement('div');
-        col.classList.add('col');
-        col.innerHTML = `
-            <div class="card lugar-card">
-                <img src="${lugar.imagen}" class="card-img-top" alt="${lugar.nombre}">
+        // Asegura que los datos existan
+    const id = lugar.id;
+    const nombre = lugar.nombre || 'Lugar sin nombre';
+    const categoria = lugar.categoria || 'General';
+    const imagenUrl = lugar.imagen || '/static/img/placeholder.png';
+    const lat = lugar.lat || '';
+    const lng = lugar.lng || '';
+    const address = lugar.address || 'Dirección no disponible';
+
+    // Datos para el modal "Info"
+    const description = lugar.description || 'Descripción no disponible.';
+    const website = lugar.website || '';
+    const phone = lugar.phone || '';
+    const rating = lugar.rating || 'N/A';
+
+    const cardHTML = `
+        <div class="col-md-6 mb-3">
+            <div class="card h-100 lugar-card">
+                <img src="${imagenUrl}" class="card-img-top" alt="${nombre}">
                 <div class="card-body">
-                    <h5 class="card-title-sm">${lugar.nombre}</h5>
-                    <span class="badge categoria-badge categoria-${lugar.categoria.toLowerCase()}">${lugar.categoria}</span>
-                    <div class="d-flex justify-content-between align-items-center mt-2">
-                        <button class="btn btn-sm btn-outline-info btn-ver" data-id="${lugar.id}">Ver</button>
-                        <button class="btn btn-sm btn-outline-success btn-add"
-                                data-id="${lugar.id}"
-                                data-nombre="${lugar.nombre}"
-                                data-categoria="${lugar.categoria}"
-                                data-img="${lugar.imagen}">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
+                    <span class="badge bg-primary mb-2">${categoria}</span>
+                    <h6 class="card-title">${nombre}</h6>
+                    <p class="card-text small text-muted">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        ${address}
+                    </p>
+                </div>
+                <div class="card-footer d-flex justify-content-end">
+
+                    <button class="btn btn-outline-primary btn-sm me-1 btn-ver" 
+                            data-id="${id}"
+                            data-nombre="${nombre}"
+                            data-direccion="${address}"
+                            data-descripcion="${encodeURIComponent(description)}"
+                            data-website="${website}"
+                            data-phone="${phone}"
+                            data-rating="${rating}"
+                            data-img="${imagenUrl}"
+                            data-categoria="${categoria.replace(/'/g, "\\'")}"
+                            data-lat="${lat}"
+                            data-lng="${lng}">
+                        <i class="fas fa-info-circle me-1"></i>Info
+                    </button>
+                    <button class="btn btn-success btn-sm btn-add" 
+                            data-id="${id}" 
+                            data-nombre="${nombre}" 
+                            data-categoria="${categoria.replace(/'/g, "\\'")}" 
+                            data-img="${imagenUrl}"
+                            data-lat="${lat}"
+                            data-lng="${lng}">
+                        <i class="fas fa-plus me-1"></i>Agregar
+                    </button>
                 </div>
             </div>
-        `;
-        container.appendChild(col);
+        </div>
+    `;
+
+    container.innerHTML += cardHTML;
     }
 
     // Función para renderizar un lugar en la lista de mi itinerario
@@ -390,6 +426,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Cargar recomendaciones cercanas usando el endpoint server-side (usa radius por defecto del proyecto)
+    async function cargarRecomendacionesCercanas() {
+        try {
+            // Determinar la ubicación de referencia: primer lugar del día actual si existe
+            const lugaresDelDia = miItinerarioActual[currentDay] || [];
+            let refLat = null, refLng = null;
+            if (lugaresDelDia.length > 0 && lugaresDelDia[0].lat && lugaresDelDia[0].lng) {
+                refLat = lugaresDelDia[0].lat;
+                refLng = lugaresDelDia[0].lng;
+            } else {
+                // Fallback: centro de CDMX
+                refLat = 19.4326;
+                refLng = -99.1332;
+            }
+
+            // Intentar leer un radio establecido en el DOM (data-recommendation-radius-km) o usar 15 km
+            let radiusKm = 15.0;
+            try {
+                const r = document.body.dataset.recommendationRadiusKm;
+                if (r) radiusKm = parseFloat(r);
+            } catch (e) {}
+
+            // Obtener los IDs de los lugares ya en el día actual para evitar duplicados
+            const existingIds = new Set(lugaresDelDia.map(p => p.id));
+
+            const resp = await fetch(`/api/places/nearby/?lat=${encodeURIComponent(refLat)}&lng=${encodeURIComponent(refLng)}&radius_km=${encodeURIComponent(radiusKm)}`);
+            if (!resp.ok) throw new Error(`Error al cargar recomendaciones: ${resp.statusText}`);
+            const places = await resp.json();
+
+            // Filtrar lugares que ya están en el día actual para evitar duplicados
+            const newPlaces = places.filter(p => !existingIds.has(p.id));
+
+            // Renderizar en el contenedor de recomendaciones (hasta 6)
+            recomendacionesContainer.innerHTML = '';
+            if (!newPlaces || newPlaces.length === 0) {
+                recomendacionesContainer.innerHTML = '<p class="text-muted">No se encontraron recomendaciones cercanas.</p>';
+                return;
+            }
+
+            const max = Math.min(6, newPlaces.length);
+            for (let i = 0; i < max; i++) {
+                const p = newPlaces[i];
+                const categoria = determinarCategoriaPrincipal(p.types || []);
+                renderLugarCard(recomendacionesContainer, {
+                    id: p.id,
+                    nombre: p.name,
+                    categoria: categoria,
+                    imagen: p.photo_url || '/static/img/placeholder.png',
+                    lat: p.geometry && p.geometry.location && p.geometry.location.lat ? p.geometry.location.lat : null,
+                    lng: p.geometry && p.geometry.location && p.geometry.location.lng ? p.geometry.location.lng : null,
+                    address: p.address || '',
+
+                    // --- DATOS NUEVOS PARA EL MODAL "INFO" ---
+                    description: p.description || 'Descripción no disponible.',
+                    website: p.website || '',
+                    phone: p.phone_number || '',
+                    rating: p.rating || 'N/A'
+                });
+            }
+
+        } catch (error) {
+            console.error('Error cargando recomendaciones cercanas:', error);
+            recomendacionesContainer.innerHTML = '<p class="text-danger">No se pudieron cargar recomendaciones.</p>';
+        }
+    }
+
 
     // --- Lógica del Itinerario (Columna Derecha) ---
 
@@ -446,6 +548,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Actualiza los marcadores en el mapa
         actualizarMarcadores();
+        // Actualizar recomendaciones cercanas cuando cambie la lista de paradas
+        try { cargarRecomendacionesCercanas(); } catch (e) { console.warn('No se actualizaron recomendaciones:', e); }
     }
 
     // Eliminar un día: solo permite eliminar el último día (cuenta regresiva)
@@ -1076,7 +1180,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
 
     // --- Inicializar la página ---
-    cargarItinerarioActual();
+    // Cargamos el itinerario y luego las recomendaciones cercanas
+    cargarItinerarioActual().then(() => {
+        try { cargarRecomendacionesCercanas(); } catch (e) { console.warn(e); }
+    });
 
 
 });

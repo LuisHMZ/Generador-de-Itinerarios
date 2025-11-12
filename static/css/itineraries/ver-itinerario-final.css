@@ -185,4 +185,13 @@ body {
         gap: 10px;
         align-items: stretch; /* Ancho completo */
     }
+
+    .modal-detalle-lugar .imagen-principal {
+        width: 100%;             /* La imagen ocupa el 100% del ancho del modal */
+        max-height: 350px;       /* ¡Esta es la clave! Fija una altura máxima */
+        object-fit: cover;       /* Evita que la imagen se distorsione */
+        border-radius: 0.5rem;   /* Bordes redondeados (opcional, por estilo) */
+        margin-bottom: 1.5rem;   /* Espacio antes del texto */
+    }
+
 }

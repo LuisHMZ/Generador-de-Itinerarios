@@ -1,6 +1,7 @@
 # Create your views here.
 import requests     # Para llamar a la API de Google Places
 import os         # Para leer variables de entorno
+import json       # Para formatear debug con json.dumps
 
 from django.conf import settings # Para acceder a la configuración del proyecto
 from django.shortcuts import render, get_object_or_404, redirect     # Para renderizar plantillas HTML y obtener objetos o 404
@@ -22,10 +23,10 @@ from .utils import haversine  # Importa la función de utilidad para calcular di
 # Tipos de Google Places v1 que SÍ queremos guardar
 # Basado en las llaves de MAPEO_CATEGORIAS de add_stops.js
 ALLOWED_GOOGLE_TYPES = {
-    'museum', 'art_gallery', 'tourist_attraction', 'point_of_interest', 
-    'landmark', 'church', 'hindu_temple', 'mosque', 'synagogue', 
-    'place_of_worship', 'historic_site', 'amusement_park', 'aquarium', 
-    'zoo', 'stadium', 'movie_theater', 'night_club', 'bar', 'casino', 
+    'museum', 'art_gallery', 'tourist_attraction', 'point_of_interest',
+    'church', 'hindu_temple', 'mosque', 'synagogue', 
+    'place_of_worship', 'historical_place', 'cultural_landmark', 'historical_landmark',
+    'amusement_park', 'aquarium', 'zoo', 'stadium', 'movie_theater', 'night_club', 'bar', 'casino', 
     'park', 'natural_feature', 'campground', 'restaurant', 'cafe', 
     'bakery', 'shopping_mall'
 }
@@ -253,6 +254,164 @@ def search_places_api_view(request):
     combined_results = local_results + google_results_processed
     print(f"--- [DEBUG] Resultados combinados finales (enviando al JS): {len(combined_results)} ítems")
     return Response(combined_results)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def nearby_places_api_view(request):
+    """
+    Endpoint para obtener lugares cercanos (server-side) usando Places Nearby Search (Web Service).
+    Parámetros GET esperados: lat (required), lng (required), radius_km (opcional, default tomado de settings o 15)
+    Retorna una lista de lugares con campos simplificados: place_id, name, types, rating, address/vicinity, geometry, photo_url (si existe).
+    """
+    lat = request.query_params.get('lat')
+    lng = request.query_params.get('lng')
+    try:
+        radius_km = float(request.query_params.get('radius_km', ''))
+    except Exception:
+        # Valor por defecto: si existe en settings usa RECOMMENDATION_RADIUS_KM, sino 15.0 km
+        radius_km = float(getattr(settings, 'RECOMMENDATION_RADIUS_KM', 15.0))
+
+    if not lat or not lng:
+        return Response({'error': "Parámetros 'lat' y 'lng' son requeridos."}, status=status.HTTP_400_BAD_REQUEST)
+
+    api_key = os.environ.get('GOOGLE_API_KEY') or getattr(settings, 'GOOGLE_API_KEY', None)
+    if not api_key:
+        return Response({'error': 'Google API key no configurada en el servidor.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # (No rate-limiting: petición simple al servicio de Places)
+
+    # Vamos a apegarnos a la documentación 100% y usar solo Tabla A
+    # Esta es una lista mucho más curada para recomendaciones
+    DEFAULT_NEARBY_TYPES = [
+        'art_gallery',
+        'museum',
+        'park',
+        'restaurant',
+        'cafe',
+        'shopping_mall',
+        'historical_place',
+        'plaza',
+    ]
+
+    try:
+        # (Asegúrate de tener DEFAULT_NEARBY_TYPES y ALLOWED_GOOGLE_TYPES definidos)
+        tipos_a_incluir = DEFAULT_NEARBY_TYPES 
+        place_type = request.query_params.get('type')
+        if place_type:
+            if place_type in ALLOWED_GOOGLE_TYPES:
+                 tipos_a_incluir = [place_type]
+            else:
+                return Response({'error': f"Tipo '{place_type}' no soportado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Definir el Field Mask (pedimos todo lo necesario para guardar)
+        fields_mask = (
+            "places.id,"
+            "places.name,"
+            "places.displayName,"
+            "places.types,"
+            "places.rating,"
+            "places.formattedAddress,"
+            "places.location,"
+            "places.websiteUri,"
+            "places.internationalPhoneNumber,"
+            "places.editorialSummary,"
+            "places.photos"
+        )
+
+        # 2. Construir el Body (¡con el 'circle' correcto!)
+        search_body = {
+            "languageCode": "es",
+            "includedTypes": tipos_a_incluir,
+            "maxResultCount": 10, 
+            "locationRestriction": {
+                "circle": {
+                    "center": {
+                        "latitude": float(lat),
+                        "longitude": float(lng)
+                    },
+                    "radius": int(radius_km * 1000)
+                }
+            }
+        }
+        
+        # 3. Headers
+        search_headers = {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': api_key,
+            'X-Goog-FieldMask': fields_mask
+        }
+
+        # 4. Llamar a searchNearby
+        search_url = 'https://places.googleapis.com/v1/places:searchNearby'
+        resp = requests.post(search_url, json=search_body, headers=search_headers, timeout=8)
+        resp.raise_for_status()
+        data = resp.json()
+        results = data.get('places', [])
+
+        # --- INICIO DE LA NUEVA LÓGICA DE GUARDADO ---
+        
+        # Necesitamos estas importaciones (asegúrate de que estén al inicio de views.py)
+        # from .models import TouristicPlace
+        # from .serializers import TouristicPlaceSerializer
+        # from django.core.files.base import ContentFile
+
+        processed_objects = [] # Lista para guardar los OBJETOS de nuestra BD
+
+        for place_data in results:
+            # Usamos el 'name' (resource name v1) como ID externo único
+            google_v1_id = place_data.get('name')
+            if not google_v1_id:
+                continue
+
+            # 5. Mapear datos (igual que en search_places_api_view)
+            defaults = {
+                'name': place_data.get('displayName', {}).get('text', ''),
+                'address': place_data.get('formattedAddress', ''),
+                'description': place_data.get('editorialSummary', {}).get('text', ''),
+                'lat': place_data.get('location', {}).get('latitude'),
+                'long': place_data.get('location', {}).get('longitude'),
+                'website': place_data.get('websiteUri', ''),
+                'phone_number': place_data.get('internationalPhoneNumber', ''),
+                'external_api_rating': place_data.get('rating'),
+            }
+            
+            # 6. Guardar o Actualizar en nuestra BD
+            place_obj, created = TouristicPlace.objects.update_or_create(
+                external_api_id=google_v1_id,
+                defaults=defaults
+            )
+            
+            # 7. Lógica de descarga de fotos (igual que en search_places_api_view)
+            if not place_obj.photo and 'photos' in place_data and len(place_data['photos']) > 0:
+                photo_resource_name = place_data['photos'][0].get('name')
+                if photo_resource_name:
+                    print(f"--- [DEBUG-Nearby] Foto encontrada. Descargando desde: {photo_resource_name}")
+                    photo_url = f"https://places.googleapis.com/v1/{photo_resource_name}/media?key={api_key}&maxWidthPx=800"
+                    try:
+                        photo_response = requests.get(photo_url, timeout=10)
+                        photo_response.raise_for_status()
+                        file_name = f"{google_v1_id.split('/')[-1]}.jpg" 
+                        place_obj.photo.save(file_name, ContentFile(photo_response.content), save=True)
+                        print(f"--- [DEBUG-Nearby] ¡ÉXITO! Foto guardada en {place_obj.photo.url}")
+                    except requests.exceptions.RequestException as e_photo:
+                        print(f"!!! [ERROR-Nearby] FOTO: No se pudo descargar: {e_photo}")
+
+            processed_objects.append(place_obj)
+        
+        # 8. Serializar los OBJETOS de nuestra BD
+        # Esto nos da { "id": 58, "name": "...", "photo_url": "/media/...", ... }
+        serializer = TouristicPlaceSerializer(processed_objects, many=True)
+        return Response(serializer.data)
+        
+        # --- FIN DE LA NUEVA LÓGICA ---
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error calling Places Nearby: {e}")
+        return Response({'error': 'Error al llamar al servicio externo de Places.'}, status=status.HTTP_502_BAD_GATEWAY)
+    except Exception as e:
+        print(f"Unexpected error in nearby_places_api_view: {e}")
+        return Response({'error': 'Error interno del servidor.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # Vistas para la creación de itinerarios (HTML)
@@ -523,7 +682,7 @@ def itinerary_stops_api_view(request, itinerary_id):
                         )
                     )
                 except TouristicPlace.DoesNotExist:
-                    print(f"Advertencia: No se encontró TouristicPlace con id {place_id}. Omitiendo.")
+                    print(f"Advertencia: No se encontró TouristicPlace con id {touristic_place_id}. Omitiendo.")
             if new_stops:
                 ItineraryStop.objects.bulk_create(new_stops)
                 return Response({"message": "Itinerario actualizado con éxito."}, status=status.HTTP_200_OK)
@@ -666,3 +825,65 @@ def optimize_stops_view(request, itinerary_id):
     })
 
 
+# Vista API para guardar el itinerario después de la vista previa
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def publish_itinerary_api_view(request, itinerary_id):
+    """
+    Endpoint de API para publicar (guardar definitivamente) un itinerario.
+    Cambia su estado de 'draft' a 'published'.
+    """
+    try:
+        itinerary = Itinerary.objects.get(id=itinerary_id, user=request.user)
+    except Itinerary.DoesNotExist:
+        return Response({"error": "No se encontró el itinerario o no tienes permiso."}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        # Cambiar el estado a 'published'
+        itinerary.status = 'published'
+        itinerary.save()
+    except Exception as e:
+        return Response({"error": f"Error al publicar el itinerario: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({"success": "Itinerario publicado correctamente."})
+
+# Vista para ver los detalles de un itinerario ya publicado
+@login_required
+def view_itinerary_view(request, itinerary_id):
+    """
+    Muestra los detalles de un itinerario publicado.
+    El usuario debe ser el propietario del itinerario.
+    Contexto enviado a la plantilla:
+      - itinerary: objeto Itinerary
+      - stops_by_day: lista de tuplas (day_number, [stops ordenadas por placement])
+    """
+    # Obtiene el itinerario asegurando que pertenece al usuario autenticado y está publicado
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user, status='published')
+
+    # Obtén las paradas ordenadas (el modelo ya define ordering por day_number, placement)
+    stops_qs = ItineraryStop.objects.filter(itinerary=itinerary).select_related('touristic_place')
+
+    # Agrupar por día
+    stops_by_day = []
+    current_day = None
+    current_list = []
+    for stop in stops_qs:
+        if current_day is None:
+            current_day = stop.day_number
+            current_list = [stop]
+        elif stop.day_number == current_day:
+            current_list.append(stop)
+        else:
+            stops_by_day.append((current_day, current_list))
+            current_day = stop.day_number
+            current_list = [stop]
+
+    if current_day is not None:
+        stops_by_day.append((current_day, current_list))
+
+    context = {
+        'itinerary': itinerary,
+        'stops_by_day': stops_by_day,
+    }
+
+    return render(request, 'itineraries/view_itinerary.html', context)
