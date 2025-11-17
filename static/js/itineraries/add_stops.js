@@ -7,14 +7,7 @@ const TIPOS_LUGARES = [
     'point_of_interest', 'establishment' // Generales
 ];
 
-// Sistema de categorías principales
-const CATEGORIAS_PRINCIPALES = [
-    'Museos', 'Galerías de Arte', 'Puntos de Interés', 'Atracciones Turísticas', 
-    'Sitios Históricos', 'Iglesias y Templos', 'Teatros', 'Parques de Diversiones',
-    'Zoológicos', 'Acuarios', 'Estadios', 'Cines', 'Vida Nocturna', 'Parques y Plazas',
-    'Maravillas Naturales', 'Zonas de Acampar', 'Restaurantes', 'Cafeterías', 
-    'Bares y Cantinas', 'Panaderías'
-];
+
 
 // Mapeo de tipos de Google Places a categorías principales
 const MAPEO_CATEGORIAS = {
@@ -105,51 +98,18 @@ function getCookie(name) {
 }
 
 /**
- * FUNCIÓN CENTRALIZADA: Añadir Lugar al Itinerario
- * Propósito: Añade un lugar al 'miItinerarioActual[currentDay]'
- * validando duplicados.
- * Parámetros: placeData (un objeto JS con {id, nombre, categoria, imagen, lat, lng})
- */
-function addPlaceToItineraryFromData(placeData) {
-    const nuevoLugar = {
-        id: parseInt(placeData.id, 10),
-        nombre: placeData.nombre,
-        categoria: placeData.categoria,
-        imagen: placeData.imagen,
-        lat: placeData.lat || null,
-        lng: placeData.lng || null,
-    };
-
-    // Asegura que exista el array del día seleccionado
-    if (!miItinerarioActual[currentDay]) {
-        miItinerarioActual[currentDay] = [];
-    }
-
-    // Validación básica: id y nombre son obligatorios
-    if (!nuevoLugar.id || !nuevoLugar.nombre || nuevoLugar.nombre.toString().trim() === '') {
-        alert('No se puede añadir un lugar vacío. Asegúrate de que el lugar tenga nombre e ID válidos.');
-        return; // No añadir
-    }
-
-    // Validación de duplicados
-    if (miItinerarioActual[currentDay].some(l => parseInt(l.id, 10) === nuevoLugar.id)) {
-        alert('Este lugar ya está en tu itinerario para este día.');
-        return; // No añadir
-    }
-
-    miItinerarioActual[currentDay].push(nuevoLugar);
-    actualizarListaItinerario(); // Refresca la UI
-    
-    // (Opcional) Notificación de éxito
-    // alert(`${nuevoLugar.nombre} ha sido agregado.`);
-}
-
-/**
  * 2. Lógica para el mapa
  */
 // Variables globales del mapa
 let map;
 let markers = [];
+// Variables para dibujar la ruta
+let directionsService = null;
+let directionsRenderer = null;
+
+/**
+ * Variables globales del Itinerario
+ */
 let miItinerarioActual = {};    // { dia: [lugares], dia2: [lugares] }
 let currentDay = 1; // Día actual seleccionado
 
@@ -171,9 +131,71 @@ function initMap() {
         center: cdmx
     });
 
+    // Inicializa el DirectionsService y DirectionsRenderer
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        map: map, // Asócialo a tu mapa
+        suppressMarkers: true // ¡MUY IMPORTANTE!
+    });
+
     // Actualiza marcadores si ya hay datos cargados
     actualizarMarcadores();
 };
+
+/**
+ * Llama a la API de Directions para dibujar la ruta del día actual.
+ */
+async function dibujarRutaActual() {
+    if (!directionsService || !directionsRenderer) {
+        alert("El servicio de rutas no está listo.");
+        return;
+    }
+
+    const lugaresDelDia = miItinerarioActual[currentDay] || [];
+
+    // 1. No se puede dibujar una ruta sin al menos 2 puntos
+    if (lugaresDelDia.length < 2) {
+        directionsRenderer.setDirections({ routes: [] }); // Limpia la ruta anterior
+        return;
+    }
+
+    // 2. Preparar la solicitud para la API
+    const origin = lugaresDelDia[0];
+    const destination = lugaresDelDia[lugaresDelDia.length - 1];
+    
+    // Los puntos intermedios (waypoints)
+    const waypoints = [];
+    for (let i = 1; i < lugaresDelDia.length - 1; i++) {
+        waypoints.push({
+            location: new google.maps.LatLng(
+                parseFloat(lugaresDelDia[i].lat),
+                parseFloat(lugaresDelDia[i].lng) // Usa 'long'
+            ),
+            stopover: true
+        });
+    }
+
+    const request = {
+        origin: new google.maps.LatLng(parseFloat(origin.lat), parseFloat(origin.lng)),
+        destination: new google.maps.LatLng(parseFloat(destination.lat), parseFloat(destination.lng)),
+        waypoints: waypoints,
+        travelMode: 'WALKING' // <-- Tal como pediste
+    };
+
+    // 3. Llamar a la API
+    try {
+        const response = await directionsService.route(request);
+        if (response.status === 'OK') {
+            directionsRenderer.setDirections(response); // Dibuja la ruta
+        } else {
+            alert("No se pudo calcular la ruta: " + response.status);
+            directionsRenderer.setDirections({ routes: [] }); // Limpia en caso de error
+        }
+    } catch (error) {
+        console.error("Error al llamar a Directions API:", error);
+        alert("Error al dibujar la ruta.");
+    }
+}
 
 // Función para actualizar los marcadores en el mapa
 function actualizarMarcadores() {
@@ -192,11 +214,13 @@ function actualizarMarcadores() {
 
     // c. Itera sobre las paradas y crea marcadores
     lugaresDelDia.forEach((lugar, index) => {
-        // **ASEGÚRATE** de que 'lugar' tenga 'lat' y 'lng'
-        if (lugar.lat && lugar.lng) {
+        // Asegúrate de que 'lugar' tenga lat/lng válidos (acepta strings numéricos)
+        const latVal = (lugar.lat !== undefined && lugar.lat !== null && lugar.lat !== '') ? parseFloat(lugar.lat) : NaN;
+        const lngVal = (lugar.lng !== undefined && lugar.lng !== null && lugar.lng !== '') ? parseFloat(lugar.lng) : NaN;
+        if (Number.isFinite(latVal) && Number.isFinite(lngVal)) {
             const position = { 
-                lat: parseFloat(lugar.lat), 
-                lng: parseFloat(lugar.lng) 
+                lat: latVal,
+                lng: lngVal
             };
             
             const marker = new google.maps.Marker({
@@ -271,10 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn("Elementos críticos faltan en DOM, abortando inicialización.");
         return;
     }    // Simulación de datos para demostración (el backend proporcionará esto)
-    let lugaresRecomendadosData = []; // Esto se cargaría desde la API
-    let lugaresPopularData = [];     // Esto se cargaría desde la API
-    // let miItinerarioActual = {};    // { dia: [lugares], dia2: [lugares] }
-    // let currentDay = 1; // Día actual seleccionado
     let searchTimeout;
 
     // ID del Itinerario (para cargar/guardar paradas)
@@ -474,8 +494,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     nombre: p.name,
                     categoria: categoria,
                     imagen: p.photo_url || '/static/img/placeholder.png',
-                    lat: p.geometry && p.geometry.location && p.geometry.location.lat ? p.geometry.location.lat : null,
-                    lng: p.geometry && p.geometry.location && p.geometry.location.lng ? p.geometry.location.lng : null,
+                    lat: p.lat || null,
+                    lng: p.long || null,
                     address: p.address || '',
 
                     // --- DATOS NUEVOS PARA EL MODAL "INFO" ---
@@ -552,6 +572,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try { cargarRecomendacionesCercanas(); } catch (e) { console.warn('No se actualizaron recomendaciones:', e); }
     }
 
+    /**
+     * eliminarUltimoDia - Deshabilitado para control total desde backend
+     * Nuevo comportamiento:
+     * Ahora el número de días se controla desde el backend y el dataset del body,
+     * por lo que no es necesario permitir eliminar días desde el frontend.
+     */
     // Eliminar un día: solo permite eliminar el último día (cuenta regresiva)
     function eliminarUltimoDia(diaAEliminar) {
         const diasExistentes = Object.keys(miItinerarioActual).map(Number).sort((a, b) => a - b);
@@ -588,12 +614,19 @@ document.addEventListener('DOMContentLoaded', () => {
         actualizarListaItinerario();
     }
 
-    // --- MODIFICADA: actualizarDropdownDias ---
+    /**
+     * actualizarDropdownDias
+     * Nuevo comportamiento:
+     * Recoge de el dataset del body el número total de días
+     * y los renderiza en el dropdown.
+     * Ya no se puede modificar el número de días manualmente.
+     */
     function actualizarDropdownDias() {
         if (!dropdownDiaMenu) return; // Añade chequeo de seguridad
         dropdownDiaMenu.innerHTML = ''; // Limpiar opciones existentes
         
-        const dias = Object.keys(miItinerarioActual).map(Number).sort((a, b) => a - b);
+        // Obtener los días existentes desde el dataset
+        const dias = parseInt(document.body.dataset.totalDias, 10) || 1;
         
         // Si no hay días (ej. al cargar por primera vez y fallar), asegura el Día 1
         if (dias.length === 0) {
@@ -603,7 +636,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ultimoDia = dias.length > 0 ? Math.max(...dias) : 1;
 
-        dias.forEach(diaNum => {
+        // Renderizar cada día en el dropdown
+        /* Deshabilitado: eliminación de días manualmente
+        * Ahora el número de días se controla desde el backend y el dataset del body
+        * por lo que no es necesario permitir eliminar días desde el frontend.
+        * 
+        * Modificación: se asume que 'dias' es un número total de días, no un array.
+        * Port lo tanto se cambió el ciclo de forEach para iterar de 1 a 'dias'.
+        */
+        for (let diaNum = 1; diaNum <= dias; diaNum++) {
             const li = document.createElement('li');
             li.classList.add('dropdown-item-wrapper', 'd-flex', 'justify-content-between', 'align-items-center');
             
@@ -614,7 +655,10 @@ document.addEventListener('DOMContentLoaded', () => {
             a.textContent = `Día: ${diaNum}`;
             a.dataset.day = diaNum;
             li.appendChild(a);
-
+            /* Deshabilitado: eliminación de días manualmente
+            * Ahora el número de días se controla desde el backend y el dataset del body
+            * por lo que no es necesario permitir eliminar días desde el frontend.
+            * 
             // Botón para eliminar el día: SOLO para el último día y si hay más de 1 día
             if (dias.length > 1 && diaNum === ultimoDia) {
                 const btnEliminarDia = document.createElement('button');
@@ -629,13 +673,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }); 
                 li.appendChild(btnEliminarDia);
             }
-
+            */
             dropdownDiaMenu.appendChild(li);
-        });
+        }
 
-        // --- VALIDACIÓN DE 3 DÍAS ---
-        // Añadir una opción para "Nuevo Día" solo si hay menos de MAX_DIAS
-        if (dias.length < MAX_DIAS) {
+        // --- VALIDACIÓN DE 3 DÍAS (Deshabilitada) ---
+        /* Añadir una opción para "Nuevo Día" solo si hay menos de MAX_DIAS
+        * Ahora el número de días se controla desde el backend y el dataset del body,
+        * por lo que no es necesario permitir añadir días desde el frontend.
+        */
+        /* if (dias.length < MAX_DIAS) {
             dropdownDiaMenu.appendChild(document.createElement('li')); // Divisor
             
             const liNuevoDia = document.createElement('li');
@@ -651,7 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
              const liLimite = document.createElement('li');
              liLimite.innerHTML = `<span class="dropdown-item-text text-muted small">Límite de ${MAX_DIAS} días alcanzado.</span>`;
              dropdownDiaMenu.appendChild(liLimite);
-        }
+        } */
 
         // Asegúrate de que currentDay sea válido
         if (!miItinerarioActual[currentDay]) {
@@ -1086,6 +1133,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    /**
+     * Botón para mostrar la ruta actual en el mapa
+     * Usando la función 'dibujarRutaActual'
+     */
+    const btnMostrarRuta = document.getElementById('btn-mostrar-ruta');
+    if (btnMostrarRuta) {
+        btnMostrarRuta.addEventListener('click', () => {
+            // Llama a la función que acabamos de crear
+            dibujarRutaActual();
+        });
+    }
+
     // --- MODIFICADO: Guardado Final (Botón Siguiente) ---
     btnSiguiente.addEventListener('click', async () => {
         console.log("Guardando itinerario:", miItinerarioActual);
@@ -1110,7 +1169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 stopsPayload.push({
                     touristic_place: parseInt(lugar.id, 10),
                     day_number: parseInt(day, 10),
-                    placement: index + 1
+                    placement: index
                 });
             });
         }
