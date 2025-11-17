@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const alertError = document.getElementById('alert-error');
     const successMessage = document.getElementById('success-message');
     const errorMessage = document.getElementById('error-message');
+    const passwordRequirements = document.querySelectorAll('#password-requirements li');
+    const passwordInput = document.getElementById('id_password1');
+    const confirmPasswordInput = document.getElementById('id_password2');
 
     // === FUNCIONES GENERALES ===
     function showAlert(alertElement, message) {
@@ -20,17 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
 const consentCheckbox = document.getElementById('id_consent');
 const submitBtn = document.getElementById('submit-btn');
 
-if (consentCheckbox && submitBtn) {
-            consentCheckbox.addEventListener('change', function () {
-                submitBtn.disabled = !this.checked;
-            });
-            // Asegura estado inicial del botón al cargar la página
-            submitBtn.disabled = !consentCheckbox.checked;
-        } else if (submitBtn) {
-             // Si no hay checkbox pero sí botón, asegúrate que no esté deshabilitado por defecto
-             // A menos que tu lógica lo requiera deshabilitado inicialmente por otra razón
-             // submitBtn.disabled = false; // Descomenta si es necesario
-        }
+consentCheckbox.addEventListener('change', function () {
+    submitBtn.disabled = !this.checked;
+});
 
 
     function showFieldError(input, message) {
@@ -76,9 +71,42 @@ if (consentCheckbox && submitBtn) {
     }
 
     function validatePassword(input) {
-        if (input.value.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+        const value = input.value;
+        if (!value) return 'La contraseña es obligatoria.';
+        if (value.length < 8) return 'Debe tener al menos 8 caracteres.';
+        if (!/[A-Z]/.test(value)) return 'Debe incluir al menos una letra mayúscula.';
+        if (!/[a-z]/.test(value)) return 'Debe incluir al menos una letra minúscula.';
+        if (!/[0-9]/.test(value)) return 'Debe incluir al menos un número.';
+        if (!/[^A-Za-z0-9]/.test(value)) return 'Debe incluir al menos un símbolo especial (ej. !@#$%).';
         return '';
     }
+
+    passwordInput.addEventListener('input', function() {
+        const value = passwordInput.value;
+
+        const conditions = [
+            /.{8,}/.test(value),           // Longitud mínima
+            /[A-Z]/.test(value),            // Mayúscula
+            /[a-z]/.test(value),            // Minúscula
+            /[0-9]/.test(value),            // Número
+            /[^A-Za-z0-9]/.test(value)      // Símbolo especial
+        ];
+
+        passwordRequirements.forEach((item, index) => {
+            const icon = item.querySelector('i');
+            if (conditions[index]) {
+                item.classList.add('valid');
+                item.classList.remove('invalid');
+                icon.classList.remove('fa-times', 'text-danger');
+                icon.classList.add('fa-check', 'text-success');
+            } else {
+                item.classList.add('invalid');
+                item.classList.remove('valid');
+                icon.classList.remove('fa-check', 'text-success');
+                icon.classList.add('fa-times', 'text-danger');
+            }
+        });
+    });
 
     function validateConfirmPassword() {
         const pass = document.getElementById('id_password1').value;
@@ -152,8 +180,6 @@ if (consentCheckbox && submitBtn) {
     // === MOSTRAR / OCULTAR CONTRASEÑAS ===
     const togglePassword = document.getElementById('toggle-password');
     const toggleConfirmPassword = document.getElementById('toggle-confirm-password');
-    const passwordInput = document.getElementById('id_password1');
-    const confirmPasswordInput = document.getElementById('id_password2');
 
     togglePassword.addEventListener('click', function() {
         const type = passwordInput.type === 'password' ? 'text' : 'password';
@@ -169,7 +195,159 @@ if (consentCheckbox && submitBtn) {
         this.classList.toggle('fa-eye-slash');
     });
 });
+document.addEventListener('DOMContentLoaded', function() {
+    
+    const form = document.getElementById('form-password-reset-key');
+    if (!form) {
+                console.log("Formulario 'form-password-reset-key' no encontrado. Script detenido.");
+                return;
+            }
+            console.log("Formulario encontrado. Adjuntando listeners...");
+    const alertSuccess = document.getElementById('alert-success-login');
+    const alertError = document.getElementById('alert-error-login');
+    const successMessage = document.getElementById('success-message-login');
+    const errorMessage = document.getElementById('error-message-login');
+    const passwordRequirements = document.querySelectorAll('#password-requirements li');
+    const passwordInput = document.getElementById('id_password1');
+    const confirmPasswordInput = document.getElementById('id_password2');
 
+
+    // === FUNCIONES GENERALES ===
+    function showAlert(alertElement, message) {
+        alertElement.style.display = 'block';
+        if (alertElement === alertSuccess) {
+            successMessage.textContent = message;
+        } else {
+            errorMessage.textContent = message;
+        }
+        setTimeout(() => alertElement.style.display = 'none', 5000);
+    }
+
+    function showFieldError(input, message) {
+        const formGroup = input.closest('.form-group');
+        if (!formGroup) return; // Salir si no se encuentra el form-group
+        
+        const errorMsg = formGroup.querySelector('.error-msg');
+        if (message) {
+            input.classList.add('is-invalid');
+            input.classList.remove('is-valid');
+            if (errorMsg) {
+                errorMsg.textContent = message;
+                errorMsg.style.display = 'block';
+            }
+        } else {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            if (errorMsg) {
+                errorMsg.textContent = '';
+                errorMsg.style.display = 'none';
+            }
+        }
+    }
+
+
+     // --- VALIDAR CONTRASEÑA ---
+    function validatePassword(input) {
+        const value = input.value;
+        if (!value) return 'La contraseña es obligatoria.';
+        if (value.length < 8) return 'Debe tener al menos 8 caracteres.';
+        if (!/[A-Z]/.test(value)) return 'Debe incluir al menos una letra mayúscula.';
+        if (!/[a-z]/.test(value)) return 'Debe incluir al menos una letra minúscula.';
+        if (!/[0-9]/.test(value)) return 'Debe incluir al menos un número.';
+        if (!/[^A-Za-z0-9]/.test(value)) return 'Debe incluir al menos un símbolo especial (ej. !@#$%).';
+        return '';
+    }
+
+    function validateConfirmPassword() {
+        const pass = document.getElementById('id_password1').value;
+        const confirm = document.getElementById('id_password2').value;
+        if (!confirm) return 'Confirma tu contraseña.';
+        if (pass !== confirm) return 'Las contraseñas no coinciden.';
+        return '';
+    }
+
+    // === VALIDAR CAMPO EN TIEMPO REAL ===
+    function validarCampo(input) {
+        let mensaje = '';
+        const id = input.id;
+        let validatorFunction = '';
+
+        if (input.id === 'id_email') mensaje = validateEmail(input);
+        else if (input.id === 'id_password1') mensaje = validatePassword(input);
+        else if (input.id === 'id_password2') mensaje = validateConfirmPassword(input);
+        else if (input.id === 'id_birth_date') mensaje = validateAge(input);
+        else if (input.id === 'id_first_name' || input.id === 'id_last_name') mensaje = validateName(input);
+        else mensaje = validateRequired(input);
+
+        showFieldError(input, mensaje);
+    }
+
+    // === ASIGNAR VALIDACIÓN EN TIEMPO REAL A TODOS LOS CAMPOS ===
+    const inputs = form.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => validarCampo(input));
+        input.addEventListener('blur', () => validarCampo(input)); // también al perder el foco
+    });
+
+    passwordInput.addEventListener('input', function() {
+        const value = passwordInput.value;
+
+        const conditions = [
+            /.{8,}/.test(value),           // Longitud mínima
+            /[A-Z]/.test(value),            // Mayúscula
+            /[a-z]/.test(value),            // Minúscula
+            /[0-9]/.test(value),            // Número
+            /[^A-Za-z0-9]/.test(value)      // Símbolo especial
+        ];
+
+        passwordRequirements.forEach((item, index) => {
+            const icon = item.querySelector('i');
+            if (conditions[index]) {
+                item.classList.add('valid');
+                item.classList.remove('invalid');
+                icon.classList.remove('fa-times', 'text-danger');
+                icon.classList.add('fa-check', 'text-success');
+            } else {
+                item.classList.add('invalid');
+                item.classList.remove('valid');
+                icon.classList.remove('fa-check', 'text-success');
+                icon.classList.add('fa-times', 'text-danger');
+            }
+        });
+    });
+
+    form.addEventListener('submit', function(e) {
+                console.log("Evento submit capturado."); 
+                
+                // Oculta alertas de envíos anteriores
+                if (alertError) alertError.style.display = 'none';
+                if (errorMessage) errorMessage.textContent = '';
+                
+                // Revalida todo antes de enviar
+                const passError = validatePassword(passwordInput);
+                const confirmError = validateConfirmPassword();
+                
+                // Muestra los errores (si los hay)
+                showFieldError(passwordInput, passError);
+                showFieldError(confirmPasswordInput, confirmError);
+
+                // Si hay algún error de frontend, DETIENE el envío
+                if (passError || confirmError) {
+                    console.log("Errores de frontend encontrados. Envío detenido."); // Log
+                    e.preventDefault(); // ¡Detiene la recarga de la página!
+                    
+                    if (errorMessage) errorMessage.textContent = 'Por favor, corrige los errores marcados.';
+                    if (alertError) alertError.style.display = 'block';
+                }else{
+                // Si no hay errores (passError y confirmError están vacíos),
+                // el script termina, e.preventDefault() NO se llama,
+                // y el formulario se envía al servidor (Django) para la validación final.
+                console.log("Validación Frontend OK. Enviando a Django...");
+                }
+            });
+
+
+});
 // === CONTROL DEL FORMULARIO DE RECUPERAR CONTRASEÑA ===
 document.addEventListener('DOMContentLoaded', function () {
     const formRecuperar = document.getElementById('form-recuperar');

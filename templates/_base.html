@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-    
+    <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
     <!-- Tus estilos CSS -->
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
     {% block extra_css %}{% endblock %} <!-- Para CSS adicional por página -->
@@ -30,27 +30,35 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                {% block navbar_links %}
+                <!-- Este es el contenido por DEFECTO que verán todas las páginas -->
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'home' %}">Inicio</a>
                     </li>
-                    <!-- Añade otros enlaces aquí -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Destinos</a>
+                    </li> 
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Contacto</a>
+                    </li>
+                    
                     {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Mi Perfil</a> {# Reemplaza '#' con la URL del perfil #}
-                        </li>
+                        <!-- Si el usuario está logueado -->
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'simple_logout' %}">Cerrar Sesión</a>
                         </li>
                     {% else %}
+                        <!-- Si el usuario NO está logueado -->
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'simple_login' %}">Iniciar Sesión</a>
                         </li>
-                         <li class="nav-item">
+                        <li class="nav-item">
                             <a class="nav-link" href="{% url 'simple_register' %}">Registrarse</a>
                         </li>
                     {% endif %}
                 </ul>
+                {% endblock navbar_links %}
             </div>
         </div>
     </nav>

@@ -11,6 +11,13 @@ class SimpleSignupForm(BaseUserCreationForm):
     last_name = forms.CharField(max_length=150, required=True, label='Apellidos')
     email = forms.EmailField(max_length=254, required=True, help_text='Obligatorio.')
     birth_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label='Fecha de Nacimiento', required=False)
+    consent = forms.BooleanField(
+        required=True, # ¡Esta es la validación de seguridad!
+        label="Sí, acepto los términos y condiciones y la política de privacidad.",
+        error_messages={
+            'required': 'Debes aceptar los términos y condiciones para registrarte.'
+        }
+    )
     def clean_first_name(self):
         first_name = self.cleaned_data.get('first_name')
         # Permite letras (incluyendo acentos), espacios y apóstrofes/guiones comunes en nombres

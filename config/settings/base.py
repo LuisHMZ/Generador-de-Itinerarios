@@ -102,6 +102,21 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Configuración del Backend de Email (para desarrollo)
 # Mostrará los emails en la consola en lugar de enviarlos realmente.
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Le dice a Django que use el servidor SMTP (Servidor de Correo Real)
+""" EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# Configuración del servidor de Gmail
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True # Usa Seguridad de Capa de Transporte (TLS)  """
+
+# Credenciales (leídas de forma segura desde tu archivo .env)
+# (Asegúrate de tener 'import os' al inicio de tu settings.py)
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+# Dirección "De:" por defecto para los correos enviados por tu app
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 
@@ -171,7 +186,54 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 #ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = '/login/'
 #LOGIN_URL = 'simple_login'
 #LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = 'account_login'
+# ---------------------------------
 
+# URL a la que ir después de un login exitoso
+LOGIN_REDIRECT_URL = '/' # A la home
+
+# URL a la que ir después de un logout exitoso
+# (Lo apuntamos a nuestra vista 'simple_login' personalizada)
+ACCOUNT_LOGOUT_REDIRECT_URL = 'simple_login' 
+
+# URL a la que ir después de confirmar el email
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = 'simple_login'
 #ACCOUNT_SIGNUP_FIELDS = ("username", "email*")
 
 ACCOUNT_SIGNUP_FORM_CLASS = 'apps.users.forms.SimpleSignupForm'  # Formulario de registro personalizado
+
+# Configuración de Proveedores de Allauth (SOCIALACCOUNT)
+# Esto le dice a allauth qué datos pedir a Google/Facebook
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        # Para obtener datos como 'first_name', 'last_name'
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    },
+    'facebook': {
+        # Pedimos el email, perfil público y nombre
+        'SCOPE': ['email', 'public_profile'],
+        'FIELDS': [
+            'id',
+            'email',
+            'name',
+            'first_name',
+            'last_name',
+            'verified',
+        ],
+        'METHOD': 'oauth2', # Usar OAuth2
+        'VERIFIED_EMAIL': False, # Facebook no siempre garantiza email verificado
+    }
+}
+
+# (Opcional, pero recomendado)
+# Registrar automáticamente al usuario después de un login social exitoso
+SOCIALACCOUNT_AUTO_SIGNUP = True
+# Si el proveedor (ej. Google) ya verificó el email, confiamos en él
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'

@@ -1,42 +1,304 @@
 {% load static %}
+{% load socialaccount %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar sesión</title>
+    <title>Iniciar Sesión - MexTur</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-    <link rel="preload" href="css/styles.css" as="style">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}" >
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- CSS Personalizado -->
+    <!-- Asumiendo que tienes index.css para estilos generales y login.css para específicos de login -->
+    <link rel="stylesheet" href="{% static 'css/login.css' %}"> 
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
     
+
 </head>
 <body>
-    <div class="container">
-        <h1>Inicia sesión</h1>
-        
-        <div id="mensaje-login" style="margin-bottom: 1em;"></div>
+    <!-- Header (Adaptado con URLs de Django) -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <!-- Asume que tienes logo.png en static/img/ -->
+            <img class="navbar-logo" src="{% static 'img/logo.png' %}" alt="Logo">
+            <a class="navbar-brand" href="{% url 'home' %}">MEX<span>TUR</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Destinos</a>
+                    </li> 
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Contacto</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'simple_logout' %}">Cerrar Sesión</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'simple_register' %}">Registrarse</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-        <form method="post" id="form-simple-login">
-            {% csrf_token %}
-            <div>
-                <label for="username-input">Nombre de usuario</label>
-                <input type="text" name="username" id="username-input" placeholder="Escribe tu nombre de usuario">
+    <!-- Main Content -->
+    <div class="container my-5">
+        <div class="container-register"> {# Usa la misma clase container si los estilos son compartidos #}
+            <h1 class="register-title">Inicia Sesión</h1>
+            <p class="register-subtitle">Accede a tu cuenta para descubrir los destinos más increíbles de México</p>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert-custom {% if message.tags == 'success' %}alert-success-custom{% elif message.tags == 'error' %}alert-error-custom{% else %}alert-info-custom{% endif %}" style="display: block; text-align: left;">
+                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Alertas (IDs deben coincidir con auth.js) -->
+            <div id="alert-success-login" class="alert-custom alert-success-custom">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="success-message-login"></span>
             </div>
-            <div>
-                <label for="contraseña-input">Contraseña</label>
-                <input type="password" name="password" id="contraseña-input" placeholder="Escribe tu contraseña">
+            <div id="alert-error-login" class="alert-custom alert-error-custom">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span id="error-message-login"></span>
+                <!-- Mostrar errores generales del formulario aquí -->
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <p class="mb-0">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
             </div>
-            <p><a href="recuperar-contraseña.html">¿Olvidaste tu contraseña?</a></p>
-            <button type="submit">Iniciar sesión</button>
-        </form>
-        <p>O continúa con</p>
-        <button class="boton-google">Continuar con Google</button>
-        <button class="boton-facebook">Continuar con Facebook</button>
-        <p>¿No tienes una cuenta? <a href="{% url 'simple_register' %}">Registrate</a></p>
+
+            <!-- ID del formulario debe coincidir con auth.js -->
+            <form id="form-simple-login" method="post" novalidate>
+                {% csrf_token %}
+
+                <!-- Campo Username/Email -->
+                <!-- AuthenticationForm usa 'username' pero puede aceptar email si está configurado -->
+                <div class="form-group" data-field-name="username"> {# Usamos 'username' como key #}
+                    <label for="{{ form.username.id_for_label }}" class="form-label">Correo electrónico</label>
+                    <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}"
+                           placeholder="Escribe tu usuario o correo electrónico" class="form-control" required
+                           value="{{ form.username.value|default:'' }}"> {# Mantiene el valor si hay error #}
+                    <span class="error-msg">
+                        {% if form.username.errors %}{% for error in form.username.errors %}{{ error }}{% endfor %}{% endif %}
+                    </span>
+                </div>
+
+                <!-- Campo Contraseña -->
+                <div class="form-group" data-field-name="password"> {# Usamos 'password' como key #}
+                    <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña</label>
+                    <div class="input-icon"> {# Añadimos contenedor para el ojo si aplica #}
+                        <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}"
+                               placeholder="Escribe tu contraseña" class="form-control" required>
+                               <span class="error-msg"></span>
+                        <!-- Ojo para mostrar/ocultar (si lo implementas en JS para login) -->
+                        <i class="fas fa-eye password-toggle" data-target="{{ form.password.id_for_label }}"></i>
+                    </div>
+                     <span class="error-msg">
+                        {% if form.password.errors %}{% for error in form.password.errors %}{{ error }}{% endfor %}{% endif %}
+                    </span>
+                </div>
+
+                <!-- Opciones: Recordarme / Olvidé Contraseña -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="form-check m-0">
+                        <!-- 'Remember me' necesita lógica extra en el backend (no estándar en AuthenticationForm) -->
+                        <!-- <input type="checkbox" id="remember-checkbox" name="remember" class="form-check-input"> -->
+                        <!-- <label for="remember-checkbox" class="form-check-label">Recordarme</label> -->
+                    </div>
+                    <div class="login-link text-end">
+                        <!-- Enlace al modal o a la URL de reseteo de contraseña de allauth -->
+                         <a href="{% url 'account_reset_password' %}">¿Olvidaste tu contraseña?</a>
+                         {# O si usas el modal: <a href="#" data-bs-toggle="modal" data-bs-target="#modalRecuperar">¿Olvidaste tu contraseña?</a> #}
+                    </div>
+                </div>
+
+                <!-- Botón Submit -->
+                <button type="submit" class="btn-login" id="submit-btn"> {# Puedes usar btn-register si quieres el mismo estilo #}
+                    <span>Iniciar Sesión</span>
+                </button>
+
+                 <!-- Separador y Botones Sociales (Funcionalidad no implementada aún) -->
+                <div class="text-center mt-3 mb-2"><span class="text-muted">O continúa con</span></div>
+                {% providers_media_js %} <!-- Carga el JS necesario para popups sociales -->
+
+                    <div class="d-grid gap-2">
+                        <a href="{% provider_login_url 'google' %}" class="btn btn-social btn-google">
+                            <i class="fab fa-google me-2"></i> Continuar con Google
+                        </a>
+                        <a href="{% provider_login_url 'facebook' %}" class="btn btn-social btn-facebook">
+                            <i class="fab fa-facebook-f me-2"></i> Continuar con Facebook
+                        </a>
+                    </div>
+
+                 <p class="login-link mt-4 text-center">
+                    ¿No tienes una cuenta? <a href="{% url 'simple_register' %}">Regístrate</a>
+                </p>
+
+            </form>
+        </div>
     </div>
-    
+
+    <footer class="footer">
+        <!-- ... (Contenido del footer igual que en Registro.html, pero usa {% url 'home' %} etc. para enlaces) ... -->
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>MEX<span>TUR</span></h5>
+                    <p>Explora los destinos más increíbles de México con nosotros.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Enlaces</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'simple_login' %}">Inicio</a></li>
+                        <li><a href="{% url 'simple_login' %}">Destinos</a></li>
+                        <li><a href="{% url 'simple_login' %}">Paquetes</a></li>
+                        <li><a href="{% url 'simple_login' %}">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Contacto</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-phone me-2"></i> +52 55 1234 5678</li>
+                        <li><i class="fas fa-envelope me-2"></i> info@mextur.com</li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i> Ciudad de México</li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p>&copy; {% now "Y" %} MexTur. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Tus Scripts JS -->
+    <script src="{% static 'js/scriptIndex.js' %}"></script> {# Para funciones generales como toggle password #}
+    <script src="{% static 'js/scriptLogin.js' %}"></script> {# Para funciones generales como toggle password #}
+    <script src="{% static 'js/auth.js' %}"></script> {# Para el fetch AJAX del login #}
+
+     <!-- Script inline para toggle password (si no está en scriptIndex.js) y limpiar errores -->
+     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Lógica para mostrar/ocultar contraseña (similar a registro)
+            const passwordToggles = document.querySelectorAll('.password-toggle');
+            passwordToggles.forEach(toggle => {
+                toggle.addEventListener('click', function () {
+                    const targetId = this.getAttribute('data-target');
+                    if (!targetId) return;
+                    const passwordInput = document.getElementById(targetId);
+                    if (!passwordInput) return;
+
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        this.classList.remove('fa-eye');
+                        this.classList.add('fa-eye-slash');
+                    } else {
+                        passwordInput.type = 'password';
+                        this.classList.remove('fa-eye-slash');
+                        this.classList.add('fa-eye');
+                    }
+                });
+            });
+
+             // Limpiar errores al escribir
+            const formInputs = document.querySelectorAll('#form-simple-login .form-control');
+            formInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    const formGroup = this.closest('.form-group');
+                    if (formGroup && formGroup.classList.contains('error-field')) {
+                        formGroup.classList.remove('error-field');
+                        const errorMsgSpan = formGroup.querySelector('.error-msg');
+                        if (errorMsgSpan) errorMsgSpan.textContent = '';
+                    }
+                    // Limpia alerta general de error
+                    const alertError = document.getElementById('alert-error-login');
+                    if (alertError && alertError.style.display === 'block') {
+                        alertError.style.display = 'none';
+                        document.getElementById('error-message-login').textContent = '';
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Modal Recuperar Contraseña (Si decides usarlo) -->
+    <!-- (El HTML del modal que te pasaron se queda igual) -->
+    <div class="modal fade" id="modalRecuperar" tabindex="-1" aria-labelledby="modalRecuperarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-4 text-center">
+            
+            <div class="modal-header border-0 justify-content-center">
+                <button type="button" class="btn-close position-absolute end-0 me-3 mt-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <!-- Alertas personalizadas (IDs distintos) -->
+            <div id="alert-success-modal" class="alert-custom alert-success-custom">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="success-message-modal"></span>
+            </div>
+
+            <div id="alert-error-modal" class="alert-custom alert-error-custom">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span id="error-message-modal"></span>
+            </div>
+
+            <div class="modal-body">
+                <div class="icon-container mb-3">
+                <i class="fa-solid fa-lock fa-2x text-primary"></i>
+                </div>
+
+                <h5 class="fw-bold mb-2">Recuperar contraseña</h5>
+                <p class="text-muted mb-4">Ingresa tu correo electrónico para restablecer tu contraseña</p>
+
+                <form id="form-recuperar" novalidate>
+        <div class="mb-3 text-start">
+            <label for="recuperarEmail" class="form-label">Correo electrónico:</label>
+            <input type="email" class="form-control" id="recuperarEmail" placeholder="Escribe tu correo electrónico" required>
+            <span class="error-msg"></span>
+        </div>
+        <button type="submit" class="btn-login" id="submit-btn-modal">
+            <span>Restablecer</span>
+        </button>
+        </form>
+
+            </div>
+
+            <div class="modal-footer border-0 justify-content-center">
+                <small>¿Recordaste tu contraseña? 
+                <a href="#" data-bs-dismiss="modal" class="text-decoration-none text-primary fw-semibold">Inicia Sesión</a>
+                </small>
+            </div>
+            </div>
+        </div>
+    </div>
+
 </body>
-<script src="{% static 'js/auth.js' %}"></script>
 </html>

@@ -252,15 +252,110 @@ if (formSimpleRegister && alertSuccessDivReg && alertErrorDivReg) { // Verifica 
 /******************************************************************************************/
 /*************************Inicio de sesión simple con fetch API****************************/
 /******************************************************************************************/
-const formSimpleLogin = document.getElementById('form-simple-login'); // ID del nuevo form
-const mensajeSimpleLoginDiv = document.getElementById('mensaje-login'); // Div para mensajes
+const formSimpleLogin = document.getElementById('form-simple-login'); 
+const alertSuccessDivLog = document.getElementById('alert-success-login'); 
+const successMessageSpanLog = document.getElementById('success-message-login'); 
+const alertErrorDivLog = document.getElementById('alert-error-login'); 
+const errorMessageSpanLog = document.getElementById('error-message-login'); 
 
-if (formSimpleLogin && mensajeSimpleLoginDiv) {
+// --- Funciones de validación SÓLO para el login (ligeras) ---
+
+/**
+ * Muestra/oculta un mensaje de error debajo de un campo de formulario.
+ * @param {HTMLElement} input - El elemento input.
+ * @param {string} message - El mensaje de error (o "" para limpiar).
+ */
+function showLoginFieldError(input, message) {
+    const formGroup = input.closest('.form-group');
+    if (!formGroup) return;
+    const errorMsgSpan = formGroup.querySelector('.error-msg');
+
+    if (message) {
+        formGroup.classList.add('error-field');
+        if (errorMsgSpan) {
+            errorMsgSpan.textContent = message;
+            errorMsgSpan.style.display = 'block';
+        }
+    } else {
+        formGroup.classList.remove('error-field');
+        if (errorMsgSpan) {
+            errorMsgSpan.textContent = '';
+            errorMsgSpan.style.display = 'none';
+        }
+    }
+}
+
+function validarCampoLogin(input) {
+    let mensaje = '';
+    const value = input.value.trim();
+    const id = input.id;
+
+    // 1. Requerido
+    if (!value) {
+        mensaje = 'Este campo es requerido.';
+    } 
+    // 2. Formato (Validación súper básica)
+    else if (id === 'id_username' && value.includes(' ') && value.includes('@')) {
+        // Asumimos que si tiene @ es un email, y los emails no tienen espacios
+        mensaje = 'Correo inválido, no debe contener espacios.';
+    } else if (id === 'id_username' && !value.includes('@') && value.includes(' ')) {
+        // Asumimos que es un username, y los usernames no tienen espacios
+        mensaje = 'Usuario inválido, no debe contener espacios.';
+    }
+
+    showLoginFieldError(input, mensaje);
+    return mensaje === ''; // Devuelve true si es válido (sin mensaje)
+}
+
+/**
+ * Valida el formulario de login completo ANTES de enviarlo.
+ * @returns {boolean} - true si todo el formulario es válido, false si no.
+ */
+function validarFormularioLoginCompleto() {
+    if (!formSimpleLogin) return false;
+    // Selecciona solo los inputs requeridos
+    const inputs = formSimpleLogin.querySelectorAll('.form-control[required]'); 
+    let formValid = true;
+
+    // Oculta alertas generales al iniciar validación
+    if (alertErrorDivLog) alertErrorDivLog.style.display = 'none';
+    if (errorMessageSpanLog) errorMessageSpanLog.textContent = '';
+
+    inputs.forEach(input => {
+        if (!validarCampoLogin(input)) {
+            formValid = false; // Si CUALQUIER campo falla, el form no es válido
+        }
+    });
+
+    if (!formValid) {
+         if (errorMessageSpanLog && alertErrorDivLog) {
+             errorMessageSpanLog.textContent = 'Por favor, corrige los errores marcados.';
+             alertErrorDivLog.style.display = 'block'; // Muestra la alerta general
+         }
+        // Opcional: Hacer scroll al primer error
+        const firstError = formSimpleLogin.querySelector('.error-field');
+        if(firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center'});
+    }
+
+    return formValid; // true si OK, false si hubo error frontend
+}
+
+
+if (formSimpleLogin && alertSuccessDivLog && alertErrorDivLog && errorMessageSpanLog) {
     formSimpleLogin.addEventListener('submit', function(event) {
         event.preventDefault();
 
-        mensajeSimpleLoginDiv.textContent = ''; // Limpia mensajes
-        mensajeSimpleLoginDiv.style.color = 'black';
+        const isFrontendValid = validarFormularioLoginCompleto();
+        
+        if (!isFrontendValid) {
+            console.log("Validación Frontend (Login) falló. Envío a Django cancelado.");
+            return; // Detiene la función si hay errores locales (ej. campos vacíos)
+        }
+        console.log("Validación Frontend (Login) OK. Enviando a Django...");
+
+        // Oculta alertas (por si la validación las mostró y se corrigió rápido)
+        alertSuccessDivLog.style.display = 'none';
+        alertErrorDivLog.style.display = 'none';
 
         const formData = new FormData(formSimpleLogin);
         const csrftoken = getCookie('csrftoken');
@@ -284,40 +379,55 @@ if (formSimpleLogin && mensajeSimpleLoginDiv) {
         })
         .then(data => {
             if (data.status === 'success') {
-                mensajeSimpleLoginDiv.textContent = data.message;
-                mensajeSimpleLoginDiv.style.color = 'green';
+                successMessageSpanLog.textContent = data.message || '¡Inicio de sesión exitoso!';
+                alertSuccessDivLog.style.display = 'block'; // Muestra alerta verde
                 // Redirige después del login exitoso
-                window.location.href = data.redirect_url || '/'; // Redirige a la URL proporcionada o a la raíz
+                //window.location.href = data.redirect_url || '/'; // Redirige a la URL (home)
+                setTimeout(() => {
+                    window.location.href = data.redirect_url || '/';
+                }, 2000);
             } else if (data.status === 'info') {
                  // Caso: Ya estaba logueado
-                mensajeSimpleLoginDiv.textContent = data.message;
-                mensajeSimpleLoginDiv.style.color = 'blue';
-                window.location.href = data.redirect_url || '/';
+                successMessageSpanLog.textContent = data.message || 'Ya has iniciado sesión.';
+                alertSuccessDivLog.style.display = 'block';
+                setTimeout(() => { window.location.href = data.redirect_url || '/'; }, 1500);
+            } else {
+                 // Respuesta 200 pero con status != 'success' (raro)
+                errorMessageSpanLog.textContent = data.message || 'Ocurrió un error inesperado.';
+                 alertErrorDivLog.style.display = 'block'; // Muestra alerta roja
             }
         })
         .catch(error => {
-            console.error('Error en el inicio de sesión:', error);
+            console.error('Error en el inicio de sesión (Respuesta Django):', error.data || error.message || error);
             let generalErrorMessage = 'Ocurrió un error inesperado.';
             if (error.status === 403 && error.data && error.data.message) {
-                // Error específico: Email no verificado (o permiso denegado)
-                generalErrorMessage = error.data.message; // Usa el mensaje del backend
-                mensajeSimpleLoginDiv.textContent = generalErrorMessage;
-            }
-            else if (error.status === 400 && error.data && error.data.errors) {
-                // Muestra errores de validación (ej. contraseña incorrecta)
-                let errorMsg = '';
+                // Error 403: Email no verificado
+                generalErrorMessage = error.data.message; // "Debes verificar tu correo..."
+            
+            } else if (error.status === 400 && error.data && error.data.errors) {
+                // Error 400: Validación de Django falló (ej. credenciales incorrectas)
                 if (error.data.errors.__all__) { // Error general de AuthenticationForm
-                    errorMsg = error.data.errors.__all__[0];
-                } else { // Errores por campo (es raro en login, pero por si acaso)
-                    for (const field in error.data.errors) {
-                        errorMsg += `${field}: ${error.data.errors[field][0]} `;
-                    }
+                    generalErrorMessage = error.data.errors.__all__[0].message || error.data.errors.__all__[0];
+                
+                } else { // Errores por campo (raro en login, pero por si acaso)
+                     generalErrorMessage = 'Por favor, revisa los campos.';
+                     // Muestra errores específicos bajo los campos
+                     for (const fieldName in error.data.errors) {
+                         const input = formSimpleLogin.querySelector(`#id_${fieldName}`);
+                         if (input) {
+                            showLoginFieldError(input, error.data.errors[fieldName][0]);
+                         }
+                     }
                 }
-                mensajeSimpleLoginDiv.textContent = errorMsg.trim() || 'Usuario o contraseña incorrectos.';
+            } else if (error.data && error.data.message) {
+                generalErrorMessage = error.data.message;
             } else {
-                mensajeSimpleLoginDiv.textContent = 'Ocurrió un error inesperado.';
+                 generalErrorMessage = 'Error de conexión o credenciales incorrectas.';
             }
-            mensajeSimpleLoginDiv.style.color = 'red';
+
+            // Muestra el mensaje de error general en la alerta roja
+            errorMessageSpanLog.textContent = generalErrorMessage;
+            alertErrorDivLog.style.display = 'block';
         });
     });
 } else {

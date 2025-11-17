@@ -1,89 +1,182 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenido a MexTur</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;600;700&display=swap" rel="stylesheet">
+
+{% block title %}Bienvenido a MexTur{% endblock %}
+
+{% block extra_css %}
+    <!-- Carga el CSS para el nuevo contenido (carrusel, categorías) -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
     
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock %}
 
-    <style>
-        .welcome-header {
-            font-weight: 600;
-            font-size: 4rem;
-            margin-bottom: 2rem;
-            color: var(--azul-oscuro);
-        }
+{% block content %}
 
-        .user-greeting {
-            font-size: 2.2rem;
-            font-weight: 400;
-            color: var(--gris);
-            margin-bottom: 3rem;
-        }
-
-        .auth-links {
-            display: flex;
-            gap: 2rem;
-            width: 40rem;
-        }
-
-        .btn {
-            display: block;
-            text-decoration: none;
-            border: none;
-            border-radius: 4px;
-            padding: 1.5rem 1rem;
-            width: 100%;
-            background-color: var(--azul-claro);
-            color: var(--blanco);
-            font: inherit;
-            font-size: 1.6rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            transition: background-color 0.2s ease;
-        }
-
-        .btn:hover {
-            background-color: #3a8a8a; 
-        }
-        
-        .btn-logout {
-            background-color: var(--azul-oscuro);
-        }
-
-        .btn-logout:hover {
-            background-color: #162c44; 
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
+<!-- 
+    SECCIÓN DE BIENVENIDA (HERO)
+    Usamos la sección "hero" del nuevo diseño para la imagen de fondo,
+    pero insertamos TU lógica de bienvenida (con estilos de 'main.css' actualizados).
+-->
+<section class="hero d-flex align-items-center text-center">
+    <div class="container text-white">
+        <!-- Contenido del 'home' provisional -->
         <h1 class="welcome-header">Bienvenido a MexTur</h1>
-
+        <p class="lead">Explora los destinos más increíbles de México</p>
         {% if user.is_authenticated %}
             <!-- Contenido para usuarios que han iniciado sesión -->
-            <p class="user-greeting">Hola, {{ user.username }}</p>
+            <p class="user-greeting">Hola, {{ user.first_name|default:user.username }}</p>
 
-            <div class="auth-links">
-                <a href="{% url 'simple_logout' %}" class="btn btn-logout">Cerrar Sesión</a>
-            </div>
 
         {% else %}
             <!-- Contenido para visitantes -->
             <p class="user-greeting">Inicia sesión o regístrate para planear tu próxima aventura.</p>
 
-            <div class="auth-links">
-                <a href="{% url 'simple_login' %}" class="btn">Iniciar Sesión</a>
-                <a href="{% url 'simple_register' %}" class="btn">Registrarse</a>
-            </div>
         {% endif %}
+         <div class="input-group mt-4 w-75 mx-auto">
+            <input type="text" class="form-control" placeholder="¿A dónde quieres viajar hoy?">
+            <button class="btn btn-primary">Explora itinerarios</button>
+        </div>
 
+        <!-- Fin del contenido del 'home' provisional -->
     </div>
-</body>
-</html>
+</section>
+
+<!-- 
+    SECCIÓN DE ITINERARIOS PÚBLICOS (Carrusel)
+ 
+-->
+<section class="container my-5 pt-5">
+    <h2 class="fw-bold mb-4">LUGARES POPULARES</h2><br>
+
+    <!-- Carrusel Bootstrap -->
+    <div id="destinosCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+
+            <!-- Slide 1 -->
+            <div class="carousel-item active">
+                <div class="row g-4">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card shadow-sm">
+                            <img src="{% static 'img/torre-latino.jpg' %}" class="card-img-top" alt="CDMX">
+                            <div class="card-body">
+                                <h5 class="card-title">CIUDAD DE MÉXICO</h5>
+                                <p class="card-text small">Itinerarios: Exploración del centro histórico</p>
+                                <a href="#" class="btn btn-outline-primary btn-sm">Ver Itinerario</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card shadow-sm">
+                            <img src="{% static 'img/torre-latino.jpg' %}" class="card-img-top" alt="CDMX">
+                            <div class="card-body">
+                                <h5 class="card-title">CIUDAD DE MÉXICO</h5>
+                                <p class="card-text small">Itinerarios: Exploración del centro histórico</p>
+                                <a href="#" class="btn btn-outline-primary btn-sm">Ver Itinerario</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card shadow-sm">
+                            <img src="{% static 'img/torre-latino.jpg' %}" class="card-img-top" alt="CDMX">
+                            <div class="card-body">
+                                <h5 class="card-title">CIUDAD DE MÉXICO</h5>
+                                <p class="card-text small">Itinerarios: Exploración del centro histórico</p>
+                                <a href="#" class="btn btn-outline-primary btn-sm">Ver Itinerario</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card shadow-sm">
+                            <img src="{% static 'img/torre-latino.jpg' %}" class="card-img-top" alt="CDMX">
+                            <div class="card-body">
+                                <h5 class="card-title">CIUDAD DE MÉXICO</h5>
+                                <p class="card-text small">Itinerarios: Exploración del centro histórico</p>
+                                <a href="#" class="btn btn-outline-primary btn-sm">Ver Itinerario</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="carousel-item">
+                <div class="row g-4">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card shadow-sm">
+                            <img src="{% static 'img/morelos.jpg' %}" class="card-img-top" alt="MORELOS">
+                            <div class="card-body">
+                                <h5 class="card-title">MORELOS</h5>
+                                <p class="card-text small">Itinerarios: Exploración del centro histórico</p>
+                                <a href="#" class="btn btn-outline-primary btn-sm">Ver Itinerario</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card shadow-sm">
+                            <img src="{% static 'img/morelos.jpg' %}" class="card-img-top" alt="MORELOS">
+                            <div class="card-body">
+                                <h5 class="card-title">MORELOS</h5>
+                                <p class="card-text small">Itinerarios: Exploración del centro histórico</p>
+                                <a href="#" class="btn btn-outline-primary btn-sm">Ver Itinerario</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card shadow-sm">
+                            <img src="{% static 'img/morelos.jpg' %}" class="card-img-top" alt="MORELOS">
+                            <div class="card-body">
+                                <h5 class="card-title">MORELOS</h5>
+                                <p class="card-text small">Itinerarios: Exploración del centro histórico</p>
+                                <a href="#" class="btn btn-outline-primary btn-sm">Ver Itinerario</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ... (puedes añadir más cards aquí) ... -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Controles -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#destinosCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Anterior</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#destinosCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Siguiente</span>
+        </button>
+    </div>
+</section>
+
+
+<!-- 
+    SECCION DE CATEGORIAS
+   
+-->
+<section class="aventura text-center py-5">
+    <div class="container">
+        <h2 class="fw-bold mb-5">ENCUENTRA TU TIPO DE AVENTURA</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-3 col-6">
+                <div class="icons-footer"> </div>
+                <img src="{% static 'img/mascara.png' %}" width="80" alt="Aventura extrema">
+                <h5 class="mt-3">Entretenimiento y Ocio</h5>
+            </div>
+            <div class="col-md-3 col-6">
+                <img src="{% static 'img/arquitectura.png' %}" width="80" alt="Cultura">
+                <h5 class="mt-3">Cultura e Historia</h5>
+            </div>
+            <div class="col-md-3 col-6">
+                <img src="{% static 'img/naturaleza.png' %}" width="80" alt="Familia">
+                <h5 class="mt-3">Naturaleza y Aire Libre</h5>
+            </div>
+            <div class="col-md-3 col-6">
+                <img src="{% static 'img/restaurante.png' %}" width="80" alt="Familia">
+                <h5 class="mt-3">Comida y Bebida</h5>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

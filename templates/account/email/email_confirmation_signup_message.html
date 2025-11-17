@@ -1,0 +1,37 @@
+<!-- Esto iría en templates/account/email/email_confirmation_signup_message.html -->
+
+{% load i18n %}
+
+<div style="font-family: 'Poppins', sans-serif; padding: 20px; background-color: #f8f9fa;">
+    <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        
+        <h1 style="color: #1F3C5A; font-weight: 600; margin-bottom: 20px;">
+            ¡Bienvenido a <span style="color: #49a3a3">Mex</span><span style="color: #f39c12">Tur</span>!
+        </h1>
+        
+        <p style="color: #2c3e50; font-size: 16px; line-height: 1.6;">
+            ¡Hola {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}!
+        </p>
+        
+        <p style="color: #2c3e50; font-size: 16px; line-height: 1.6;">
+            Para completar tu registro, necesitamos confirmar tu dirección de correo.
+        </p>
+        
+        <a href="{{ activate_url }}" style="display: inline-block; background-color: #49a3a3; color: #ffffff; padding: 12px 25px; margin: 20px 0; border-radius: 5px; text-decoration: none; font-weight: 600;">
+            Confirmar mi Correo
+        </a>
+
+        <p style="color: #7d7d7d; font-size: 14px;">
+            Si el botón no funciona, copia y pega el siguiente enlace en tu navegador:
+        </p>
+        <p style="color: #49a3a3; font-size: 12px; word-break: break-all;">
+            {{ activate_url }}
+        </p>
+        
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        
+        <p style="color: #7d7d7d; font-size: 12px;">
+            &copy; {% now "Y" %} MexTur. Todos los derechos reservados.
+        </p>
+    </div>
+</div>

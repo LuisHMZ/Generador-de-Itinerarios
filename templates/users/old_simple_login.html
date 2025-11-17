@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link rel="preload" href="css/styles.css" as="style">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" >
+    
+</head>
+<body>
+    <div class="container">
+        <h1>Inicia sesión</h1>
+        
+        <div id="mensaje-login" style="margin-bottom: 1em;"></div>
+
+        <form method="post" id="form-simple-login">
+            {% csrf_token %}
+            <div>
+                <label for="username-input">Nombre de usuario</label>
+                <input type="text" name="username" id="username-input" placeholder="Escribe tu nombre de usuario">
+            </div>
+            <div>
+                <label for="contraseña-input">Contraseña</label>
+                <input type="password" name="password" id="contraseña-input" placeholder="Escribe tu contraseña">
+            </div>
+            <p><a href="recuperar-contraseña.html">¿Olvidaste tu contraseña?</a></p>
+            <button type="submit">Iniciar sesión</button>
+        </form>
+        <p>O continúa con</p>
+        <button class="boton-google">Continuar con Google</button>
+        <button class="boton-facebook">Continuar con Facebook</button>
+        <p>¿No tienes una cuenta? <a href="{% url 'simple_register' %}">Registrate</a></p>
+    </div>
+    
+</body>
+<script src="{% static 'js/auth.js' %}"></script>
+</html>

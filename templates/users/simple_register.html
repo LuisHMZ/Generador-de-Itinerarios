@@ -1,4 +1,5 @@
 {% load static %}
+{% load socialaccount %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,6 +18,7 @@
 
     <!-- ASUMIENDO que tienes un archivo index.css en static/css/ -->
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
     
 
 </head>
@@ -128,7 +130,15 @@
                         
                     </div>
                     
+                    
                 </div>
+                <ul id="password-requirements" class="password-requirements list-unstyled mt-2">
+                        <li><i class="fas fa-times text-danger me-2"></i> Al menos 8 caracteres</li>
+                        <li><i class="fas fa-times text-danger me-2"></i> Una letra mayúscula</li>
+                        <li><i class="fas fa-times text-danger me-2"></i> Una letra minúscula</li>
+                        <li><i class="fas fa-times text-danger me-2"></i> Un número</li>
+                        <li><i class="fas fa-times text-danger me-2"></i> Un símbolo especial (!@#$%)</li>
+                    </ul>
 
                 <!-- Campo Contraseña 2 -->
                 <div class="form-group" data-field-name="password2">
@@ -139,23 +149,48 @@
                         <i class="fas fa-eye password-toggle" id="toggle-confirm-password"></i>
                         
                     </div>
-                   
                 </div>
 
-                <!-- Checkbox (Lo dejamos opcional por ahora, necesita lógica en el form/view) -->
-                <!-- <div class="form-check mb-3"> ... </div> -->
+                <div class="form-check mb-3" data-field-name="consent">
+                    <!-- {{ form.consent }} renderiza <input type="checkbox" name="consent" id="id_consent" required> -->
+                    {{ form.consent.as_widget }} {# Usamos as_widget para control más fino si se necesita clase #}
+                    {# <input type="checkbox" name="{{ form.consent.name }}" id="{{ form.consent.id_for_label }}" class="form-check-input" required> #}
+                    
+                    <label class="form-check-label" for="{{ form.consent.id_for_label }}">
+                        <!-- {{ form.consent.label }} jala el texto desde forms.py -->
+                        {{ form.consent.label }}
+                        {# Sí, acepto los términos y condiciones y la política de privacidad. #}
+                    </label>
+
+                    <!-- Div para mostrar el error de backend si falla -->
+                    {% if form.consent.errors %}
+                        <div class="invalid-feedback d-block" style="font-size: 0.85rem; margin-top: 4px; color: var(--error-color);">
+                            {% for error in form.consent.errors %}
+                                {{ error }} <!-- Muestra "Debes aceptar los términos..." -->
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <!-- Puedes añadir un span.error-msg aquí si quieres que JS muestre errores frontend -->
+                    <span class="error-msg" style="display: none; color: var(--error-color); font-size: 0.85rem; margin-top: 4px;"></span>
+                </div>
 
                 <!-- Botón submit -->
-                <button type="submit" class="btn btn-register" id="submit-btn">
+                <button type="submit" class="btn btn-register" id="submit-btn" disabled>
                     <span>Unirse</span>
                 </button>
 
                 <!-- Separador y Botones Sociales (Funcionalidad no implementada aún) -->
                 <div class="text-center mt-3 mb-2"><span class="text-muted">O continúa con</span></div>
-                <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-social btn-google"><i class="fab fa-google me-2"></i> Continuar con Google</button>
-                    <button type="button" class="btn btn-social btn-facebook"><i class="fab fa-facebook-f me-2"></i> Continuar con Facebook</button>
-                </div>
+                    {% providers_media_js %} <!-- Carga el JS necesario para popups sociales -->
+
+                    <div class="d-grid gap-2">
+                        <a href="{% provider_login_url 'google' %}" class="btn btn-social btn-google">
+                            <i class="fab fa-google me-2"></i> Continuar con Google
+                        </a>
+                        <a href="{% provider_login_url 'facebook' %}" class="btn btn-social btn-facebook">
+                            <i class="fab fa-facebook-f me-2"></i> Continuar con Facebook
+                        </a>
+                    </div>
 
                 <p class="login-link mt-4 text-center">
                     ¿Ya tienes una cuenta? <a href="{% url 'simple_login' %}">Inicia sesión</a>

@@ -1,0 +1,69 @@
+{% extends "_base.html" %}
+{% load i18n %}
+{% load static %} <!-- Buena práctica incluirlo también en la hija -->
+
+{% block title %}{% trans "Verificación de Correo Enviada" %}{% endblock %}
+
+<!-- 
+    Sobrescribimos la barra de navegación para que tenga sentido.
+    El usuario AÚN NO está logueado, así que mostramos Inicio, Login y Registro.
+-->
+{% block navbar_links %}
+    <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}">Inicio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}">Destinos</a>
+        </li> 
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}">Contacto</a>
+        </li>
+        
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'simple_login' %}">Iniciar Sesión</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'simple_register' %}">Registrarse</a>
+        </li>
+    </ul>
+{% endblock navbar_links %}
+
+
+{% block content %}
+<div class="container my-5">
+    <!-- Reutilizamos las clases de tu diseño de login/registro -->
+    <div class="container-register" style="max-width: 650px; text-align: center;">
+
+        <!-- 
+            Mostramos los "Mensajes" de Django. 
+        -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-custom alert-success-custom" style="display: block;">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Título y contenido principal de esta página -->
+        <h1 class="register-title mt-4">{% trans "Verifique su dirección de correo electrónico" %}</h1>
+        
+        <p class="register-subtitle" style="line-height: 1.6;">
+            {% blocktrans %}Le hemos enviado un correo electrónico para su verificación. Siga el enlace proporcionado para finalizar el proceso de registro. Si no ve el correo electrónico de verificación en su bandeja de entrada principal, compruebe su carpeta de correo no deseado. Por favor, póngase en contacto con nosotros si no recibe el correo electrónico de verificación en unos minutos.{% endblocktrans %}
+        </p>
+
+        <!-- Un botón para volver a la página de inicio -->
+        <div class="d-grid mt-4">
+            <a href="{% url 'home' %}" class="btn-login" style="text-decoration: none;">{% trans "Volver a Inicio" %}</a>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<!-- Esta página es estática, no necesita JS extra -->
+{% endblock %}

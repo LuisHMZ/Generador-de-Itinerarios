@@ -1,0 +1,100 @@
+{% extends "_base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}Gestionar Correos - MexTur{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="container-register" style="max-width: 800px;">
+        <h1 class="register-title">Gestionar Correos Electrónicos</h1>
+
+        <!-- Mensajes de Django (ej. "Correo reenviado") -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-custom {% if message.tags == 'success' %}alert-success-custom{% else %}alert-error-custom{% endif %}" style="display: block;">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if user.emailaddress_set.all %}
+            <p class="register-subtitle">Esta es la lista de tus correos electrónicos:</p>
+            
+            <form action="{% url 'account_email' %}" class="email_list" method="post">
+                {% csrf_token %}
+                <fieldset class="mb-3">
+                    
+                    {% for emailaddress in user.emailaddress_set.all %}
+                    <div class="form-check p-3 mb-2 rounded {% if emailaddress.verified %}bg-light{% else %}bg-warning-light{% endif %}" style="border: 1px solid #ddd;">
+                        <input type="radio" id="email_radio_{{forloop.counter}}" name="email" 
+                               value="{{emailaddress.email}}" {% if emailaddress.primary or user.emailaddress_set.count == 1 %}checked="checked"{% endif %}>
+                        
+                        <label for="email_radio_{{forloop.counter}}" class="form-check-label ms-2 {% if emailaddress.primary %}fw-bold{% endif %}">
+                            {{ emailaddress.email }}
+                            {% if emailaddress.verified %}
+                                <span class="badge bg-success ms-2">Verificado</span>
+                            {% else %}
+                                <span class="badge bg-danger ms-2">No Verificado</span>
+                            {% endif %}
+                            {% if emailaddress.primary %}
+                                <span class="badge bg-primary ms-2">Primario</span>
+                            {% endif %}
+                        </label>
+                    </div>
+                    {% endfor %}
+
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button class="btn btn-secondary" type="submit" name="action_primary">Hacer Primario</button>
+                        <button class="btn btn-info" type="submit" name="action_send">Reenviar Confirmación</button>
+                        <button class="btn btn-danger" type="submit" name="action_remove">Eliminar</button>
+                    </div>
+                </fieldset>
+            </form>
+
+        {% else %}
+            <p class="register-subtitle">No tienes correos electrónicos asociados a tu cuenta.</p>
+        {% endif %}
+
+        
+        <hr class="my-4">
+        
+        {% if can_add_email %}
+            <h4 class="register-title fs-3">Añadir Correo Electrónico</h4>
+            <form method="post" action="{% url 'account_email' %}" class="add_email" novalidate>
+                {% csrf_token %}
+
+                <!-- Alertas para el formulario de añadir email -->
+                {% if add_email_form.errors or add_email_form.non_field_errors %}
+                <div id="alert-error-add-email" class="alert-custom alert-error-custom" style="display: block;">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span id="error-message-add-email">
+                        {% if add_email_form.non_field_errors %}
+                            {% for error in add_email_form.non_field_errors %}{{ error }}{% endfor %}
+                        {% else %}
+                            Por favor corrige los errores.
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+
+                <!-- Campo Email -->
+                <div class="form-group {% if add_email_form.email.errors %}error-field{% endif %}" data-field-name="email">
+                    <label for="{{ add_email_form.email.id_for_label }}" class="form-label">Correo Electrónico</label>
+                    {{ add_email_form.email }}
+                    <span class="error-msg">
+                        {% if add_email_form.email.errors %}{% for error in add_email_form.email.errors %}{{ error }}{% endfor %}{% endif %}
+                    </span>
+                </div>
+                
+                <button name="action_add" type="submit" class="btn btn-register w-100">
+                    <span>Añadir Correo</span>
+                </button>
+            </form>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+

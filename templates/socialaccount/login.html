@@ -1,0 +1,113 @@
+{% extends "_base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}
+    {% blocktrans with provider_name=provider.name %}
+        Iniciar Sesión {{ provider_name }} - MexTur
+    {% endblocktrans %}
+{% endblock %}
+{% block extra_css %}
+    <!-- Reutilizamos los estilos de login/register -->
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
+{% endblock %}
+
+<!-- 
+    Sobrescribimos la barra de navegación.
+    El usuario está en un flujo de autenticación, mostramos "Registrarse".
+    (O podemos mostrar 'Iniciar Sesión' si el usuario quiere cancelar el
+    login social y usar el normal).
+-->
+{% block navbar_links %}
+    <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}">Inicio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}">Destinos</a>
+        </li> 
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}">Contacto</a>
+        </li>
+        
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'simple_login' %}">Iniciar Sesión</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'simple_register' %}">Registrarse</a>
+        </li>
+    </ul>
+{% endblock navbar_links %}
+
+
+{% block content %}
+<div class="container my-5">
+    <div class="container-register" style="max-width: 650px; text-align: center;">
+
+        <h1 class="register-title">{% trans "Inicio de sesión mediante" %} {{ provider.name }}</h1>
+
+        <p class="register-subtitle">
+            {% blocktrans with provider_name=provider.name site_name=current_site.name %}Se dispone a iniciar sesión en {{ site_name }} usando una cuenta externa desde {{ provider_name }}.{% endblocktrans %}
+        </p>
+
+        <!-- 
+            Este formulario envía el POST a allauth para confirmar el login social.
+            Es un POST normal, no usa AJAX.
+        -->
+        <form id="form-social-login" class="login" method="POST" action="" novalidate>
+            {% csrf_token %}
+
+            <!-- 
+                Muestra cualquier error que allauth pueda tener
+                (ej. si el social login falla por alguna razón).
+            -->
+            {% if form.errors or form.non_field_errors %}
+                <div id="alert-error-login" class="alert-custom alert-error-custom" style="display: block;">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span id="error-message-login">
+                        {% if form.non_field_errors %}
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        {% else %}
+                            Por favor, corrige los errores.
+                        {% endif %}
+                    </span>
+                </div>
+            {% endif %}
+
+            <!-- Campos ocultos necesarios para el flujo de allauth -->
+            {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+            {% if form.process %}
+                {{ form.process }}
+            {% endif %}
+
+            <!-- Botón Submit -->
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn-login" id="submit-btn">
+                    <span>{% trans "Continuar" %}</span>
+                </button>
+            </div>
+            
+            <p class="login-link mt-4 text-center">
+                {% if redirect_field_value %}
+                    <!-- Si Django sabe de dónde vienes (ej. /login/), vuelve allí -->
+                    <a href="{{ redirect_field_value }}">{% trans "Cancelar y volver" %}</a>
+                {% else %}
+                    <!-- Si no, envía a un lugar seguro (tu login principal) -->
+                    <a href="{% url 'simple_login' %}">{% trans "Cancelar y volver al Login" %}</a>
+                {% endif %}
+            </p>
+
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<!-- Esta página es estática, no necesita JS extra -->
+{% endblock %}

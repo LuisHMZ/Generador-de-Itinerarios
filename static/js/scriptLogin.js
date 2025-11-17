@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('login-form');
-    const alertSuccess = document.getElementById('alert-success');
-    const alertError = document.getElementById('alert-error');
-    const successMessage = document.getElementById('success-message');
-    const errorMessage = document.getElementById('error-message');
+    const form = document.getElementById('form-simple-login');
+    const alertSuccess = document.getElementById('alert-success-login');
+    const alertError = document.getElementById('alert-error-login');
+    const successMessage = document.getElementById('success-message-login');
+    const errorMessage = document.getElementById('error-message-login');
 
     // === Función para mostrar alertas ===
     function showAlert(alertElement, message) {
@@ -42,15 +42,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validatePassword(input) {
         if (!input.value) return 'La contraseña es obligatoria.';
-        if (input.value.length < 6) return 'Debe tener al menos 6 caracteres.';
+        if (input.value.length < 8) return 'Debe tener al menos 8 caracteres.';
         return '';
     }
 
     // === Validar campo individual ===
     function validarCampo(input) {
         let mensaje = '';
-        if (input.id === 'correo-input') mensaje = validateEmail(input);
-        else if (input.id === 'contraseña-input') mensaje = validatePassword(input);
+        if (input.id === 'id_username') mensaje = validateEmail(input);
+        else if (input.id === 'id_login') mensaje = validateEmail(input);
+        else if (input.id === 'id_password') mensaje = validatePassword(input);
         showFieldError(input, mensaje);
     }
 
@@ -62,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // === Envío del formulario ===
-    form.addEventListener('submit', function(e) {
+    /* form.addEventListener('submit', function(e) {
         e.preventDefault();
         alertSuccess.style.display = 'none';
         alertError.style.display = 'none';
@@ -82,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 2000);
-    });
+    }); */
 
     // === Mostrar / Ocultar contraseña ===
     const togglePassword = document.getElementById('toggle-password');

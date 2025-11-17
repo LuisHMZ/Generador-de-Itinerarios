@@ -1,11 +1,11 @@
     {% extends "_base.html" %} {# Hereda de tu plantilla base #}
     {% load static i18n account %} {# Carga las etiquetas necesarias #}
     
-    {% block title %}{% trans "Confirmar Dirección de E-mail" %}{% endblock %}
+    {% block title %}{% trans "Confirmar Dirección de E-mail - MexTur" %}{% endblock %}
     
     {% block content %}
     <div class="container-register" > {# Reutiliza estilo de registro o crea uno nuevo #}
-        <h1 class="register-title">{% trans "Confirmar Dirección de E-mail" %}</h1>
+        <h1 class="register-title">{% trans "Confirmar Dirección de E-mail - MexTur" %}</h1>
     
         {% if confirmation %}
             {% user_display confirmation.email_address.user as user_display %}
