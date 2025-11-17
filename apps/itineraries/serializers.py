@@ -78,6 +78,63 @@ class ItineraryStopSerializer(serializers.ModelSerializer):
 
 # serializers.py
 class ItinerarySerializer(serializers.ModelSerializer):
+    """ 
+    ItinerarySerializer
+    Serializador para el modelo Itinerary que soporta creación y actualización
+    con manejo anidado de paradas (ItineraryStop). Proporciona validación
+    personalizada para la lista de paradas y lógica para crear/rehacer las paradas
+    asociadas cuando se crea o actualiza un itinerario.
+    Campos (resumen)
+    - id (read-only): identificador del itinerario.
+    - user (read-only): relación al usuario propietario; no se escribe desde el serializer.
+    - user_username (read-only): campo calculado que expone user.username.
+    - title, description, start_date, end_date, category: campos del modelo, escribibles.
+    - banner_pic: declarado como ImageField(required=False, allow_null=True) pero
+        actualmente incluido en read_only_fields en Meta — por tanto, tal y como está
+        el código, se tratará como read-only a menos que se ajuste Meta.read_only_fields.
+    - creation_date (read-only): fecha de creación, gestionada por el modelo.
+    - stops: campo anidado write_only (ItineraryStopSerializer, many=True, required=False).
+        Se acepta en POST/PUT/PATCH para crear o reemplazar las paradas, pero no se
+        devuelve en la representación por ser write_only.
+    Comportamiento principal
+    - create(validated_data):
+        - Extrae 'stops' (si no viene, usa lista vacía).
+        - Crea la instancia Itinerary con el resto de datos.
+        - Crea una ItineraryStop por cada elemento de la lista de paradas asociándola
+            al itinerary recién creado.
+        - Retorna el itinerario creado.
+    - validate_stops(value):
+        - Permite None (no se valida) o una lista no vacía.
+        - Requiere que el valor sea una lista; lanza ValidationError si no lo es.
+        - Requiere que la lista no esté vacía; lanza ValidationError si lo está.
+        - Valida cada elemento usando ItineraryStopSerializer; si algún elemento es
+            inválido, lanza ValidationError con un detalle por índice: {'stops[i]': ...}.
+    - update(instance, validated_data):
+        - Extrae 'stops' si viene en la petición (si no viene, respeta las paradas actuales).
+        - Actualiza los campos normales del itinerario usando super().update.
+        - Si se recibieron datos de 'stops':
+            - Valida la lista mediante validate_stops.
+            - Borra todas las paradas actuales del itinerario y crea nuevas paradas a partir
+                de los datos recibidos (comportamiento de "reemplazo completo").
+        - Retorna la instancia actualizada.
+    Errores y consideraciones
+        - Si 'stops' no es lista o está vacía (cuando se proporciona), se lanza
+            serializers.ValidationError con mensaje claro.
+        - Si una parada individual falla la validación del serializer de parada,
+            se devuelve un error estructurado por índice para facilitar la depuración.
+        - La actualización de paradas se realiza borrando todas las existentes y creando
+            las nuevas; no hace merging ni actualización por id. Si se requiere comportamiento
+            distinto, hay que adaptar la lógica.
+        - Si se pretende que banner_pic sea escribible, hay que eliminar 'banner_pic'
+            de Meta.read_only_fields o ajustar la configuración para permitir carga.
+        - Para muchas paradas se pueden considerar optimizaciones (bulk_create,
+            transacción atómica, validación previa en bloque).
+        Uso recomendado
+        - Para incluir paradas en respuestas GET, añadir un campo read-only anidado
+            separado o quitar write_only de 'stops' y adaptar la serialización de lectura.
+        - En endpoints que manipulan paradas, envolver la creación/borrado en una
+            transacción para asegurar atomicidad y consistencia. 
+    """
     stops = ItineraryStopSerializer(many=True, write_only=True, required=False) # 'required=False' si puedes crear sin paradas
     user_username = serializers.CharField(source='user.username', read_only=True)
     # ¡Asegúrate de que banner_pic se pueda escribir!
