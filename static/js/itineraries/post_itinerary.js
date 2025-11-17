@@ -16,6 +16,26 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- Recopila los datos del formulario ---
             const formData = new FormData(form);
 
+            /**
+             * Validación adicional de fechas por si el usuario manipula el HTML
+             * Se asegura que la fecha de término no exceda el máximo permitido 
+             * o que no sea anterior a la fecha de inicio.
+             */
+            const fechaInicio = formData.get('fecha-inicio');
+            const fechaTermino = formData.get('fecha-termino');
+            if (fechaInicio && fechaTermino) {
+                const inicio = new Date(fechaInicio);
+                const termino = new Date(fechaTermino);
+                const MAX_DIAS = 3;
+                const fechaMaxima = new Date(inicio);
+                fechaMaxima.setDate(fechaMaxima.getDate() + MAX_DIAS);
+
+                if (termino < inicio || termino > fechaMaxima) {
+                    alert(`La fecha de término debe estar entre ${fechaInicio} y ${fechaMaxima.toISOString().split('T')[0]}.`);
+                    return; // Detiene si las fechas no son válidas
+                }
+            }
+
             // Opcional: Puedes ver los datos que se enviarán en la consola
             // for (let [key, value] of formData.entries()) {
             //     console.log(`${key}: ${value}`);
@@ -35,8 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const url = itineraryId
                     ? `/api/itineraries/${itineraryId}/` // URL para EDITAR (PUT o PATCH)
                     : '/api/itineraries/';               // URL para CREAR (POST)
-                const method = itineraryId ? 'PUT' : 'POST'; // O 'PATCH' si solo envías campos modificados
-
+                const method = 'POST'; // Django maneja mejor los archivos con POST, incluso para actualizaciones
+                
                 const response = await fetch(url, {
                     method: method,
                     body: formData,
@@ -98,23 +118,60 @@ document.addEventListener('DOMContentLoaded', () => {
         return cookieValue;
     }
 
+    const fechaInicioInput = document.getElementById('fecha-inicio');
+    const fechaTerminoInput = document.getElementById('fecha-termino');
+    
+    fechaInicioInput.addEventListener('change', validarFechas);
     
     function validarFechas() {
-        const fechaInicioInput = document.getElementById('fecha-inicio');
-        const fechaTerminoInput = document.getElementById('fecha-termino');
+
+        const MAX_DIAS = 3; // Máximo de días permitidos entre inicio y término (Regla de Negocio)
+        
         if (!fechaInicioInput || !fechaTerminoInput) return true; // Si no existen los campos, la validación pasa
 
         const fechaInicio = fechaInicioInput.value;
         const fechaTermino = fechaTerminoInput.value;
 
+        // Si la fecha de inicio ya fue seleccionada se habilita la fecha de término
+        if (fechaInicio) {
+            fechaTerminoInput.disabled = false;
+            fechaTerminoInput.min = fechaInicio; // Establece la fecha mínima permitida
+
+            // Establece la fecha máxima permitida según la regla de negocio
+            const fechaFinal = new Date(fechaInicio);
+            fechaFinal.setDate(fechaFinal.getDate() + MAX_DIAS);
+            const year = fechaFinal.getFullYear();
+            const month = String(fechaFinal.getMonth() + 1).padStart(2, '0');
+            const day = String(fechaFinal.getDate()).padStart(2, '0');
+            fechaTerminoInput.max = `${year}-${month}-${day}`;
+            
+        } else {
+            fechaTerminoInput.disabled = true;
+            fechaTerminoInput.value = ''; // Limpia el valor si se deshabilita
+        }
+
+        /**
+         * Por mera lógica, esta sección del código nunca haría efecto
+         * puesto que el código anterior ya establece min y max adecuados.
+         * Sin embargo, se deja para validación adicional por si el usuario manipula el HTML.
+         */
+
         fechaTerminoInput.classList.remove('is-invalid');
         fechaTerminoInput.setCustomValidity('');
 
-        if (fechaInicio && fechaTermino && fechaTermino < fechaInicio) {
-            fechaTerminoInput.classList.add('is-invalid');
-            fechaTerminoInput.setCustomValidity('La fecha de término no puede ser anterior a la fecha de inicio.');
-            return false;
+        if (fechaInicio && fechaTermino) {
+            const inicio = new Date(fechaInicio);
+            const termino = new Date(fechaTermino);
+
+            if (termino < inicio) {
+                fechaTerminoInput.classList.add('is-invalid');
+                fechaTerminoInput.setCustomValidity('La fecha de término no puede ser anterior a la fecha de inicio.');
+                return false;
+            }
+
+            
         }
+
         return true;
     }
 
