@@ -31,6 +31,15 @@ ALLOWED_GOOGLE_TYPES = {
     'bakery', 'shopping_mall'
 }
 
+# Sistema de categorías principales
+CATEGORIAS_PRINCIPALES = [
+    'Museos', 'Galerías de Arte', 'Puntos de Interés', 'Atracciones Turísticas', 
+    'Sitios Históricos', 'Iglesias y Templos', 'Teatros', 'Parques de Diversiones',
+    'Zoológicos', 'Acuarios', 'Estadios', 'Cines', 'Vida Nocturna', 'Parques y Plazas',
+    'Maravillas Naturales', 'Zonas de Acampar', 'Restaurantes', 'Cafeterías', 
+    'Bares y Cantinas', 'Panaderías'
+]
+
 # Vista para la página principal (condicional)
 def home_view(request):
     if request.user.is_authenticated:
@@ -429,6 +438,7 @@ def create_itinerary_view(request):
     # Solo maneja GET para mostrar el formulario vacío
     context = {
         'itinerary': None, # Pasa None para indicar que es creación
+        'categorias': CATEGORIAS_PRINCIPALES, # Pasa las categorías para el formulario
         'mode': 'Crear',    # Indica al template que estamos en modo creación
     }
     return render(request, 'itineraries/create_edit_itinerary.html', context)
@@ -441,6 +451,11 @@ def add_stops_view(request, itinerary_id):
     # Obtenemos el itinerario que se está editando (o creando)
     # Asegúrate de que el usuario actual sea el dueño
     itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+
+    # --- Cálculo del numero de días que el usuario ha planeado ---
+    total_dias = 1 # Valor por defecto
+    if itinerary.start_date and itinerary.end_date and itinerary.start_date <= itinerary.end_date:
+        total_dias = (itinerary.end_date - itinerary.start_date).days + 1
 
     # --- Lógica para Recomendaciones ---
     recommended_places = []
@@ -479,6 +494,7 @@ def add_stops_view(request, itinerary_id):
     # --- Prepara el contexto para la plantilla ---
     context = {
         'itinerary': itinerary,
+        'total_dias': total_dias,
         'recommended_places': recommended_places,
         'popular_places': popular_places,
         # Puedes pasar el itinerario actual como JSON si el JS lo necesita al cargar
@@ -730,9 +746,12 @@ def itinerary_preview_view(request, itinerary_id):
     if current_day is not None:
         stops_by_day.append((current_day, current_list))
 
+    google_api_key = os.environ.get('GOOGLE_API_KEY')
+
     context = {
         'itinerary': itinerary,
         'stops_by_day': stops_by_day,
+        'GOOGLE_API_KEY': google_api_key,
     }
 
     return render(request, 'itineraries/preview_itinerary.html', context)
