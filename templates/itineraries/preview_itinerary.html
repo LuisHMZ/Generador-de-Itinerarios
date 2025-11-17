@@ -45,7 +45,7 @@
                         <span class="badge tag-cultura">{{ itinerary.category }}</span>
                     </div>
                     <div class="mb-4 itinerary-main-image">
-                        <img src="{{ itinerary.banner_pic|default:'/static/img/placeholder.png' }}" alt="Imagen principal del itinerario {{ itinerary.title }}" class="img-fluid rounded">
+                        <img src="{{ itinerary.banner_pic.url |default:'/static/img/placeholder.png' }}" alt="Imagen principal del itinerario {{ itinerary.title }}" class="img-fluid rounded">
                     </div>
                     <div class="mb-4 itinerary-description">
                         <p>{{ itinerary.description }}</p>
@@ -71,7 +71,8 @@
                                 <div class="card-lugar-itinerario"
                                 data-bs-toggle="modal" 
                                 data-bs-target="#modalDetallesLugar"
-                                
+                                data-lat="{{ stop.touristic_place.lat }}"
+                                data-lng="{{ stop.touristic_place.long }}"
                                 data-nombre="{{ stop.touristic_place.name }}"
                                 data-img="{{ stop.touristic_place.photo.url|default_if_none:'/static/img/placeholder.png' }}"
                                 data-direccion="{{ stop.touristic_place.address }}"
@@ -119,7 +120,7 @@
                             </div>
                     </div>
                     <div class="mapa-placeholder-final rounded">
-                        <img src="img/mapa-ejemplo.png" alt="Mapa de Rutas" class="img-fluid">
+                        <div id="map-preview" style="height: 400px; width: 100%;"></div>
                     </div>
                 </div>
 
@@ -145,5 +146,6 @@
             integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
             crossorigin="anonymous"></script>
     <script src="{% static 'js/itineraries/publish_itinerary.js' %}"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_API_KEY }}&libraries=places,marker,geometry&callback=initMap" defer></script>
 </body>
 </html>

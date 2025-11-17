@@ -20,6 +20,145 @@ function getCookie(name) {
 	return cookieValue;
 }
 
+// --- VARIABLES GLOBALES PARA EL MAPA ---
+let map = null;
+let markers = [];
+let directionsService = null;
+let directionsRenderer = null;
+
+// ===================================================
+// FUNCIONES GLOBALES DEL MAPA
+// ===================================================
+
+/**
+ * 1. Callback de Google: Inicializa el mapa
+ */
+function initMap() {
+    try {
+        // Usa el ID del mapa de tu HTML: "map-preview"
+        map = new google.maps.Map(document.getElementById('map-preview'), {
+            center: { lat: 19.432608, lng: -99.133209 }, // Centro en CDMX
+            zoom: 10,
+            // (puedes añadir más opciones de estilo aquí)
+        });
+        
+        // Inicializa los servicios de ruta
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: true // Oculta los marcadores A, B, C de Google
+        });
+        
+        console.log("-> Mapa y servicios (incluyendo Directions) listos.");
+
+    } catch (e) {
+        console.error("Error al inicializar el mapa: ", e);
+    }
+}
+
+
+/**
+ * 2. Dibuja los marcadores para una lista de lugares
+ * (Modificado para aceptar la lista como parámetro)
+ */
+function actualizarMarcadores(lugaresDelDia) {
+    if (!map) {
+        console.warn("actualizarMarcadores: El mapa no está listo.");
+        return; 
+    }
+    
+    // Limpiar marcadores antiguos
+    markers.forEach(marker => marker.setMap(null));
+    markers = [];
+
+    if (!lugaresDelDia || lugaresDelDia.length === 0) {
+        return; // No hay marcadores que dibujar
+    }
+
+    const bounds = new google.maps.LatLngBounds(); // Para centrar el mapa
+
+    for (const [index, lugar] of lugaresDelDia.entries()) {
+        
+        if (lugar.lat && lugar.lng) {
+            const position = {
+                lat: parseFloat(lugar.lat),
+                lng: parseFloat(lugar.lng)
+            };
+
+            const marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                label: {
+                    text: (index + 1).toString(),
+                    color: "white",
+                    fontWeight: "bold"
+                },
+                title: lugar.nombre
+            });
+            markers.push(marker);
+            bounds.extend(position); // Extiende los límites para el zoom
+        }
+    }
+
+    // Centra y ajusta el zoom del mapa a los marcadores
+    if (lugaresDelDia.length > 0) {
+        map.fitBounds(bounds);
+    }
+}
+
+
+/**
+ * 3. Dibuja la ruta en el mapa
+ * (Modificado para aceptar la lista como parámetro)
+ */
+async function dibujarRutaActual(lugaresDelDia) {
+    if (!directionsService || !directionsRenderer) {
+        console.warn("dibujarRutaActual: El servicio de rutas no está listo.");
+        return;
+    }
+    
+    // Limpiar ruta anterior
+    directionsRenderer.setDirections({ routes: [] });
+
+    // Filtrar lugares que SÍ tienen coordenadas
+    const paradasConCoordenadas = lugaresDelDia.filter(lugar => {
+        return lugar.lat && lugar.lng && 
+               lugar.lat.toString().trim() !== '' && 
+               lugar.lng.toString().trim() !== '';
+    });
+
+    if (paradasConCoordenadas.length < 2) {
+        return; // No hay ruta que dibujar
+    }
+
+    // Preparar la solicitud
+    const origin = paradasConCoordenadas[0];
+    const destination = paradasConCoordenadas[paradasConCoordenadas.length - 1];
+    const waypoints = paradasConCoordenadas.slice(1, -1).map(lugar => ({
+        location: new google.maps.LatLng(parseFloat(lugar.lat), parseFloat(lugar.lng)),
+        stopover: true
+    }));
+
+    const request = {
+        origin: new google.maps.LatLng(parseFloat(origin.lat), parseFloat(origin.lng)),
+        destination: new google.maps.LatLng(parseFloat(destination.lat), parseFloat(destination.lng)),
+        waypoints: waypoints,
+        travelMode: 'WALKING'
+    };
+
+    // Llamar a la API
+    try {
+        const response = await directionsService.route(request);
+        if (response.status === 'OK') {
+            directionsRenderer.setDirections(response); // Dibuja la ruta
+        } else {
+            console.warn("No se pudo calcular la ruta: " + response.status);
+        }
+    } catch (error) {
+        console.error("Error al llamar a Directions API:", error);
+    }
+}
+
 /**
  * Añade un event listener al botón de publicar itinerario (ID = 'boton_publicar_itinerario')
  * Cuando se hace clic, envía una solicitud POST a la API para publicar el itinerario
@@ -27,9 +166,6 @@ function getCookie(name) {
  * La información debe pasar primero por un serializador en el backend para validación y procesamiento.
  * Luego, el backend debe actualizar el estado del itinerario a "publicado" y devolver una respuesta adecuada.
  */
-
-
-
 document.addEventListener('DOMContentLoaded', () => {
 	// Buscamos el botón (por si se carga el script antes del DOM)
 	const boton = document.getElementById('boton_publicar_itinerario');
@@ -178,5 +314,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+	// Recoger los datos de lat y long de los lugares del itinerario
+	const lugaresDelDia = [];
+	const lugarCards = document.querySelectorAll('.card-lugar-itinerario');
+	lugarCards.forEach(card => {
+		const data = card.dataset;
+		lugaresDelDia.push({
+			nombre: data.nombre || '',
+			lat: data.lat || '',
+			lng: data.lng || ''
+		});
+	});
+
+	// Actualizar marcadores y ruta en el mapa
+	actualizarMarcadores(lugaresDelDia);
+	dibujarRutaActual(lugaresDelDia);
+
 });
+
 
