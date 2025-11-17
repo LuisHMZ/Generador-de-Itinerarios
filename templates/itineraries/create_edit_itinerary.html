@@ -39,11 +39,16 @@
                         <label for="categoria-itinerario" class="form-label">Categoría:</label>
                         <select class="form-select" id="categoria-itinerario" name="category">
                             <option value="" selected disabled>Selecciona una categoría</option>
+                            {% for categoria in categorias %}
+                                <option value="{{ categoria }}" {% if itinerary and itinerary.category == categoria %}selected{% endif %}>{{ categoria }}</option>
+                            {% endfor %}
+                            <!-- 
                             <option value="aventura" {% if itinerary and itinerary.category == 'aventura' %}selected{% endif %}>Aventura</option>
                             <option value="cultural" {% if itinerary and itinerary.category == 'cultural' %}selected{% endif %}>Cultural</option>
                             <option value="relax" {% if itinerary and itinerary.category == 'relax' %}selected{% endif %}>Relax</option>
                             <option value="gastronomia" {% if itinerary and itinerary.category == 'gastronomia' %}selected{% endif %}>Gastronomía</option>
                             <option value="naturaleza" {% if itinerary and itinerary.category == 'naturaleza' %}selected{% endif %}>Naturaleza</option>
+                            -->
                         </select>
                     </div>
                 </div>
@@ -55,7 +60,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="end_date" class="form-label">Fecha de termino:</label>
-                        <input type="date" class="form-control" id="fecha-termino" name="end_date" value="{% if itinerary and itinerary.end_date %}{{ itinerary.end_date }}{% endif %}">
+                        <input type="date" class="form-control" id="fecha-termino" name="end_date" value="{% if itinerary and itinerary.end_date %}{{ itinerary.end_date }}{% endif %}" disabled>
                         <div class="invalid-feedback">
                             La fecha de término no puede ser anterior a la fecha de inicio.
                         </div>
@@ -66,6 +71,12 @@
                             <span class="input-group-text"><i class="fas fa-camera"></i></span>
                             <input type="text" class="form-control file-name-display" placeholder="Ningún archivo seleccionado" readonly value="{% if itinerary and itinerary.banner_pic %}{{ itinerary.banner_pic.name }}{% endif %}">
                             <input type="file" class="form-control file-input-hidden" id="banner-pic" name="banner_pic" accept="image/*">
+                            {% if itinerary and itinerary.banner_pic %}
+                                <div class="mt-2">
+                                    <small>Portada actual:</small>
+                                    <img src="{{ itinerary.banner_pic.url }}" alt="{{ itinerary.title }}" style="max-height: 100px; width: auto;">
+                                </div>
+                            {% endif %}
                             <label class="btn btn-outline-secondary file-browse-btn" for="banner-pic">Cambiar</label>
                         </div>
                     </div>
@@ -83,7 +94,6 @@
 {% block extra_js %}
     <script src="{% static 'js/itineraries/edit_title.js' %}" defer></script>
     <!-- <script src="{% static 'js/itineraries/autofill_location.js' %}" defer></script> -->
-    <script src="{% static 'js/itineraries/date_validation.js' %}" defer></script>
     <script src="{% static 'js/itineraries/cancel_button.js' %}" defer></script>
     <script src="{% static 'js/itineraries/post_itinerary.js' %}" defer></script>
 
