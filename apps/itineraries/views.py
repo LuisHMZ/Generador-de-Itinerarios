@@ -1,6 +1,6 @@
 # Create your views here.
-import requests     # Para llamar a la API de Google Places
-import os         # Para leer variables de entorno
+import requests    # Para llamar a la API de Google Places
+import os          # Para leer variables de entorno
 
 from django.conf import settings # Para acceder a la configuración del proyecto
 from django.shortcuts import render, get_object_or_404, redirect     # Para renderizar plantillas HTML y obtener objetos o 404
@@ -10,23 +10,111 @@ from django.contrib.auth.decorators import login_required  # Para requerir login
 
 from django.core.files.base import ContentFile # Para manejar archivos de imagen
 
-from rest_framework.response import Response    # Para devolver respuestas API
+from rest_framework.response import Response     # Para devolver respuestas API
 from rest_framework.decorators import api_view, permission_classes  # Para definir vistas API y permisos
-from rest_framework import viewsets, permissions, status    # Para ViewSets y permisos
+from rest_framework import viewsets, permissions, status     # Para ViewSets y permisos
 
 from .models import Itinerary, ItineraryStop, TouristicPlace, Category # Importa tus modelos
-from .serializers import ItinerarySerializer, TouristicPlaceSerializer, CategorySerializer, ItineraryStopDetailSerializer  # Importa tus serializers
+from .serializers import ItinerarySerializer, TouristicPlaceSerializer, CategorySerializer, ItineraryStopDetailSerializer
 
-# Vista para la página principal (condicional)
+from apps.alertas.models import Notification
+from friendship.models import Friend
+
+# --- Importaciones de la Lógica Social (Agregado por Luis) ---
+from django.contrib.auth import get_user_model
+from apps.posts.models import Post # <-- Importamos el modelo Post de la otra app
+from friendship.models import Friend 
+from friendship.models import FriendshipRequest # <-- Importamos el modelo Friend
+from apps.alertas.models import Notification
+
+
+# --- Definimos el Modelo de User UNA SOLA VEZ ---
+User = get_user_model()
+
+
+# --- VISTA DEL FEED SOCIAL (home_view) ---
+# (Esta es la función que hemos estado modificando)
+@login_required
 def home_view(request):
+    """
+    Esta vista maneja la página principal ('/home/')
+    y ahora sirve el NUEVO diseño del feed (feed/feed.html)
+    con datos REALES de la base de datos (Posts y Amigos).
+    """
     if request.user.is_authenticated:
-        # Lógica para mostrar el feed (ej. obtener posts)
-        # return render(request, 'posts/feed.html', context)
-        # Por ahora, una simple redirección o placeholder:
-        return render(request, 'itineraries/provisional_home.html') # Crea esta plantilla simple
+        
+        user = request.user
+        
+        # --- 1. LÓGICA DE POSTS ---
+        try:
+            friend_ids_list = [f.id for f in Friend.objects.friends(user)]
+            posts = Post.objects.filter(
+                author_id__in=friend_ids_list + [user.id]
+            ).order_by('-created_at')
+        except Exception as e:
+            print(f"Error obteniendo posts: {e}")
+            posts = []
+
+        # --- 2. LÓGICA DE AMIGOS (Sugerencias y Estado) ---
+        try:
+            friends_ids = [f.id for f in Friend.objects.friends(user)]
+            sent_requests = FriendshipRequest.objects.filter(from_user=user, rejected__isnull=True)
+            sent_ids = sent_requests.values_list('to_user_id', flat=True)
+            received_requests = FriendshipRequest.objects.filter(to_user=user, rejected__isnull=True)
+            received_ids = received_requests.values_list('from_user_id', flat=True)
+
+            all_other_users = User.objects.exclude(id=user.id)
+            
+            users_with_status = []
+            for other_user in all_other_users:
+                status = 'NONE'
+                request_id = None
+                
+                if other_user.id in friends_ids:
+                    status = 'FRIENDS'
+                elif other_user.id in sent_ids:
+                    status = 'PENDING_SENT'
+                    req = sent_requests.filter(to_user=other_user).first()
+                    if req: request_id = req.id
+                elif other_user.id in received_ids:
+                    status = 'PENDING_RECEIVED'
+                    req = received_requests.filter(from_user=other_user).first()
+                    if req: request_id = req.id
+
+                users_with_status.append({
+                    'user': other_user,
+                    'status': status,
+                    'request_id': request_id, 
+                })
+        except Exception as e:
+            print(f"Error obteniendo sugerencias de amigos: {e}")
+            users_with_status = []
+
+        # --- 3. LÓGICA DE NOTIFICACIONES (¡NUEVA!) ---
+        try:
+            # Buscamos las notificaciones NO LEÍDAS para este usuario
+            notifications = Notification.objects.filter(user=user, is_read=False).order_by('-created_at')
+        except Exception as e:
+            print(f"Error obteniendo notificaciones: {e}")
+            notifications = []
+
+        # 4. Enviar los datos a la NUEVA plantilla
+        context = {
+            'posts': posts, 
+            'users_with_status': users_with_status,
+            'notifications': notifications # <-- ¡DATOS NUEVOS!
+        }
+        
+        return render(request, 'feed/home_feed.html', context)
+    
     else:
-        # Muestra la página de bienvenida (que tiene los enlaces login/registro)
-        return render(request, 'itineraries/provisional_home.html') # Tu plantilla de bienvenida
+        return redirect('account_login')
+
+# --- FIN DE LA VISTA DEL FEED SOCIAL ---
+
+
+# --- OTRAS VISTAS (API, ITINERARIOS, ETC.) ---
+# (Todo tu código original se preserva aquí intacto)
 
 # Vista API para buscar lugares turísticos usando Google Places API
 @api_view(['GET'])
@@ -57,7 +145,7 @@ def search_places_api_view(request):
     if len(local_results) < 5:
         api_key = os.environ.get('GOOGLE_API_KEY')
         if not api_key:
-             print("!!! [ERROR] GOOGLE_API_KEY no encontrada.")
+            print("!!! [ERROR] GOOGLE_API_KEY no encontrada.")
         else:
             # --- 2. Llamar a Google Text Search (v1) ---
             search_url = "https://places.googleapis.com/v1/places:searchText"
@@ -203,9 +291,9 @@ def search_places_api_view(request):
                         place_ids_found_locally.add(place_obj.id)
 
             except requests.exceptions.RequestException as e_search:
-                 print(f"!!! [ERROR] llamando a Google Text Search v1: {e_search.response.text if e_search.response else e_search}")
+                print(f"!!! [ERROR] llamando a Google Text Search v1: {e_search.response.text if e_search.response else e_search}")
             except Exception as e_proc_search:
-                 print(f"!!! [ERROR] procesando búsqueda v1: {e_proc_search}")
+                print(f"!!! [ERROR] procesando búsqueda v1: {e_proc_search}")
 
     # --- 4. Combinar Resultados ---
     combined_results = local_results + google_results_processed
@@ -228,7 +316,7 @@ def create_itinerary_view(request):
     # Solo maneja GET para mostrar el formulario vacío
     context = {
         'itinerary': None, # Pasa None para indicar que es creación
-        'mode': 'Crear',    # Indica al template que estamos en modo creación
+        'mode': 'Crear',   # Indica al template que estamos en modo creación
     }
     return render(request, 'itineraries/create_edit_itinerary.html', context)
 
@@ -455,10 +543,6 @@ def itinerary_stops_api_view(request, itinerary_id):
 def itinerary_preview_view(request, itinerary_id):
     """
     Muestra una vista previa del itinerario (no lo publica ni lo guarda).
-    El usuario debe ser el propietario del itinerario.
-    Contexto enviado a la plantilla:
-      - itinerary: objeto Itinerary
-      - stops_by_day: lista de tuplas (day_number, [stops ordenadas por placement])
     """
     # Obtiene el itinerario asegurando que pertenece al usuario autenticado
     itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
@@ -490,4 +574,3 @@ def itinerary_preview_view(request, itinerary_id):
     }
 
     return render(request, 'itineraries/preview_itinerary.html', context)
-

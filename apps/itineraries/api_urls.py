@@ -6,9 +6,9 @@ from . import views
 
 # Router para los endpoints REST
 router = DefaultRouter()
-router.register(r'itineraries', views.ItineraryViewSet, basename='itinerary')
-router.register(r'places', views.TouristicPlaceViewSet, basename='touristicplace')
-router.register(r'categories', views.CategoryViewSet, basename='category')
+#router.register(r'itineraries', views.ItineraryViewSet, basename='itinerary')
+#router.register(r'places', views.TouristicPlaceViewSet, basename='touristicplace')
+#router.register(r'categories', views.CategoryViewSet, basename='category')
 
 urlpatterns = [
     # Endpoints API específicos

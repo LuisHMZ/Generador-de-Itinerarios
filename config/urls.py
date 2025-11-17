@@ -36,8 +36,15 @@ urlpatterns = [
     path('api/messaging/', include('apps.messaging.urls')),
     path('api/posts/', include('apps.posts.urls')),
     path('api/reports/', include('apps.reports.urls')),
+    path('api/', include('apps.alertas.urls')),
+
 
     #Rutas WEB (HTML)
+    
+    # --- Página principal del feed social ---
+   path('home/', user_views.home_feed_view, name='home'),
+
+
     # Rutas de la app de itineraries (HTML)
     path('', include('apps.itineraries.urls')),
     # Rutas de la app de usuarios (HTML)
