@@ -14,7 +14,9 @@
     <link rel="stylesheet" href="{% static 'css/itineraries/modal-styles.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body {% if itinerary %} data-itinerary-id="{{ itinerary.id }}" {% endif %}>
+<body {% if itinerary %} data-itinerary-id="{{ itinerary.id }}"
+                        data-total-dias="{{ total_dias }}"
+        {% endif %}>
 
     <header class="header-global">
         <div class="header-contenido">
@@ -186,6 +188,10 @@
                     <button class="btn btn-outline-primary btn-sm me-2" id="btn-optimizar-ruta" 
                             title="Optimizar ruta del día actual (se necesita un mínimo de 3 paradas)">
                         <i class="fas fa-magic me-1"></i> Optimizar Ruta
+                    </button>
+                    <button class="btn btn-outline-info btn-sm me-2" id="btn-mostrar-ruta" 
+                            title="Mostrar la ruta en coche en el mapa">
+                        <i class="fas fa-road me-1"></i> Ver Ruta
                     </button>
                 </section>
 
