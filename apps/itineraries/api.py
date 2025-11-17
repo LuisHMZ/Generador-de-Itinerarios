@@ -2,6 +2,7 @@
 # ViewSets y vistas API para Itinerarios y Lugares Turísticos.
 
 from rest_framework import viewsets, permissions
+from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Itinerary, TouristicPlace, Category
 from .serializers import ItinerarySerializer, TouristicPlaceSerializer, CategorySerializer
 
@@ -16,6 +17,8 @@ class ItineraryViewSet(viewsets.ModelViewSet):
     # Define quién puede hacer qué (ajusta según tus necesidades)
     # IsAuthenticatedOrReadOnly: Cualquiera puede VER (GET), pero solo usuarios logueados pueden CREAR/EDITAR/BORRAR
     permission_classes = [permissions.IsAuthenticatedOrReadOnly] 
+    # Permitir subida de archivos vía multipart/form-data (ej. `banner_pic`)
+    parser_classes = [MultiPartParser, FormParser]
 
     def perform_create(self, serializer):
         """
