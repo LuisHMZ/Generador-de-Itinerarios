@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'storages',
     # Django Rest Framework
     'rest_framework',
+    'django_recaptcha',
 ]
 
 MIDDLEWARE = [
@@ -237,3 +238,15 @@ SOCIALACCOUNT_PROVIDERS = {
 SOCIALACCOUNT_AUTO_SIGNUP = True
 # Si el proveedor (ej. Google) ya verificó el email, confiamos en él
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
+
+# --- Configuración de reCAPTCHA ---
+# (Asegúrate de que 'import os' esté al inicio de tu settings.py)
+
+# Lee la Clave de Sitio (pública) desde el .env
+RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_SITE_KEY')
+
+# Lee la Clave Secreta (privada) desde el .env
+RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
+
+# Opcional: Cambia el tema a oscuro si prefieres
+# RECAPTCHA_DEFAULT_THEME = 'dark'

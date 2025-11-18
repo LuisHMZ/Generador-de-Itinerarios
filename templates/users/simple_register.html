@@ -151,6 +151,19 @@
                     </div>
                 </div>
 
+                <div class="form-group" data-field-name="captcha" style="margin-bottom: 1.5rem; display: flex; justify-content: center;flex-direction: column;align-items: center;">
+                
+                <!-- Esto renderiza el widget "No soy un robot" -->
+                    {{ form.captcha }}
+                    
+                    <!-- Muestra errores de backend (ej. "Respuesta inválida") -->
+                    <span class="error-msg" style="width: 100%; text-align: center; margin-top: 5px; position:relative;">
+                        {% if form.captcha.errors %}
+                            {% for error in form.captcha.errors %}{{ error }}{% endfor %}
+                        {% endif %}
+                    </span>
+                </div>
+
                 <div class="form-check mb-3" data-field-name="consent">
                     <!-- {{ form.consent }} renderiza <input type="checkbox" name="consent" id="id_consent" required> -->
                     {{ form.consent.as_widget }} {# Usamos as_widget para control más fino si se necesita clase #}

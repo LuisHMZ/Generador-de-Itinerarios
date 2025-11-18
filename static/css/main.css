@@ -5,7 +5,7 @@ body {
 }
 
 /* IMAGEN DE INICIO */
-.hero {
+/* .hero {
   background: url('../img/index.jpg') no-repeat center center/cover;
   height: 100vh;
   color: white;
@@ -13,8 +13,40 @@ body {
   align-items: center;
   justify-content: center;
   flex-direction: column;
- 
+} */
+
+.hero {
+  background-image: url('../img/index.jpg');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  height: 100vh;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: #fff;
+  text-align: center;
+  overflow: hidden;
+  scroll-snap-align: start;
 }
+
+/* oscurecer la imagen para que el texto resalte */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(6,10,20,0.55), rgba(6,10,20,0.45));
+  z-index: 1;
+}
+
+.hero .container {
+  position: relative;
+  z-index: 2;
+}
+
+
 .hero .credit {
   font-size: 0.8rem;
   opacity: 0.8;
@@ -62,14 +94,176 @@ body {
     --gris: #7d7d7d;
 }
 
-.welcome-header {
+/* .welcome-header {
     font-weight: 600;
     font-size: 4rem;
     margin-bottom: 2rem;
-    color: var(--blanco); /* Cambiado a blanco para que resalte en el 'hero' */
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Sombra para legibilidad */
+    color: var(--blanco); 
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+ */
+.welcome-header{
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--blanco);
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  margin-bottom: 2rem;
+  font-size: clamp(3.5rem, 8vw, 6rem); /* responsivo */
+  line-height: 1;
+}
+.lead{
+  font-size: clamp(1rem, 2.2vw, 1.8rem);
+  opacity: 0.95;
+  margin-bottom: 1.2rem;
 }
 
+.search-bar {
+  max-width: 920px;
+  width: 90%;
+  background: rgba(255,255,255,0.96);
+  border-radius: 999px;
+  padding: 0;                 /* quitar padding vertical para eliminar espacio blanco */
+  display: flex;
+  align-items: center;
+  box-shadow: 0 12px 40px rgba(12,18,30,0.25);
+  overflow: hidden;
+  gap: 0;                     /* sin gap para que el botón quede pegado al input */
+}
+
+/* icono izquierdo */
+.search-bar .input-group-text {
+  background: transparent;
+  border: 0;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  height: 48px;               /* fuerza la misma altura */
+}
+
+/* icono en círculo oscuro (izquierda) */
+.search-bar .input-group-text i,
+.search-bar .input-group-text .fa-search {
+  
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 18px;
+  box-shadow: 0 6px 18px rgba(31,60,90,0.18);
+  margin-right: 8px;
+}
+
+/* input sin bordes */
+.search-bar .form-control {
+  border: 0;
+  background: transparent;
+  padding-left: 6px;
+  padding-right: 12px;        /* espacio antes del botón */
+  font-size: 1rem;
+  height: 48px;
+  line-height: 48px;          /* centrar texto verticalmente */
+  color: var(--text-color);
+  font-weight: 700;
+  outline: none;
+  box-shadow: none;
+  flex: 1 1 auto;
+}
+
+/* Forzar color del texto tecleado y caret dentro de la barra de búsqueda */
+.search-bar .form-control,
+.search-bar .form-control:focus,
+.search-bar .form-control:active {
+    color: #1F3C5A !important;
+    caret-color: #1F3C5A !important;
+    -webkit-text-fill-color: #1F3C5A !important; /* para Chrome/Safari */
+}
+
+/* Placeholder en azul (si se requiere) */
+.search-bar .form-control::placeholder {
+    color: #1F3C5A !important;
+    opacity: 0.9;
+}
+
+/* Autofill (Chrome) — evitar que el navegador ponga texto blanco */
+.search-bar .form-control:-webkit-autofill,
+.search-bar .form-control:-webkit-autofill:focus,
+.search-bar .form-control:-webkit-autofill:hover {
+    -webkit-text-fill-color: #1F3C5A !important;
+    box-shadow: 0 0 0px 1000px rgba(255,255,255,0.0) inset !important; /* mantener fondo transparente */
+}
+
+/* Compatibilidad extra para selecciones internas */
+.search-bar .form-control::-moz-selection,
+.search-bar .form-control::selection {
+    background: rgba(31,60,90,0.12);
+    color: #1F3C5A !important;
+}
+
+.btn-explore {
+  background: #D2691E !important;
+  color: #fff !important;
+  border: 0 !important;
+  height: 48px !important;
+  padding: 0 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 999px 999px 0;
+  margin: 0;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.btn-explore span {
+  font-weight: 700;
+  font-size: 1rem;
+}
+.search-bar {
+	/* quitar espacio derecho para que el botón llegue al borde */
+	padding-right: 0;
+	/* eliminar gap para que no deje fondo blanco entre input y botón */
+	gap: 0;
+}
+
+/* espacio entre input y botón lo controlamos con padding del input */
+.search-bar .form-control {
+	/* ...existing styles... */
+	padding-right: 12px; /* espacio interno antes del botón */
+}
+
+.btn-explore {
+	background: #D2691E !important; /* naranja */
+	color: #fff !important;
+	border: 0 !important;
+	height: 48px !important;
+	padding: 0 24px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 0 999px 999px 0; /* solo redondear lado derecho */
+	margin-right: 0;
+	box-shadow: none !important; /* quitar sombra que pueda generar halo blanco */
+	outline: none !important;
+}
+
+/* eliminar cualquier efecto que cambie fondo o cree borde blanco */
+.btn-explore:hover,
+.btn-explore:focus,
+.btn-explore:active {
+	background: #D2691E !important;
+	color: #fff !important;
+	filter: none !important;
+	transform: none !important;
+	box-shadow: none !important;
+}
+
+/* asegurar que el input quede con la esquina izquierda redondeada (si hace falta visualmente) */
+.search-bar .form-control,
+.search-bar .input-group-text {
+	border-radius: 999px 0 0 999px;
+}
 .user-greeting {
     font-size: 2.2rem;
     font-weight: 400;
@@ -78,3 +272,56 @@ body {
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* Sombra para legibilidad */
 }
 
+/* ===============================
+   ALERTAS PERSONALIZADAS (AJUSTE)
+================================= */
+.alert-custom {
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: none; 
+    animation: fadeIn 0.5s;
+    /* ¡CAMBIO! Añadimos flex y align-items para alinear el icono y el texto */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Regla para mostrar la alerta cuando JS lo necesite */
+:is(.alert-custom.show, .alert-custom[style*="display: flex"]) {
+    display: flex !important; /* Mantenemos flex */
+}
+
+/* Ajusta el texto dentro de la alerta */
+.alert-custom span {
+    /* ESTADO ORIGINAL: sin 'text-align: center;' */
+    text-align: center; /* Alineado a la izquierda por defecto */
+    color: var(--light-color); /* Color oscuro por defecto */
+    margin-left: 0.5rem;
+    
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.alert-success-custom {
+    background-color: rgb(39 174 96 / 27%);
+    border: 1px solid var(--success-color);
+    color: var(--light-color); /* El icono es verde */
+}
+/* El span usará el color --dark-color de la regla .alert-custom span */
+/* .alert-success-custom span { ... }  <-- (Sin regla específica aquí) */
+
+
+.alert-error-custom {
+    background-color: rgba(231, 76, 60, 0.1);
+    border: 1px solid var(--error-color);
+    color: var(--error-color); /* El icono es rojo */
+}
+/* El span usará el color --dark-color de la regla .alert-custom span */
+/* .alert-error-custom span { ... } <-- (Sin regla específica aquí) */
+
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

@@ -16,6 +16,56 @@ function getCookie(name) {
     return cookieValue;
 }
 
+/**
+ * Función auxiliar para encontrar el div.form-group del captcha
+ */
+function getRecaptchaGroup() {
+    // Busca el div.form-group que tiene el data-field-name="captcha"
+    return document.querySelector('.form-group[data-field-name="captcha"]');
+}
+
+/**
+ * Esta función es llamada por la API de Google cuando el usuario
+ * completa el reCAPTCHA exitosamente. (Nombre definido en forms.py)
+ */
+window.onRecaptchaSuccess = function(token) {
+    console.log("reCAPTCHA validado exitosamente por el usuario.");
+    const formGroup = getRecaptchaGroup();
+    if (formGroup) {
+        // Añade la clase 'success-field' para el borde verde
+        formGroup.classList.add('success-field');
+        formGroup.classList.remove('error-field'); // Quita el rojo si estaba
+        
+        // Limpia el mensaje de error (si lo había)
+        const errorMsgSpan = formGroup.querySelector('.error-msg');
+        if (errorMsgSpan) {
+            errorMsgSpan.textContent = '';
+            errorMsgSpan.style.display = 'none';
+        }
+    }
+};
+
+/**
+ * Esta función es llamada por la API de Google si el token
+ * del reCAPTCHA expira (el usuario esperó demasiado).
+ */
+window.onRecaptchaExpired = function() {
+    console.warn("reCAPTCHA expirado.");
+    const formGroup = getRecaptchaGroup();
+    if (formGroup) {
+        // Quita el verde y vuelve a poner el rojo
+        formGroup.classList.remove('success-field');
+        formGroup.classList.add('error-field');
+        
+        // Muestra un mensaje de error
+        const errorMsgSpan = formGroup.querySelector('.error-msg');
+        if (errorMsgSpan) {
+            errorMsgSpan.textContent = 'El Captcha ha expirado, por favor verifícalo de nuevo.';
+            errorMsgSpan.style.display = 'block';
+        }
+    }
+};
+
 const formSimpleRegister = document.getElementById('form-simple-register');
 const mensajeSimpleRegisterDiv = document.getElementById('mensaje-simple-registro');
 const form = document.getElementById('form-simple-register');
@@ -198,27 +248,40 @@ if (formSimpleRegister && alertSuccessDivReg && alertErrorDivReg) { // Verifica 
 
         // Itera sobre los errores devueltos por Django (form.errors)
         for (const fieldName in errors) {
-            const fieldErrors = errors[fieldName];
-            // Construye el selector para encontrar el div.form-group correcto
-            // Usa el atributo data-field-name que pusimos en el HTML
-            const formGroup = form ? form.querySelector(`.form-group[data-field-name="${fieldName}"]`) : null;
-
-            if (formGroup && fieldErrors.length > 0) {
-                // Obtiene el input DENTRO del formGroup
-                const input = formGroup.querySelector('.form-control');
-                if (input) {
-                    // Usa la función showFieldError para mostrar el error específico de Django
-                    // Asegúrate que fieldErrors[0] tenga el mensaje (puede ser un string o un objeto con .message)
-                    let message = fieldErrors[0].message ? fieldErrors[0].message : fieldErrors[0];
-                    showFieldError(input, message);
-                    if (!firstErrorField) firstErrorField = formGroup; // Guarda el primer campo con error
+                    const fieldErrors = errors[fieldName];
+                    const message = fieldErrors[0].message || fieldErrors[0];
+                    
+                    // --- ¡CAMBIO IMPORTANTE AQUÍ! ---
+                    // Manejo especial para el campo 'captcha'
+                    if (fieldName === 'captcha') {
+                        const formGroup = formSimpleRegister.querySelector(`.form-group[data-field-name="captcha"]`);
+                        if (formGroup) {
+                            const errorMsgSpan = formGroup.querySelector('.error-msg');
+                            if (errorMsgSpan) {
+                                errorMsgSpan.textContent = message; // Muestra "Este campo es requerido."
+                                errorMsgSpan.style.display = 'block';
+                            }
+                            formGroup.classList.add('error-field'); // Opcional: estilizar el div
+                            if (!firstErrorField) firstErrorField = formGroup;
+                        }
+                    } 
+                    // Manejo de errores no ligados a un campo (ej. "__all__")
+                    else if (fieldName === '__all__') {
+                        generalErrorMessage = message;
+                    } 
+                    // Manejo normal para todos los demás campos (username, password, etc.)
+                    else {
+                        const formGroup = formSimpleRegister.querySelector(`.form-group[data-field-name="${fieldName}"]`);
+                        if (formGroup) {
+                            const input = formGroup.querySelector('.form-control');
+                            if (input) {
+                                showFieldError(input, message); // Usa la función existente
+                                if (!firstErrorField) firstErrorField = formGroup;
+                            }
+                        }
+                    }
+                    // --- FIN DEL CAMBIO ---
                 }
-            } else if (fieldName === '__all__' && fieldErrors.length > 0) {
-                // Error general del formulario (no asociado a un campo específico)
-                // Ejemplo: "El usuario ya existe" si no está ligado a 'username'
-                generalErrorMessage = fieldErrors[0].message || fieldErrors[0];
-            }
-        }
         // Opcional: Hacer scroll al primer campo con error
         // if(firstErrorField) firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center'});
 

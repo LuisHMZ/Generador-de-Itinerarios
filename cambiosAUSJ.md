@@ -28,3 +28,23 @@ EMAIL_BACKEND: Esta variable de configuración le dice a Django qué "motor" o s
 
 'django.core.mail.backends.console.EmailBackend': Al establecer este valor, le indicamos a Django que, en lugar de conectarse a un servidor SMTP (como Gmail o SendGrid), simplemente tome el contenido completo del correo (cabeceras, asunto, cuerpo) y lo imprima en la salida estándar (la terminal donde corre runserver).
 
+# Cambios 18/11/25
+Se ha integrado Google reCAPTCHA v2 en el formulario de registro para evitar bots. Para que el proyecto funcione en tu entorno local, debes seguir estos pasos:
+
+1. Actualizar el Código y Dependencias
+
+Baja los últimos cambios de la rama y actualiza tus librerías de Python (se añadió django-recaptcha).
+
+git pull origin feature/email-verification-fix
+pip install -r requirements.txt
+
+
+2. Configurar las Variables de Entorno (.env)
+
+El proyecto fallará si no tienes las claves de Google configuradas. Abre tu archivo .env local y añade estas claves de prueba de Google (son seguras y funcionan en localhost para todos):
+
+# --- Claves de Google reCAPTCHA v2 (Entorno de Pruebas) ---
+# Estas claves son genéricas de Google para desarrollo. 
+# NO usar en producción.
+RECAPTCHA_SITE_KEY=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI
+RECAPTCHA_SECRET_KEY=6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe

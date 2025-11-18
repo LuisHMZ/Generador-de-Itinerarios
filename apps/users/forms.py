@@ -4,7 +4,9 @@ from django import forms
 from django.contrib.auth.forms import BaseUserCreationForm
 from django.contrib.auth.models import User
 import re
-
+from allauth.account.models import EmailAddress
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV2Checkbox
 class SimpleSignupForm(BaseUserCreationForm):
     # Añade los campos que UserCreationForm no tiene por defecto
     first_name = forms.CharField(max_length=30, required=True, label='Nombre(s)')
@@ -17,6 +19,15 @@ class SimpleSignupForm(BaseUserCreationForm):
         error_messages={
             'required': 'Debes aceptar los términos y condiciones para registrarte.'
         }
+    )
+    captcha = ReCaptchaField(
+        widget=ReCaptchaV2Checkbox(
+            attrs={
+                'data-callback': 'onRecaptchaSuccess',       # Llama a esta función JS en éxito
+                'data-expired-callback': 'onRecaptchaExpired'  # Llama a esta en expiración
+            }
+        ),
+        label="" # Ocultamos la etiqueta por defecto, el widget es suficiente
     )
     def clean_first_name(self):
         first_name = self.cleaned_data.get('first_name')
@@ -35,6 +46,31 @@ class SimpleSignupForm(BaseUserCreationForm):
         model = User
         # Añade los campos extra a los que ya maneja UserCreationForm (username, password1, password2)
         fields = BaseUserCreationForm.Meta.fields + ('first_name', 'last_name', 'email', 'birth_date')
+
+    def clean_email(self):
+        """
+        Valida que el correo electrónico no esté ya en uso por otra cuenta,
+        comprobando tanto el modelo User como el modelo EmailAddress de allauth.
+        """
+        email = self.cleaned_data.get('email')
+        if not email:
+            return email # El validador 'required' se encargará
+        
+        email = email.lower() # Normalizar a minúsculas
+        
+        # 1. Comprueba si el email ya existe en la tabla User
+        #    (para usuarios creados por admin o flujos antiguos)
+        if User.objects.filter(email__iexact=email).exists():
+             raise forms.ValidationError("Ya existe una cuenta con esta dirección de correo electrónico.")
+             
+        # 2. Comprueba si el email ya existe en la tabla EmailAddress de allauth
+        #    (para usuarios de login social o que ya han verificado)
+        if EmailAddress.objects.filter(email__iexact=email, verified=True).exists():
+             raise forms.ValidationError("Ya existe una cuenta verificada con esta dirección de correo electrónico.")
+
+        # ¡Pasa la validación! Devuelve el email limpio.
+        return email
+    # -----------------------------------------------
 
     def signup(self, request, user):
         """

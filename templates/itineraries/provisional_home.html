@@ -16,7 +16,27 @@
     Usamos la sección "hero" del nuevo diseño para la imagen de fondo,
     pero insertamos TU lógica de bienvenida (con estilos de 'main.css' actualizados).
 -->
+    
 <section class="hero d-flex align-items-center text-center">
+    <div class="container global-messages-container" 
+         style="max-width: 960px; 
+                position: absolute; 
+                top: 90px;  /* Ajusta (70px de navbar + 20px de espacio) */
+                left: 0; 
+                right: 0; 
+                margin-left: auto; 
+                margin-right: auto; 
+                z-index: 10;">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-custom {% if message.tags == 'success' %}alert-success-custom{% elif message.tags == 'error' %}alert-error-custom{% else %}alert-info-custom{% endif %}" 
+                     style="display: flex;">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
     <div class="container text-white">
         <!-- Contenido del 'home' provisional -->
         <h1 class="welcome-header">Bienvenido a MexTur</h1>
@@ -31,11 +51,88 @@
             <p class="user-greeting">Inicia sesión o regístrate para planear tu próxima aventura.</p>
 
         {% endif %}
-         <div class="input-group mt-4 w-75 mx-auto">
-            <input type="text" class="form-control" placeholder="¿A dónde quieres viajar hoy?">
-            <button class="btn btn-primary">Explora itinerarios</button>
+        
+        <div class="mt-4 mx-auto w-100 w-md-75 d-flex justify-content-center">
+            <div class="input-group search-bar">
+                <span class="input-group-text border-0 bg-transparent"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" class="form-control border-0" placeholder="¿A dónde quieres viajar hoy?">
+                <button class="btn-explore btn" type="button"><span>Explora itinerarios</span></button>
+            </div>
         </div>
-
+        <div class="mt-4 mx-auto w-100 w-md-75 d-flex justify-content-center">
+            <div class="input-group search-bar">
+                <!-- 
+                  Icono de la izquierda:
+                  'd-none' = Oculto por defecto (en móvil/xs)
+                  'd-sm-block' = Visible desde tamaño 'sm' (pequeño) en adelante
+                -->
+                <span class="input-group-text border-0 bg-transparent d-none d-sm-block">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <!-- 
+                  Input:
+                  Placeholder acortado para mejor visualización
+                -->
+                <input type="text" class="form-control border-0 ps-5 ps-sm-0" placeholder="¿A dónde quieres viajar hoy?">
+                <!-- 
+                  Botón de la derecha:
+                  Contiene AMBOS (texto e icono) y alterna su visibilidad
+                -->
+                <button class="btn-explore btn" type="button" style="min-width: 90px;">
+                    <!-- 
+                      Texto:
+                      'd-none' = Oculto por defecto (en móvil/xs)
+                      'd-sm-inline' = Visible desde 'sm' en adelante
+                    -->
+                    <span class="d-none d-sm-inline">Explora itinerarios</span>
+                    
+                    <!-- 
+                      Icono:
+                      'd-sm-none' = Oculto desde 'sm' en adelante
+                      (Visible solo en 'xs' por defecto)
+                    -->
+                    <i class="fas fa-search d-sm-none"></i>
+                </button>
+                
+            </div>
+        </div>
+        <div class="mt-4 mx-auto w-100 w-md-75 d-flex justify-content-center">
+            <div class="input-group search-bar">
+                <!-- 
+                  Icono de la izquierda:
+                  'd-none' = Oculto por defecto (en móvil/xs)
+                  'd-sm-block' = Visible desde tamaño 'sm' (pequeño) en adelante
+                -->
+                <span class="input-group-text border-0 bg-transparent d-none d-sm-block">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <!-- 
+                  Input:
+                  Placeholder acortado para mejor visualización
+                -->
+                <input type="text" class="form-control border-0 ps-3 ps-sm-0" placeholder="¿A dónde quieres viajar hoy?">
+                <!-- 
+                  Botón de la derecha:
+                  Contiene AMBOS (texto e icono) y alterna su visibilidad
+                -->
+                <button class="btn-explore btn" type="button" style="min-width: 150px;">
+                    <!-- 
+                      Texto:
+                      'd-none' = Oculto por defecto (en móvil/xs)
+                      'd-sm-inline' = Visible desde 'sm' en adelante
+                    -->
+                    <span class="d-none d-sm-inline">Explora itinerarios</span>
+                    
+                    <!-- 
+                      Icono:
+                      'd-sm-none' = Oculto desde 'sm' en adelante
+                      (Visible solo en 'xs' por defecto)
+                    -->
+                    <i class="fas fa-search d-sm-none"></i>
+                </button>
+                
+            </div>
+        </div>
         <!-- Fin del contenido del 'home' provisional -->
     </div>
 </section>
@@ -179,4 +276,26 @@
     </div>
 </section>
 
+{% endblock %}
+ {% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Selecciona TODOS los mensajes flash (en la home, login, etc.)
+            const flashMessages = document.querySelectorAll('.global-messages-container .alert-custom');
+            
+            flashMessages.forEach(function(message) {
+                // Solo aplica a los que se muestran al cargar (los que no tienen display:none)
+                // Usamos getComputedStyle por si 'display: flex' está en el CSS
+                const displayStyle = window.getComputedStyle(message).display;
+                
+                if (displayStyle !== 'none') {
+                    // Espera 5 segundos (5000 milisegundos)
+                    setTimeout(function() {
+                        // Oculta el mensaje
+                        message.style.display = 'none';
+                    }, 5000); // 5 segundos
+                }
+            });
+        });
+    </script>
 {% endblock %}

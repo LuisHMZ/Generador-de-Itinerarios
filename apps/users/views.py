@@ -138,7 +138,7 @@ def simple_login_view(request):
             }, status=403)
             # Inicia la sesión del usuario
             auth_login(request, user)
-
+            messages.success(request, f'Ha iniciado sesión exitosamente como {user.first_name or user.username}.')
             # Responde según si es fetch o no
             if is_ajax:
                 # Si es AJAX, devuelve JSON de éxito y redirige
