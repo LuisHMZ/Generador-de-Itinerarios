@@ -22,6 +22,8 @@ from django.urls import path, include
 from apps.users import views as user_views
 from apps.itineraries import views as itinerary_views
 
+from apps.posts import views as post_views
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     # URLs de autenticación (allauth)
@@ -43,6 +45,8 @@ urlpatterns = [
     
     # --- Página principal del feed social ---
    path('home/', user_views.home_feed_view, name='home'),
+
+   path('saved/', post_views.saved_posts_view, name='saved_posts_view'),
 
 
     # Rutas de la app de itineraries (HTML)

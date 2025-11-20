@@ -26,4 +26,6 @@ urlpatterns = [
 
     # Esta es la URL de tu página de solicitudes
     path('solicitudes/', views.friend_requests_view, name='friend_requests_view'),
+
+    path('perfil/<str:username>/', views.profile_view, name='profile_view'),
 ]

@@ -280,3 +280,202 @@
     color: #777;
     margin: 0;
 }
+
+/* ============================ */
+/* === MENÚ LATERAL (NUEVO) === */
+/* ============================ */
+
+/* 1. HACE QUE EL MENÚ SE QUEDE FIJO AL BAJAR (STICKY) */
+.menu-lateral {
+  font-size: 15px;
+  
+  /* La magia para que se quede fijo: */
+  position: sticky;
+  
+  /* Se "pegará" a 90px del borde superior.
+    ¡Ajusta este número si tu header es más alto o más bajo!
+  */
+  top: 90px; 
+}
+
+/* 2. DEFINE LA ANIMACIÓN DE HOVER (LA QUE PEDISTE) */
+.menu-item {
+  /* Prepara la animación para que dure 0.2 segundos */
+  transition: all 0.2s ease-in-out;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.menu-item:hover {
+  /* Al pasar el mouse, se mueve 4px a la derecha */
+  background-color: #f6f6f6;
+  transform: translateX(4px);
+}
+
+.menu-item i {
+  width: 22px;
+  text-align: center;
+  color: #000000;
+}
+
+/* Modal estilo Facebook (Theater Mode) */
+.modal-facebook .modal-dialog {
+    max-width: 90%; /* Ocupa casi toda la pantalla */
+    height: 90vh;
+    margin: 1.75rem auto;
+}
+
+.modal-facebook .modal-content {
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.modal-facebook .modal-body {
+    padding: 0;
+    height: 100%;
+}
+
+/* Columna Izquierda (Imagen) */
+.facebook-media-col {
+    background-color: #000; /* Fondo negro elegante */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.facebook-media-col img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Columna Derecha (Comentarios) */
+.facebook-comments-col {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #fff;
+}
+
+.fb-comments-header {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0; /* No se encoge */
+}
+
+.fb-comments-body {
+    flex-grow: 1; /* Ocupa el espacio restante */
+    overflow-y: auto; /* Scroll solo en los comentarios */
+    padding: 15px;
+}
+
+.fb-comments-footer {
+    padding: 15px;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
+}
+
+/* Estilo de un comentario individual */
+.comment-bubble {
+    background-color: #f0f2f5;
+    border-radius: 18px;
+    padding: 8px 12px;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.comment-avatar {
+    width: 32px; 
+    height: 32px; 
+    border-radius: 50%; 
+    object-fit: cover;
+}
+
+/* Estilos para comentarios anidados */
+.comment-replies {
+    margin-left: 40px; /* Indentación */
+    border-left: 2px solid #f0f2f5; /* Línea guía sutil */
+    padding-left: 10px;
+}
+
+/* Estilos para los botones pequeños debajo del comentario */
+.comment-actions small {
+    cursor: pointer;
+    margin-right: 10px;
+    font-weight: 600;
+    color: #65676b;
+    font-size: 12px;
+}
+.comment-actions small:hover {
+    text-decoration: underline;
+}
+.comment-actions .delete-action:hover {
+    color: red;
+}
+
+/* Input cuando estás respondiendo */
+.replying-to-alert {
+    font-size: 12px;
+    color: #65676b;
+    padding: 0 10px 5px;
+}
+
+/* En: static/css/feed.css */
+
+/* === BARRA LATERAL DERECHA (CONTACTOS) === */
+.right-sidebar-sticky {
+    position: sticky;
+    top: 90px; /* Se pega a la misma altura que el menú izquierdo */
+}
+
+.contacts-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #333;
+    transition: background-color 0.2s;
+}
+
+.contact-item:hover {
+    background-color: #e4e6eb;
+    color: #000;
+}
+
+.contact-avatar-wrapper {
+    position: relative;
+    margin-right: 12px;
+}
+
+.contact-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.online-indicator {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background-color: #31a24c; /* Verde Facebook */
+    border: 2px solid #fff;
+    border-radius: 50%;
+}
+
+.contact-name {
+    font-weight: 500;
+    font-size: 0.95rem;
+}

@@ -18,6 +18,8 @@ from apps.alertas.models import Notification
 from apps.posts.models import Post
 from friendship.models import Friend, FriendshipRequest 
 from friendship.exceptions import AlreadyFriendsError, AlreadyExistsError # Necesario para el manejo de excepciones
+from django.utils import timezone
+from datetime import timedelta
 # --- Fin de importaciones sociales ---
 
 
@@ -127,37 +129,35 @@ def simple_logout_view(request):
 @login_required
 def home_feed_view(request):
     """
-    Esta vista maneja el feed principal, mostrando posts públicos
-    y también la lista de usuarios para "Personas que quizás conozcas".
+    Esta vista maneja el feed principal, mostrando posts públicos,
+    lista de usuarios y amigos en línea.
     """
     
     # 1. Obtenemos todas las publicaciones
     try:
-        # --- ▼▼▼ CORRECCIÓN ▼▼▼ ---
-        # Ahora usamos .prefetch_related('pictures')
-        # que es el related_name de tu modelo PostPicture
         all_posts = Post.objects.all().select_related(
             'user', 'user__profile'
         ).prefetch_related(
-            'pictures'  # <-- ¡Este es el nombre correcto!
+            'pictures' 
         ).order_by('-created_at')
-        
-        # (El print() ya lo puedes borrar si quieres, o dejarlo)
-        print(f"************************************")
-        print(f"DEBUG: Se encontraron {len(all_posts)} posts en la base de datos.")
-        print(f"************************************")
-        
     except Exception as e:
         print(f"Error obteniendo posts: {e}") 
         all_posts = []
 
-    # ... (el resto de tu vista continúa igual) ...
-
-    # 2. Obtenemos la lista de usuarios para los carruseles
-    # (El resto de tu código que ya funcionaba)
+    # 2. Listas de usuarios y amigos
     users_list = User.objects.exclude(id=request.user.id)
     my_friends = Friend.objects.friends(request.user)
     pending_requests = FriendshipRequest.objects.filter(to_user=request.user, rejected__isnull=True)
+
+    # --- ▼▼▼ LÓGICA DE AMIGOS EN LÍNEA (NUEVO) ▼▼▼ ---
+    # Consideramos "En línea" si se conectó en los últimos 15 minutos
+    time_threshold = timezone.now() - timedelta(minutes=15)
+    online_friends = []
+    
+    for friend in my_friends:
+        if friend.last_login and friend.last_login > time_threshold:
+            online_friends.append(friend)
+    # --- ▲▲▲ FIN LÓGICA NUEVA ▲▲▲ ---
 
     users_with_status = []
     for user in users_list:
@@ -185,10 +185,12 @@ def home_feed_view(request):
     context = {
         'posts': all_posts, 
         'users_with_status': users_with_status,
+        'online_friends': online_friends, # <-- Pasamos la lista a la plantilla
     }
     return render(request, 'feed/home_feed.html', context)
 
 # VISTA PARA ENVIAR SOLICITUD DE AMISTAD
+
 @login_required
 def send_friend_request(request, to_user_id):
     """
@@ -196,35 +198,44 @@ def send_friend_request(request, to_user_id):
     """
     recipient = get_object_or_404(User, id=to_user_id)
     sender = request.user
+    
     if sender == recipient:
         messages.error(request, "No puedes enviarte una solicitud a ti mismo.")
         return redirect('home') 
     
     try:
+        # 1. Verificar si ya son amigos
         if Friend.objects.are_friends(sender, recipient):
             raise AlreadyFriendsError
-        if FriendshipRequest.objects.filter(from_user=sender, to_user=recipient).exists() or \
-           FriendshipRequest.objects.filter(from_user=recipient, to_user=sender).exists():
+
+        # 2. Verificar si hay solicitudes ACTIVAS (Pendientes y NO rechazadas)
+        #    rejected__isnull=True significa "que no ha sido rechazada"
+        if FriendshipRequest.objects.filter(from_user=sender, to_user=recipient, rejected__isnull=True).exists() or \
+           FriendshipRequest.objects.filter(from_user=recipient, to_user=sender, rejected__isnull=True).exists():
             raise AlreadyExistsError
-        
-        # 1. Se crea la solicitud de amistad (tu código original)
+
+        # --- ▼▼▼ LÓGICA NUEVA: LIMPIEZA DE RECHAZADOS ▼▼▼ ---
+        # Si hubo una solicitud anterior que FUE RECHAZADA, la borramos
+        # para permitir un nuevo intento.
+        FriendshipRequest.objects.filter(from_user=sender, to_user=recipient, rejected__isnull=False).delete()
+        FriendshipRequest.objects.filter(from_user=recipient, to_user=sender, rejected__isnull=False).delete()
+        # --- ▲▲▲ FIN DE LÓGICA NUEVA ▲▲▲ ---
+
+        # 3. Crear la nueva solicitud
         FriendshipRequest.objects.create(from_user=sender, to_user=recipient)
 
-        # --- ▼▼▼ CÓDIGO DE NOTIFICACIÓN AÑADIDO ▼▼▼ ---
+        # 4. Crear Notificación
         try:
-            # ¡IMPORTANTE! Asegúrate de que el 'name=' de tu URL para
-            # ver solicitudes sea 'friend_requests_view'
             link = request.build_absolute_uri(reverse('friend_requests_view'))
         except Exception:
-            link = '#' # Link de respaldo si falla el reverse
+            link = '#'
 
         Notification.objects.create(
-            recipient=recipient,  # Notificación PARA el destinatario
-            actor=sender,         # Creada POR el que la envía
+            recipient=recipient,
+            actor=sender,
             message=f'{sender.username} te ha enviado una solicitud de amistad.',
             link=link
         )
-        # --- ▲▲▲ FIN DEL CÓDIGO AÑADIDO ▲▲▲ ---
 
         messages.success(request, f"Solicitud enviada a {recipient.username}.")
         
@@ -354,3 +365,59 @@ def cancel_friend_request(request, request_id):
         print(f"\n--- DEBUG: ERROR AL CANCELAR --- {e}")
         
     return redirect('home')
+
+
+@login_required
+def profile_view(request, username):
+    """
+    Muestra el perfil de un usuario. Es dinámica:
+    - Muestra "Editar" si es tu propio perfil.
+    - Muestra "Añadir Amigo" si es de otro.
+    """
+    
+    profile_user = get_object_or_404(User, username=username)
+    
+    try:
+        user_posts = Post.objects.filter(user=profile_user).select_related(
+            'user', 'user__profile'
+        ).prefetch_related(
+            'pictures'
+        ).order_by('-created_at')
+    except Exception as e:
+        print(f"Error obteniendo posts para el perfil: {e}")
+        user_posts = []
+    
+    is_self = (request.user == profile_user)
+    
+    # --- ▼▼▼ BLOQUE MODIFICADO ▼▼▼ ---
+    friendship_status = None
+    pending_request_id = None  # 1. Inicializamos la variable
+    
+    if not is_self:
+        if Friend.objects.are_friends(request.user, profile_user):
+            friendship_status = 'FRIENDS'
+        else:
+            # Revisa si yo le envié una solicitud
+            sent_request = FriendshipRequest.objects.filter(from_user=request.user, to_user=profile_user, rejected__isnull=True).first()
+            if sent_request:
+                friendship_status = 'PENDING_SENT'
+                pending_request_id = sent_request.id # 2. Guardamos el ID
+            else:
+                # Revisa si él me envió una solicitud
+                received_request = FriendshipRequest.objects.filter(from_user=profile_user, to_user=request.user, rejected__isnull=True).first()
+                if received_request:
+                    friendship_status = 'PENDING_RECEIVED'
+                    pending_request_id = received_request.id # 2. Guardamos el ID
+                else:
+                    friendship_status = 'NOT_FRIENDS'
+    # --- ▲▲▲ FIN DEL BLOQUE ▲▲▲ ---
+            
+    context = {
+        'profile_user': profile_user,
+        'user_posts': user_posts,
+        'is_self': is_self,
+        'friendship_status': friendship_status,
+        'pending_request_id': pending_request_id, 
+    }
+    
+    return render(request, 'users/profile.html', context)

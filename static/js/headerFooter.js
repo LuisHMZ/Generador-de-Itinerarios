@@ -22,9 +22,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- 1. LECTURA DE URLs DE DJANGO (Variables dinámicas) ---
     const logoutUrl = document.body.dataset.logoutUrl || '#';
     const homeUrl = '/home/'; 
-    const profileUrl = 'perfil.html'; 
-    const staticUrlBase = '/static/img/'; // Ruta base para imágenes
-    const apiNotificationsUrl = '/api/alertas/'; // ¡URL de la API que creamos!
+    // Leemos el username del body para el enlace de perfil
+    const currentUsername = document.body.dataset.username || '';
+    const profileUrl = currentUsername ? `/perfil/${currentUsername}/` : '#';
+    
+    const staticUrlBase = '/static/img/'; 
+    const apiNotificationsUrl = '/api/alertas/';
+    const apiUnreadCountUrl = '/api/alertas/unread-count/';
+    const apiMarkReadUrl = '/api/alertas/mark-read/';
     // --- FIN LECTURA DE URLs ---
 
     const headerHtml = `
@@ -49,14 +54,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         <button class="btn btn-menu" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" title="Menú">
                             <i class="bi bi-list"></i>
                         </button>
+                        
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <li><a class="dropdown-item" href="${profileUrl}"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-geo-alt me-2"></i>Itinerario</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Mensajes</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Configuración</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="${logoutUrl}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
                         </ul>
-                    </div>
+                        </div>
                 </div>
             </div>
         </header>
@@ -137,67 +141,50 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // ------------------------------------
-    // --- LÓGICA DE NOTIFICACIONES REALES (CORREGIDA) ---
+    // --- LÓGICA DE NOTIFICACIONES (LIMPIA) ---
     // ------------------------------------
     
-    // 3. Obtenemos los elementos DESPUÉS de inyectarlos
     const notificationsList = document.getElementById('notifications-list');
     const countElement = document.getElementById('notification-badge-count');
     const modalElement = document.getElementById('notificationsModal'); 
-    const bellButton = document.getElementById('bell-button'); // El botón que inyectamos
+    const bellButton = document.getElementById('bell-button');
 
-    // 4. Creamos la instancia del Modal y asignamos el clic manualmente
     if (modalElement && bellButton) {
         const notificationModal = new bootstrap.Modal(modalElement); 
         
-        // --- ▼▼▼ LÓGICA DE CLIC CON CONSOLE.LOGS ▼▼▼ ---
         bellButton.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log("--- CLIC EN CAMPANA ---"); // DEBUG
 
-            // 1. Oculta el contador
             if (countElement) {
-                console.log("1. Ocultando contador (JS)"); // DEBUG
                 countElement.style.display = 'none'; 
             }
             
-            // 2. Llama al cargador
-            console.log("2. Llamando a loadNotifications(true)"); // DEBUG
+            // 1. Carga el historial
             loadNotifications(true); 
             
-            // 3. Muestra el modal
-            console.log("3. Mostrando modal"); // DEBUG
+            // 2. Muestra el modal
             notificationModal.show();
         });
-        // --- ▲▲▲ FIN DE LA LÓGICA DE CLIC ▲▲▲ ---
     }
 
     /**
-     * Busca las notificaciones en la API de Django y actualiza el modal.
+     * Carga el HISTORIAL de notificaciones en el modal.
+     * Si 'markAsRead' es true, también llama a la función para marcarlas.
      */
-    // --- ▼▼▼ LÓGICA DE CARGA CON CONSOLE.LOGS ▼▼▼ ---
     function loadNotifications(markAsRead = false) {
         if (!notificationsList) return;
         notificationsList.innerHTML = '<p class="text-center text-muted p-3">Cargando...</p>';
-        console.log("4. loadNotifications: Empezando fetch a /api/alertas/"); // DEBUG
 
-        // 1. Pide las notificaciones
-        fetch(apiNotificationsUrl)
+        fetch(apiNotificationsUrl) // Pide el historial (leídas o no)
             .then(response => {
-                if (!response.ok) { 
-                    console.error("loadNotifications: ¡Error de red!", response); // DEBUG
-                    throw new Error('Error al obtener notificaciones.'); 
-                }
+                if (!response.ok) { throw new Error('Error al obtener notificaciones.'); }
                 return response.json();
             })
             .then(notifications => {
-                console.log("5. loadNotifications: Éxito. Notificaciones recibidas:", notifications.length); // DEBUG
-                
-                // 2. Dibuja el HTML
                 notificationsList.innerHTML = '';
                 if (notifications.length === 0) {
-                    notificationsList.innerHTML = '<p class="text-center text-muted p-3">No tienes notificaciones nuevas.</p>';
-                    return; // No hay nada que marcar como leído
+                    notificationsList.innerHTML = '<p class="text-center text-muted p-3">No tienes notificaciones.</p>';
+                    return; 
                 }
 
                 notifications.forEach(notif => {
@@ -217,12 +204,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     notificationsList.innerHTML += itemHtml;
                 });
 
-                // 3. Llama a marcar como leído (SI ES NECESARIO)
-                if (markAsRead && notifications.length > 0) {
-                    console.log("6. loadNotifications: Llamando a markNotificationsAsRead()"); // DEBUG
+                if (markAsRead) {
                     markNotificationsAsRead();
-                } else {
-                    console.log("6. loadNotifications: No se marcará como leído (markAsRead=false o length=0)"); // DEBUG
                 }
             })
             .catch(error => {
@@ -230,19 +213,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 notificationsList.innerHTML = '<p class="text-center text-danger p-3">Error al cargar notificaciones.</p>';
             });
     }
-    // --- ▲▲▲ FIN DE LA LÓGICA DE CARGA ▲▲▲ ---
-
 
     /**
-     * Envía una señal al backend para marcar todas las 
-     * notificaciones del usuario como leídas.
+     * Llama a la API para marcar todas como leídas.
      */
-    // --- ▼▼▼ LÓGICA DE MARCAR CON CONSOLE.LOGS ▼▼▼ ---
     function markNotificationsAsRead() {
-        const markReadUrl = '/api/alertas/mark-read/';
-        console.log("7. markNotificationsAsRead: Empezando POST a /api/alertas/mark-read/"); // DEBUG
-
-        fetch(markReadUrl, {
+        fetch(apiMarkReadUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -251,39 +227,27 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'success') {
-                console.log("8. markNotificationsAsRead: Éxito. Marcadas como leídas."); // DEBUG
-            } else {
-                console.error("8. markNotificationsAsRead: Error del backend.", data.message); // DEBUG
+            if (data.status !== 'success') {
+                console.error("Error al marcar notificaciones:", data.message);
             }
         })
         .catch(error => {
-            console.error('Error en fetch markNotificationsAsRead:', error); // DEBUG
+            console.error('Error en fetch markNotificationsAsRead:', error);
         });
     }
-    // --- ▲▲▲ FIN DE LA LÓGICA DE MARCAR ▲▲▲ ---
 
 
     /**
-     * Revisa el contador de notificaciones (para la campanita)
+     * Revisa el CONTADOR de notificaciones (solo NO LEÍDAS).
      */
-    // --- ▼▼▼ LÓGICA DE CONTEO CON CONSOLE.LOGS ▼▼▼ ---
-function checkNotificationCount() {
+    function checkNotificationCount() {
         if (!countElement) return;
-        
-        // 1. Definimos la NUEVA URL solo para el contador
-        const countUrl = '/api/alertas/unread-count/';
 
-        console.log("checkNotificationCount: Chequeando contador en NUEVA URL...");
-
-        // 2. Hacemos fetch a la nueva URL
-        fetch(countUrl)
+        fetch(apiUnreadCountUrl) // Llama a la API de solo conteo
             .then(response => response.json())
             .then(data => {
-                // 3. Leemos la respuesta de la nueva vista
                 if (data.status === 'success') {
                     const unreadCount = data.unread_count;
-                    console.log("checkNotificationCount: Recibidas:", unreadCount);
                     if (unreadCount > 0) {
                         countElement.textContent = unreadCount;
                         countElement.style.display = 'flex';
@@ -291,16 +255,14 @@ function checkNotificationCount() {
                         countElement.style.display = 'none';
                     }
                 } else {
-                    console.warn("Error chequeando contador:", data.message);
                     countElement.style.display = 'none';
                 }
             })
             .catch(error => {
-                console.warn("Error fatal chequeando contador:", error);
+                console.warn("Error chequeando contador de notificaciones:", error);
                 countElement.style.display = 'none';
             });
     }
-    // --- ▲▲▲ FIN DE LA FUNCIÓN MODIFICADA ▲▲▲ ---
 
     // Chequear el contador de la campanita al cargar la página
     checkNotificationCount();
