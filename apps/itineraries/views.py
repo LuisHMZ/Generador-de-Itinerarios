@@ -1,4 +1,5 @@
-# Create your views here.
+# apps/itineraries/views.py
+
 import requests    # Para llamar a la API de Google Places
 import os          # Para leer variables de entorno
 
@@ -8,32 +9,32 @@ from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required  # Para requerir login en vistas basadas en funciones
 
+# --- NUEVAS IMPORTACIONES (NECESARIAS PARA QUE FUNCIONE) ---
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.core.files.base import ContentFile # Para manejar archivos de imagen
+# -----------------------------------------------------------
 
 from rest_framework.response import Response     # Para devolver respuestas API
 from rest_framework.decorators import api_view, permission_classes  # Para definir vistas API y permisos
 from rest_framework import viewsets, permissions, status     # Para ViewSets y permisos
 
-from .models import Itinerary, ItineraryStop, TouristicPlace, Category # Importa tus modelos
+# Importamos los modelos locales
+from .models import Itinerary, ItineraryStop, TouristicPlace, Category, ItineraryComment, ItineraryReview
 from .serializers import ItinerarySerializer, TouristicPlaceSerializer, CategorySerializer, ItineraryStopDetailSerializer
 
 from apps.alertas.models import Notification
-from friendship.models import Friend
+from friendship.models import Friend, FriendshipRequest
 
-# --- Importaciones de la Lógica Social (Agregado por Luis) ---
+# --- Importaciones de la Lógica Social ---
 from django.contrib.auth import get_user_model
-from apps.posts.models import Post # <-- Importamos el modelo Post de la otra app
-from friendship.models import Friend 
-from friendship.models import FriendshipRequest # <-- Importamos el modelo Friend
-from apps.alertas.models import Notification
-
+from apps.posts.models import Post 
 
 # --- Definimos el Modelo de User UNA SOLA VEZ ---
 User = get_user_model()
 
 
 # --- VISTA DEL FEED SOCIAL (home_view) ---
-# (Esta es la función que hemos estado modificando)
 @login_required
 def home_view(request):
     """
@@ -90,7 +91,7 @@ def home_view(request):
             print(f"Error obteniendo sugerencias de amigos: {e}")
             users_with_status = []
 
-        # --- 3. LÓGICA DE NOTIFICACIONES (¡NUEVA!) ---
+        # --- 3. LÓGICA DE NOTIFICACIONES ---
         try:
             # Buscamos las notificaciones NO LEÍDAS para este usuario
             notifications = Notification.objects.filter(user=user, is_read=False).order_by('-created_at')
@@ -102,7 +103,7 @@ def home_view(request):
         context = {
             'posts': posts, 
             'users_with_status': users_with_status,
-            'notifications': notifications # <-- ¡DATOS NUEVOS!
+            'notifications': notifications
         }
         
         return render(request, 'feed/home_feed.html', context)
@@ -110,22 +111,16 @@ def home_view(request):
     else:
         return redirect('account_login')
 
-# --- FIN DE LA VISTA DEL FEED SOCIAL ---
-
 
 # --- OTRAS VISTAS (API, ITINERARIOS, ETC.) ---
-# (Todo tu código original se preserva aquí intacto)
 
-# Vista API para buscar lugares turísticos usando Google Places API
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])  # Solo usuarios autenticados pueden usar esta vista
+@permission_classes([permissions.IsAuthenticated])
 def search_places_api_view(request):
     """
     Endpoint de API para buscar lugares turísticos (v1)
-    Usando ID v1 ('places/...') como clave única.
     """
     query = request.query_params.get('query', None)
-    print(f"\n--- [NUEVA BÚSQUEDA] Query recibido: '{query}' ---")
     if not query:
         return Response({"error": "Parámetro 'query' es requerido."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -137,7 +132,6 @@ def search_places_api_view(request):
         local_places = TouristicPlace.objects.filter(name__icontains=query)[:10]
         local_results = TouristicPlaceSerializer(local_places, many=True).data
         place_ids_found_locally = {place['id'] for place in local_results}
-        print(f"--- [DEBUG] Búsqueda local encontró: {len(local_results)} resultados.")
     except Exception as e:
         print(f"!!! [ERROR] Buscando en BD local: {e}")
 
@@ -151,69 +145,45 @@ def search_places_api_view(request):
             search_url = "https://places.googleapis.com/v1/places:searchText"
             search_body = {'textQuery': query, 'languageCode': 'es', 'maxResultCount': 10}
             
-            # Pedimos el 'id' (v1) y 'displayName'
             search_headers = {
                 'Content-Type': 'application/json',
                 'X-Goog-Api-Key': api_key,
-                'X-Goog-FieldMask': 'places.name,places.displayName' # Pedimos el ID v1
+                'X-Goog-FieldMask': 'places.name,places.displayName'
             }
-            
-            print(f"--- [DEBUG] Llamando a Text Search v1...")
             
             try:
                 search_response = requests.post(search_url, json=search_body, headers=search_headers, timeout=10)
                 search_response.raise_for_status()
                 search_data = search_response.json()
 
-                print(f"--- [DEBUG] Respuesta de Text Search v1: Lugares: {len(search_data.get('places', []))}")
-
                 for place_data_basic in search_data.get('places', []):
-                    # Obtenemos el ID v1 (ej. 'places/ChIJ...')
-                    google_v1_id = place_data_basic.get('name') # 'name' contiene el ID v1
+                    google_v1_id = place_data_basic.get('name')
                     if not google_v1_id:
-                        print("--- [DEBUG] Lugar de Google sin 'name' v1, omitiendo.")
                         continue
 
-                    # ¡CAMBIO CLAVE! Buscamos en la BD por el ID v1
                     existing_place = TouristicPlace.objects.filter(external_api_id=google_v1_id).first()
                     place_obj = None
 
                     if existing_place:
-                        print(f"--- [DEBUG] El lugar '{existing_place.name}' ya existe en la BD local.")
                         if existing_place.id not in place_ids_found_locally:
                             place_obj = existing_place
                     else:
-                        print(f"--- [DEBUG] Lugar nuevo. Llamando a Place Details v1 para: {google_v1_id}")
                         # --- 3. Llamar a Place Details (v1) ---
-                        # La URL correcta es v1/{name}, donde {name} es 'places/ChIJ...'
                         details_url = f"https://places.googleapis.com/v1/{google_v1_id}"
                         
-                        # Máscara de campos para Place Details v1
                         fields_mask = (
-                            'id,'
-                            'displayName,'
-                            'formattedAddress,'
-                            'location,'
-                            'websiteUri,'
-                            'internationalPhoneNumber,'
-                            'regularOpeningHours,'
-                            'rating,'
-                            'editorialSummary,'
-                            'photos'
+                            'id,displayName,formattedAddress,location,websiteUri,internationalPhoneNumber,'
+                            'regularOpeningHours,rating,editorialSummary,photos'
                         )
                         
-                        # 1. Mueve la máscara de campos a las cabeceras
                         details_headers = {
                             'X-Goog-Api-Key': api_key,
-                            'X-Goog-FieldMask': fields_mask  # Así es como la API v1 lee los campos
+                            'X-Goog-FieldMask': fields_mask
                         }
 
-                        # 2. Deja 'params' solo con los parámetros que SÍ van en la URL
                         details_params = {'languageCode': 'es'}
 
-
                         try:
-                            # 3. La llamada ahora es correcta
                             details_response = requests.get(
                                 details_url, 
                                 params=details_params,
@@ -223,9 +193,6 @@ def search_places_api_view(request):
                             details_response.raise_for_status()
                             place_detail = details_response.json()
                             
-                            print(f"--- [DEBUG] Respuesta de Place Details: OK")
-
-                            # Mapea los campos v1 a los nombres de tu modelo
                             defaults = {
                                 'name': place_detail.get('displayName', {}).get('text', ''),
                                 'address': place_detail.get('formattedAddress', ''),
@@ -238,52 +205,35 @@ def search_places_api_view(request):
                                 'external_api_rating': place_detail.get('rating'),
                             }
                             
-                            # ¡CAMBIO CLAVE! Guardamos usando el ID v1 como clave única
-                            # Usamos update_or_create para obtener el objeto (creado o actualizado)
                             place_obj, created = TouristicPlace.objects.update_or_create(
                                 external_api_id=google_v1_id,
                                 defaults=defaults
                             )
                             
-                            # --- INICIO: LÓGICA DE FOTOS ---
-                            # FOTO 1: Revisar si el lugar NO tiene foto y la API SÍ trajo
+                            # --- LÓGICA DE FOTOS ---
                             if not place_obj.photo and 'photos' in place_detail and len(place_detail['photos']) > 0:
-                                # FOTO 2: Obtener el 'name' (resource name) de la primera foto
                                 photo_resource_name = place_detail['photos'][0].get('name')
                                 
                                 if photo_resource_name:
-                                    print(f"--- [DEBUG] Foto encontrada. Descargando desde: {photo_resource_name}")
-                                    # FOTO 3: Construir la URL de descarga (¡es un endpoint diferente!)
-                                    # Usamos 800px como un tamaño razonable
                                     photo_url = (
                                         f"https://places.googleapis.com/v1/{photo_resource_name}/media"
                                         f"?key={api_key}&maxWidthPx=800"
                                     )
                                     
                                     try:
-                                        # FOTO 4: Descargar la imagen
                                         photo_response = requests.get(photo_url, timeout=10)
                                         photo_response.raise_for_status()
-                                        
-                                        # FOTO 5: Obtener los bytes de la imagen
                                         image_content = photo_response.content
-                                        
-                                        # FOTO 6: Guardar los bytes en el ImageField
-                                        # El nombre de archivo debe ser único
                                         file_name = f"{google_v1_id.split('/')[-1]}.jpg" 
                                         place_obj.photo.save(file_name, ContentFile(image_content), save=True)
-                                        print(f"--- [DEBUG] ¡ÉXITO! Foto guardada en {place_obj.photo.url}")
                                         
                                     except requests.exceptions.RequestException as e_photo:
-                                        print(f"!!! [ERROR] FOTO: No se pudo descargar: {e_photo}")
-                            # --- FIN: LÓGICA DE FOTOS ---
-
-                            print(f"--- [DEBUG] ¡ÉXITO! Lugar guardado/creado: {place_obj.name}")
+                                        print(f"!!! [ERROR] FOTO: {e_photo}")
 
                         except requests.exceptions.RequestException as e_details:
-                            print(f"!!! [ERROR] llamando a Google Place Details v1: {e_details.response.text if e_details.response else e_details}")
+                            print(f"!!! [ERROR] Google Place Details: {e_details}")
                         except Exception as e_proc_details:
-                            print(f"!!! [ERROR] procesando detalles v1: {e_proc_details}")
+                            print(f"!!! [ERROR] procesando detalles: {e_proc_details}")
 
                     if place_obj and place_obj.id not in place_ids_found_locally:
                         serialized_place = TouristicPlaceSerializer(place_obj).data
@@ -291,159 +241,106 @@ def search_places_api_view(request):
                         place_ids_found_locally.add(place_obj.id)
 
             except requests.exceptions.RequestException as e_search:
-                print(f"!!! [ERROR] llamando a Google Text Search v1: {e_search.response.text if e_search.response else e_search}")
+                print(f"!!! [ERROR] Google Text Search: {e_search}")
             except Exception as e_proc_search:
-                print(f"!!! [ERROR] procesando búsqueda v1: {e_proc_search}")
+                print(f"!!! [ERROR] procesando búsqueda: {e_proc_search}")
 
-    # --- 4. Combinar Resultados ---
     combined_results = local_results + google_results_processed
-    print(f"--- [DEBUG] Resultados combinados finales (enviando al JS): {len(combined_results)} ítems")
     return Response(combined_results)
 
 
 # Vistas para la creación de itinerarios (HTML)
-"""
-Estas vistas permiten a los usuarios crear y editar itinerarios a través de páginas web.
-Incluye la vista para agregar paradas al itinerario con recomendaciones personalizadas.
-"""
 
 @login_required
 def create_itinerary_view(request):
-    """
-    Vista para MOSTRAR el formulario de creación de itinerario (Paso 1).
-    El guardado (POST) lo manejará la API a través de JavaScript.
-    """
-    # Solo maneja GET para mostrar el formulario vacío
     context = {
-        'itinerary': None, # Pasa None para indicar que es creación
-        'mode': 'Crear',   # Indica al template que estamos en modo creación
+        'itinerary': None,
+        'mode': 'Crear',
     }
     return render(request, 'itineraries/create_edit_itinerary.html', context)
 
-@login_required # Solo usuarios logueados pueden continuar con la creacion del itinerario
+@login_required
 def add_stops_view(request, itinerary_id):
-    """
-    Vista para mostrar la página 'Añadir Paradas' y cargar recomendaciones.
-    """
-    # Obtenemos el itinerario que se está editando (o creando)
-    # Asegúrate de que el usuario actual sea el dueño
     itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
 
-    # --- Lógica para Recomendaciones ---
     recommended_places = []
-    popular_places = [] # Dejaremos esto simple por ahora
+    popular_places = [] 
 
     try:
         profile = request.user.profile
         preferred_categories = profile.preferred_categories.all()
 
         if preferred_categories.exists():
-            # Busca lugares que pertenezcan a las categorías preferidas del usuario
-            # Excluye lugares que ya podrían estar en el itinerario (si aplica)
             recommended_places = TouristicPlace.objects.filter(
                 categories__in=preferred_categories
-            ).distinct().prefetch_related('categories')[:6] # Limita a 6 recomendaciones
-            # El .distinct() es importante si un lugar tiene varias categorías preferidas
+            ).distinct().prefetch_related('categories')[:6]
         else:
-            # Si no hay preferencias, muestra lugares aleatorios o los más populares
-            recommended_places = TouristicPlace.objects.order_by('?')[:6] # '?' para aleatorio (puede ser lento en BD grandes)
+            recommended_places = TouristicPlace.objects.order_by('?')[:6]
 
-        # Lógica simple para "Populares": por ahora, solo más lugares aleatorios diferentes
         popular_places = TouristicPlace.objects.exclude(
-            id__in=[p.id for p in recommended_places] # Excluye los ya recomendados
+            id__in=[p.id for p in recommended_places]
         ).order_by('?')[:6]
 
     except Exception as e:
         print(f"Error al obtener recomendaciones: {e}")
-        # En caso de error, simplemente no mostramos recomendaciones
 
-    google_api_key = os.environ.get('GOOGLE_API_KEY')
-    if not google_api_key:
-        print("Advertencia: GOOGLE_API_KEY no encontrada.")
-        google_api_key = "" # Evita errores en la plantilla
+    google_api_key = os.environ.get('GOOGLE_API_KEY') or ""
 
-
-    # --- Prepara el contexto para la plantilla ---
     context = {
         'itinerary': itinerary,
         'recommended_places': recommended_places,
         'popular_places': popular_places,
-        # Puedes pasar el itinerario actual como JSON si el JS lo necesita al cargar
-        # 'current_itinerary_json': ...,
         'google_api_key': google_api_key,
     }
 
-    # Renderiza la plantilla HTML
-    return render(request, 'itineraries/add_stops.html', context) # Asume que el HTML está en templates/itineraries/
+    return render(request, 'itineraries/add_stops.html', context)
 
 
 @login_required
 def edit_itinerary_view(request, itinerary_id):
-    """
-    Vista para MOSTRAR el formulario de edición de itinerario (Paso 1).
-    El guardado (POST/PATCH) lo manejará la API a través de JavaScript.
-    """
-    # Obtiene el itinerario existente o da 404
     itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
-    
-    # Solo maneja GET para mostrar el formulario con datos
     context = {
-        'itinerary': itinerary, # Pasa el objeto para rellenar el form en el HTML
-        'mode': 'Editar',       # Indica al template que estamos en modo edición
+        'itinerary': itinerary, 
+        'mode': 'Editar',        
     }
     return render(request, 'itineraries/create_edit_itinerary.html', context)
 
 
-# Vista de seguridad para el autocompletado y el uso de la API de Geocoding de Google
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])  # Solo usuarios autenticados pueden usar esta vista
+@permission_classes([permissions.IsAuthenticated])
 def geocode_autocomplete_api_view(request):
-    """
-    Proxy endpoint for geocoding/autocomplete suggestions.
-    Calls an external API securely using the backend API key.
-    """
     query = request.query_params.get('query', None)
     if not query or len(query) < 3:
         return Response({"error": "Query parameter 'query' is required (min 3 chars)."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # --- CHOOSE YOUR GEOCODING API ---
-    # Example using Google Places Autocomplete API
-    # Support both env var names for flexibility
-    api_key = os.environ.get('GOOGLE_API_KEY') or os.environ.get('GOOGLE_API_KEY')
+    api_key = os.environ.get('GOOGLE_API_KEY')
     if not api_key:
-        print("ERROR: GOOGLE API key not found (expected GOOGLE_API_KEY or GOOGLE_API_KEY).")
         return Response({"error": "Server configuration error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     external_api_url = "https://maps.googleapis.com/maps/api/place/autocomplete/json"
-    # Restrict to Mexico using components=country:mx
     params = {
         'input': query,
         'key': api_key,
         'language': 'es',
-        'types': '(cities)', # Example: restrict to cities
+        'types': '(cities)',
         'components': 'country:mx',
     }
 
     try:
         response = requests.get(external_api_url, params=params, timeout=5)
-        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+        response.raise_for_status() 
         data = response.json()
 
-        # Process Google's response - Autocomplete returns 'predictions'
         if data.get('status') != 'OK':
-            print(f"Google API Error: {data.get('status')} - {data.get('error_message')}")
-            return Response({"error": "Could not fetch suggestions from provider."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response({"error": "Could not fetch suggestions."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         predictions = data.get('predictions', [])
-
-        # Desired Mexican states (normalized checks)
         desired_states = [
-            'estado de méxico', 'estado de mexico', 'méxico', 'mexico', # Estado de México may appear as 'Estado de México' or 'México'
+            'estado de méxico', 'estado de mexico', 'méxico', 'mexico',
             'ciudad de méxico', 'cdmx',
             'morelos', 'hidalgo', 'tlaxcala', 'puebla'
         ]
 
-        # Helper to check if an administrative_area_level_1 matches desired states
         def is_allowed_state(address_components):
             if not address_components:
                 return False
@@ -456,20 +353,16 @@ def geocode_autocomplete_api_view(request):
                             return True
             return False
 
-        # To avoid excessive Place Details calls, limit how many predictions we inspect
-        MAX_DETAILS_CALLS = 6
         suggestions = []
-
-        # For each prediction, call Place Details (limited) and filter by admin area
         details_url = "https://maps.googleapis.com/maps/api/place/details/json"
-
+        MAX_DETAILS_CALLS = 6
         details_calls = 0
+        
         for p in predictions:
             if details_calls >= MAX_DETAILS_CALLS:
                 break
             place_id = p.get('place_id')
-            if not place_id:
-                continue
+            if not place_id: continue
 
             details_params = {
                 'place_id': place_id,
@@ -485,72 +378,42 @@ def geocode_autocomplete_api_view(request):
                     addr_comps = ddata.get('result', {}).get('address_components', [])
                     if is_allowed_state(addr_comps):
                         suggestions.append({"description": p.get('description')})
-                # Count this as a details call even if not OK, to avoid loops
                 details_calls += 1
-            except requests.exceptions.RequestException as e:
-                print(f"Error calling Place Details for {place_id}: {e}")
+            except requests.exceptions.RequestException:
                 details_calls += 1
                 continue
 
-        # If we found allowed suggestions, return them
         if suggestions:
             return Response(suggestions)
 
-        # Fallback: if filtering by state returned nothing, return the (Mexico-only) predictions limited
         fallback = [{"description": p.get('description')} for p in predictions][:10]
         return Response(fallback)
 
-    except requests.exceptions.RequestException as e:
-        print(f"Error calling external geocoding API: {e}")
-        return Response({"error": "Error connecting to geocoding service."}, status=status.HTTP_504_GATEWAY_TIMEOUT)
     except Exception as e:
-        print(f"Unexpected error in geocode autocomplete: {e}")
+        print(f"Error in geocode autocomplete: {e}")
         return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
-# Vista para los sitios turisticos de un itinerario en específico 
-# api/itineraries/<int:itinerary_id>/places/
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def itinerary_stops_api_view(request, itinerary_id):
-    """
-    Endpoint de API para obtener las paradas de un itinerario específico.
-    """
     try:
-        # Obtiene el itinerario asegurándose que pertenece al usuario autenticado
         itinerary = Itinerary.objects.get(id=itinerary_id, user=request.user)
-        
-        # Obtiene las paradas del itinerario (modelo intermedio) y los lugares turísticos asociados
-        # Usamos select_related para traer el objeto `touristic_place` en la misma consulta.
         stops = ItineraryStop.objects.filter(itinerary=itinerary).select_related('touristic_place')
-
-        # Serializamos las paradas: cada parada incluye el `touristic_place` anidado
-        # y los campos `day_number` y `placement` que definen el orden.
         serialized_stops = ItineraryStopDetailSerializer(stops, many=True).data
-
         return Response(serialized_stops)
     
     except Itinerary.DoesNotExist:
         return Response({"error": "Itinerario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        print(f"Error obteniendo lugares del itinerario: {e}")
         return Response({"error": "Error interno del servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
-# Vista para visualizar el itinerario antes de ser creado definitivamente
-# itineraries/<int:itinerary_id>/preview/
 @login_required
 def itinerary_preview_view(request, itinerary_id):
-    """
-    Muestra una vista previa del itinerario (no lo publica ni lo guarda).
-    """
-    # Obtiene el itinerario asegurando que pertenece al usuario autenticado
     itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
-
-    # Obtén las paradas ordenadas (el modelo ya define ordering por day_number, placement)
     stops_qs = ItineraryStop.objects.filter(itinerary=itinerary).select_related('touristic_place')
 
-    # Agrupar por día
     stops_by_day = []
     current_day = None
     current_list = []
@@ -574,3 +437,174 @@ def itinerary_preview_view(request, itinerary_id):
     }
 
     return render(request, 'itineraries/preview_itinerary.html', context)
+
+
+# --- ▼▼▼ NUEVAS VISTAS PARA ACCIONES SOCIALES (AGREGADO) ▼▼▼ ---
+
+@login_required
+@require_POST
+def toggle_itinerary_like(request, itinerary_id):
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id)
+    
+    if request.user in itinerary.likes.all():
+        itinerary.likes.remove(request.user)
+        liked = False
+    else:
+        itinerary.likes.add(request.user)
+        liked = True
+        
+        # --- NOTIFICACIÓN DE LIKE ---
+        if itinerary.user != request.user:
+            Notification.objects.create(
+                recipient=itinerary.user,
+                actor=request.user,
+                message=f"A {request.user.username} le gustó tu itinerario '{itinerary.title}'",
+                link="#" 
+            )
+    
+    return JsonResponse({
+        'status': 'success', 
+        'liked': liked, 
+        'count': itinerary.likes.count()
+    })
+
+@login_required
+@require_POST
+def toggle_itinerary_save(request, itinerary_id):
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id)
+    
+    if request.user in itinerary.saved_by.all():
+        itinerary.saved_by.remove(request.user)
+        saved = False
+    else:
+        itinerary.saved_by.add(request.user)
+        saved = True
+        
+    return JsonResponse({
+        'status': 'success', 
+        'saved': saved
+    })
+
+# --- LÓGICA DE CALIFICACIÓN ---
+
+@login_required
+@require_POST
+def rate_itinerary(request, itinerary_id):
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id)
+    
+    try:
+        rating_val = int(request.POST.get('rating'))
+    except (ValueError, TypeError):
+        return JsonResponse({'status': 'error', 'message': 'Valor inválido'}, status=400)
+
+    if rating_val < 1 or rating_val > 5:
+        return JsonResponse({'status': 'error', 'message': 'La calificación debe ser entre 1 y 5'}, status=400)
+
+    # update_or_create: Si ya calificó, actualiza las estrellas; si no, crea una nueva.
+    review, created = ItineraryReview.objects.update_or_create(
+        itinerary=itinerary,
+        user=request.user,
+        defaults={'rating': rating_val}
+    )
+    
+    # Notificar al dueño solo si es la primera vez que califica
+    if created and itinerary.user != request.user:
+         Notification.objects.create(
+            recipient=itinerary.user,
+            actor=request.user,
+            message=f"{request.user.username} calificó tu itinerario '{itinerary.title}' con {rating_val} estrellas",
+            link="#"
+        )
+
+    return JsonResponse({
+        'status': 'success', 
+        'new_average': itinerary.get_average_rating() 
+    })
+
+# --- COMENTARIOS EN ITINERARIOS (ANIDADOS) ---
+
+def serialize_comments_recursive(comments_qs):
+    """ 
+    Función auxiliar recursiva para estructurar comentarios y respuestas.
+    """
+    data = []
+    for c in comments_qs:
+        if hasattr(c.user, 'profile') and c.user.profile.profile_picture:
+            avatar_url = c.user.profile.profile_picture.url
+        else:
+            avatar_url = '/static/img/default-avatar.png'
+        
+        # Buscamos las respuestas de ESTE comentario (children)
+        replies_qs = c.replies.all().order_by('created_at')
+        replies_data = serialize_comments_recursive(replies_qs)
+        
+        data.append({
+            'id': c.id,
+            'user': c.user.username,
+            'avatar': avatar_url,
+            'text': c.text,
+            'created_at': c.created_at.strftime('%d %b %Y %H:%M'),
+            'is_owner': True, # Simplificado para validación visual
+            'replies': replies_data # <--- LISTA DE RESPUESTAS ANIDADAS
+        })
+    return data
+
+@login_required
+def load_itinerary_comments(request, itinerary_id):
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id)
+    # Solo cargamos los comentarios PRINCIPALES (los que no tienen padre)
+    root_comments = itinerary.comments.filter(parent__isnull=True).select_related('user', 'user__profile').order_by('created_at')
+    
+    comments_data = serialize_comments_recursive(root_comments)
+    return JsonResponse({'comments': comments_data})
+
+@login_required
+@require_POST
+def add_itinerary_comment(request, itinerary_id):
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id)
+    text = request.POST.get('text')
+    parent_id = request.POST.get('parent_id') # <--- Capturamos si es respuesta
+    
+    if text:
+        parent_comment = None
+        if parent_id:
+            try:
+                parent_comment = ItineraryComment.objects.get(id=parent_id)
+            except ItineraryComment.DoesNotExist:
+                pass
+
+        # Creamos el comentario (con o sin padre)
+        comment = ItineraryComment.objects.create(
+            itinerary=itinerary, 
+            user=request.user, 
+            text=text,
+            parent=parent_comment
+        )
+        
+        # Notificación
+        if itinerary.user != request.user:
+            msg = f"{request.user.username} respondió a un comentario" if parent_comment else f"{request.user.username} comentó en tu itinerario"
+            Notification.objects.create(
+                recipient=itinerary.user,
+                actor=request.user,
+                message=msg,
+                link="#"
+            )
+
+        if hasattr(request.user, 'profile') and request.user.profile.profile_picture:
+            avatar_url = request.user.profile.profile_picture.url
+        else:
+            avatar_url = '/static/img/default-avatar.png'
+        
+        new_comment_data = {
+            'id': comment.id,
+            'user': request.user.username,
+            'avatar': avatar_url,
+            'text': comment.text,
+            'created_at': comment.created_at.strftime('%d %b %Y %H:%M'),
+            'is_owner': True,
+            'replies': [] # Un comentario nuevo nace sin respuestas
+        }
+        return JsonResponse({'status': 'success', 'new_comment': new_comment_data})
+    
+    return JsonResponse({'status': 'error', 'message': 'El comentario no puede estar vacío'}, status=400)

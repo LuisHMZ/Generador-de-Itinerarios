@@ -479,3 +479,20 @@
     font-weight: 500;
     font-size: 0.95rem;
 }
+
+/* === BARRA LATERAL DERECHA === */
+.right-sidebar-sticky {
+    position: sticky;
+    top: 90px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto; /* Permite hacer scroll */
+    
+    /* ▼▼▼ OCULTAR BARRA DE SCROLL ▼▼▼ */
+    -ms-overflow-style: none;  /* IE y Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* Ocultar barra en Chrome, Safari y Opera */
+.right-sidebar-sticky::-webkit-scrollbar {
+    display: none;
+}

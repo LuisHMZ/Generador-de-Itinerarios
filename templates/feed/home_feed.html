@@ -19,6 +19,16 @@
     <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" crossorigin="anonymous"></script>
+    <style>
+        /* Estilo simple para las estrellas interactivas */
+        .star-rating-widget .bi-star, .star-rating-widget .bi-star-fill {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .star-rating-widget .bi-star:hover, .star-rating-widget .bi-star-fill:hover {
+            color: #ffc107 !important; /* Amarillo al pasar el mouse */
+        }
+    </style>
 </head>
 
 <body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
@@ -84,8 +94,9 @@
                     {% else %}
                         <div class="user-mini placeholder-avatar" aria-hidden="true"></div>
                     {% endif %}
+                    
                     <input type="text" placeholder="Buscar locaciones, amigos, hashtags....">
-                    <a href="#" class="btn-new-post">Crear publicación</a>
+                    <a href="#" class="btn-new-post" data-bs-toggle="modal" data-bs-target="#createPostModal">Crear publicación</a>
                 </div>
                 {% endif %}
 
@@ -96,150 +107,185 @@
                 {% endif %}
 
                 <div id="feed-container">
-                    {% for post in posts %}
-                    <article class="post-card mb-4">
-                        <header class="post-header">
-                            {% if post.user.profile.profile_picture %}
-                                <img src="{{ post.user.profile.profile_picture.url }}" class="avatar" alt="{{ post.user.username }}">
-                            {% else %}
-                                <img src="{% static 'img/default-avatar.png' %}" class="avatar" alt="Avatar por defecto">
-                            {% endif %}
-                            <div>
-                                <strong>{{ post.user.username }}</strong>
-                                {% if post.location %}
-                                    <p class="location">{{ post.location }}</p>
-                                {% endif %}
-                            </div>
-                        </header>
-
-                        <div class="post-photo" role="img">
-                            {% with pictures=post.pictures.all %}
-                                {% if pictures %}
-                                    <img src="{{ pictures.0.pic_url.url }}" alt="Foto del post">
-                                {% else %}
-                                    <span class="placeholder-icon"><i class="bi bi-image"></i></span>
-                                {% endif %}
-                            {% endwith %}
-                        </div>
+                    {% for item in feed_items %}
                         
-                        {% if post.title %}
-                            <h5 class="post-title" style="padding: 0 16px; margin-top: 10px; font-weight: bold;">
-                                {{ post.title }}
-                            </h5>
-                        {% endif %}
-                        <p class="post-desc">{{ post.text }}</p>
+                        {% if item.feed_type == 'post' %}
+                            {% with post=item %}
+                            <article class="post-card mb-4">
+                                <header class="post-header">
+                                    {% if post.user.profile.profile_picture %}
+                                        <img src="{{ post.user.profile.profile_picture.url }}" class="avatar" alt="{{ post.user.username }}">
+                                    {% else %}
+                                        <img src="{% static 'img/default-avatar.png' %}" class="avatar" alt="Avatar por defecto">
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ post.user.username }}</strong>
+                                        {% if post.location %}
+                                            <p class="location">{{ post.location }}</p>
+                                        {% endif %}
+                                        <small class="text-muted ms-2">
+                                            {% if post.visibility == 'public' %}
+                                                <i class="bi bi-globe" title="Público"></i>
+                                            {% elif post.visibility == 'friends' %}
+                                                <i class="bi bi-people-fill" title="Solo Amigos"></i>
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </header>
 
-                        <footer class="post-actions">
-                            <div class="action-btn like-btn" data-url="{% url 'posts:toggle_like' post.id %}" style="cursor: pointer;">
-                                {% if request.user in post.likes.all %}
-                                    <i class="bi bi-heart-fill text-danger"></i>
-                                {% else %}
-                                    <i class="bi bi-heart"></i>
-                                {% endif %}
-                                <span class="like-count ms-1">{{ post.likes.count }}</span>
-                            </div>
-
-                            <div class="action-btn comment-btn" 
-                                 style="cursor: pointer;"
-                                 data-post-id="{{ post.id }}"
-                                 {% if post.pictures.all %}
-                                    data-image-url="{{ post.pictures.all.0.pic_url.url }}"
-                                 {% else %}
-                                    data-image-url="" 
-                                 {% endif %}
-                                 data-author="{{ post.user.username }}"
-                                 data-author-avatar="{% if post.user.profile.profile_picture %}{{ post.user.profile.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
-                                 data-text="{{ post.text }}">
+                                <div class="post-photo" role="img">
+                                    {% with pictures=post.pictures.all %}
+                                        {% if pictures %}
+                                            <img src="{{ pictures.0.pic_url.url }}" alt="Foto del post">
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
                                 
-                                <i class="bi bi-chat"></i> 
-                                <span class="comment-count">{{ post.comments.count|default:0 }}</span>
-                            </div>
-
-                            <div><i class="bi bi-star-fill text-warning"></i> {{ post.rating|default:"N/A" }}/5</div>
-
-                            <div class="action-btn save-btn ms-auto" data-url="{% url 'posts:toggle_save' post.id %}" style="cursor: pointer;">
-                                {% if request.user in post.saved_by.all %}
-                                    <i class="bi bi-bookmark-fill text-primary"></i>
-                                {% else %}
-                                    <i class="bi bi-bookmark"></i>
+                                {% if post.title %}
+                                    <h5 class="post-title" style="padding: 0 16px; margin-top: 10px; font-weight: bold;">
+                                        {{ post.title }}
+                                    </h5>
                                 {% endif %}
-                            </div>
-                        </footer>
-                    </article>
+                                <p class="post-desc">{{ post.text }}</p>
+
+                                <footer class="post-actions">
+                                    <div class="action-btn like-btn" data-url="{% url 'posts:toggle_like' post.id %}" style="cursor: pointer;">
+                                        {% if request.user in post.likes.all %}
+                                            <i class="bi bi-heart-fill text-danger"></i>
+                                        {% else %}
+                                            <i class="bi bi-heart"></i>
+                                        {% endif %}
+                                        <span class="like-count ms-1">{{ post.likes.count }}</span>
+                                    </div>
+                                    
+                                    <div class="action-btn comment-btn" 
+                                         style="cursor: pointer;"
+                                         data-object-id="{{ post.id }}"
+                                         data-object-type="post" 
+                                         {% if post.pictures.all %}
+                                            data-image-url="{{ post.pictures.all.0.pic_url.url }}"
+                                         {% else %}
+                                            data-image-url="" 
+                                         {% endif %}
+                                         data-author="{{ post.user.username }}"
+                                         data-author-avatar="{% if post.user.profile.profile_picture %}{{ post.user.profile.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
+                                         data-text="{{ post.text }}">
+                                        
+                                        <i class="bi bi-chat"></i> 
+                                        <span class="comment-count">{{ post.comments.count|default:0 }}</span>
+                                    </div>
+
+                                    <div class="action-btn save-btn ms-auto" data-url="{% url 'posts:toggle_save' post.id %}" style="cursor: pointer;">
+                                        {% if request.user in post.saved_by.all %}
+                                            <i class="bi bi-bookmark-fill text-primary"></i>
+                                        {% else %}
+                                            <i class="bi bi-bookmark"></i>
+                                        {% endif %}
+                                    </div>
+                                </footer>
+                            </article>
+                            {% endwith %}
+
+
+                        {% elif item.feed_type == 'itinerary' %}
+                            <article class="post-card mb-4" style="border-left: 5px solid #E57B28;"> 
+                                <header class="post-header">
+                                    {% if item.user.profile.profile_picture %}
+                                        <img src="{{ item.user.profile.profile_picture.url }}" class="avatar">
+                                    {% else %}
+                                        <img src="{% static 'img/default-avatar.png' %}" class="avatar">
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ item.user.username }}</strong>
+                                        <p class="location">
+                                            <span class="badge bg-warning text-dark me-1">Itinerario</span>
+                                            {{ item.location|default:"" }}
+                                        </p>
+                                    </div>
+                                </header>
+
+                                <div class="post-photo position-relative">
+                                    {% if item.banner_pic %}
+                                        <img src="{{ item.banner_pic.url }}" alt="Banner Itinerario" style="height: 250px; object-fit: cover; width: 100%;">
+                                    {% else %}
+                                        <div class="bg-light text-center py-5 text-muted" style="height: 200px; display:grid; place-items:center;">
+                                            <div><i class="bi bi-map fs-1"></i><br>Sin portada</div>
+                                        </div>
+                                    {% endif %}
+                                    <div class="position-absolute bottom-0 start-0 w-100 p-2" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); color: white;">
+                                        <h5 class="m-0">{{ item.title }}</h5>
+                                        
+                                        <div class="d-flex align-items-center star-rating-widget" data-itinerary-id="{{ item.id }}">
+                                            {% with user_score=item.user_rating|default:0 %}
+                                                <i class="bi bi-star{% if user_score >= 1 %}-fill text-warning{% endif %} me-1 star-btn" data-value="1"></i>
+                                                <i class="bi bi-star{% if user_score >= 2 %}-fill text-warning{% endif %} me-1 star-btn" data-value="2"></i>
+                                                <i class="bi bi-star{% if user_score >= 3 %}-fill text-warning{% endif %} me-1 star-btn" data-value="3"></i>
+                                                <i class="bi bi-star{% if user_score >= 4 %}-fill text-warning{% endif %} me-1 star-btn" data-value="4"></i>
+                                                <i class="bi bi-star{% if user_score >= 5 %}-fill text-warning{% endif %} me-1 star-btn" data-value="5"></i>
+                                            {% endwith %}
+                                            <span class="small ms-2 avg-display">
+                                                {% if item.avg_rating %}{{ item.avg_rating|floatformat:1 }}/5{% else %}N/A{% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-3">
+                                    <p class="text-muted small mb-2">
+                                        <i class="bi bi-calendar-event"></i> 
+                                        {% if item.start_date and item.end_date %}
+                                            {{ item.start_date|date:"d M" }} - {{ item.end_date|date:"d M Y" }}
+                                        {% else %}
+                                            Fecha abierta
+                                        {% endif %}
+                                    </p>
+                                    <p class="post-desc">{{ item.description|truncatewords:30 }}</p>
+                                    
+                                    <div class="d-flex align-items-center mt-3 pt-2 border-top">
+                                        
+                                        <div class="action-btn comment-btn me-4" 
+                                             style="cursor: pointer; color: #555;"
+                                             data-object-id="{{ item.id }}"
+                                             data-object-type="itinerary"
+                                             data-image-url="{% if item.banner_pic %}{{ item.banner_pic.url }}{% endif %}"
+                                             data-author="{{ item.user.username }}"
+                                             data-author-avatar="{% if item.user.profile.profile_picture %}{{ item.user.profile.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
+                                             data-text="{{ item.description }}">
+                                            <i class="bi bi-chat"></i>
+                                            <span class="ms-1 comment-count">{{ item.comments_count_val|default:0 }}</span>
+                                        </div>
+
+                                        <div class="action-btn save-itinerary-btn ms-auto" 
+                                             data-url="{% url 'posts:toggle_save_itinerary' item.id %}" 
+                                             style="cursor: pointer; color: #555;">
+                                            {% if item.is_saved_by_user %}
+                                                <i class="bi bi-bookmark-fill text-primary"></i>
+                                            {% else %}
+                                                <i class="bi bi-bookmark"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <a href="#" class="btn btn-sm w-100 btn-mextur-outline mt-3" style="border: 1px solid #E57B28; color: #E57B28;">
+                                        Ver Detalles
+                                    </a>
+                                </div>
+                            </article>
+                        {% endif %}
+
                     {% empty %}
                         <div class="alert alert-secondary text-center">
-                            {% if is_saved_view %}
-                                No has guardado ninguna publicación aún.
-                            {% else %}
-                                Aún no hay publicaciones. ¡Sigue a tus amigos o crea tu primer post!
-                            {% endif %}
+                            {% if is_saved_view %}No has guardado nada aún.{% else %}Aún no hay actividad reciente.{% endif %}
                         </div>
                     {% endfor %}
                 </div>
 
-                {% if not is_saved_view %}
-                    <div class="people-carousel mt-4">
-                        <h3 class="carousel-title">Mis Amigos</h3>
-                        <div class="carousel-container" id="friends-carousel">
-                            {% for data in users_with_status %}
-                                {% if data.status == 'FRIENDS' %}
-                                <div class="person-card">
-                                    <a href="{% url 'profile_view' data.user.username %}" class="profile-link">
-                                        <div class="person-avatar">
-                                            {% if data.user.profile.profile_picture %}
-                                                <img src="{{ data.user.profile.profile_picture.url }}" alt="{{ data.user.username }}">
-                                            {% else %}
-                                                <span>{{ data.user.username.0|upper }}</span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="person-name">{{ data.user.username }}</div>
-                                    </a>
-                                    <a href="{% url 'remove_friend' data.user.id %}" class="btn-add-friend" style="background-color: #dc3545;">Eliminar</a>
-                                </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="people-carousel">
-                        <h3 class="carousel-title">Personas que quizás conozcas</h3>
-                        <div class="carousel-container" id="people-carousel">
-                            {% for data in users_with_status %}
-                                {% if data.status != 'FRIENDS' %} 
-                                <div class="person-card">
-                                    <a href="{% url 'profile_view' data.user.username %}" class="profile-link">
-                                        <div class="person-avatar">
-                                            {% if data.user.profile.profile_picture %}
-                                                <img src="{{ data.user.profile.profile_picture.url }}" alt="{{ data.user.username }}">
-                                            {% else %}
-                                                <span>{{ data.user.username.0|upper }}</span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="person-name">{{ data.user.username }}</div>
-                                    </a>
-                                    
-                                    <div class="btn-group" role="group" aria-label="Acciones de amistad">
-                                        {% if data.status == 'PENDING_SENT' %}
-                                            <a href="{% url 'cancel_friend_request' data.request_id %}" class="btn btn-warning btn-sm" style="font-size: 11px;">Cancelar</a>
-                                        {% elif data.status == 'PENDING_RECEIVED' %}
-                                            <a href="{% url 'accept_friend_request' data.request_id %}" class="btn btn-primary btn-sm" style="font-size: 11px;">Aceptar</a>
-                                        {% else %} 
-                                            <a href="{% url 'send_friend_request' data.user.id %}" class="btn btn-success btn-sm" style="font-size: 11px;">Agregar</a>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endif %}
-                
             </div>
 
             <aside class="col-lg-3 d-none d-lg-block">
                 <div class="right-sidebar-sticky">
-                    <h5 class="text-muted fs-6 mb-3 ms-2">Contactos</h5>
-                    <ul class="contacts-list">
+                    <h6 class="text-muted fw-bold mb-3 ms-2 text-uppercase" style="font-size: 0.8rem;">Contactos</h6>
+                    <ul class="contacts-list mb-4">
                         {% for friend in online_friends %}
                         <li>
                             <a href="{% url 'profile_view' friend.username %}" class="contact-item">
@@ -258,42 +304,90 @@
                             <li class="text-muted small ms-2">No hay amigos conectados.</li>
                         {% endfor %}
                     </ul>
+                    <hr class="my-4">
+                    <h6 class="text-muted fw-bold mb-3 ms-2 text-uppercase" style="font-size: 0.8rem;">Sugerencias</h6>
+                    <ul class="contacts-list">
+                        {% for data in users_with_status %}
+                            {% if data.status != 'FRIENDS' %}
+                            <li class="mb-3">
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded hover-bg-light">
+                                    <a href="{% url 'profile_view' data.user.username %}" class="d-flex align-items-center text-decoration-none text-dark">
+                                        <div class="contact-avatar-wrapper me-2">
+                                            {% if data.user.profile.profile_picture %}
+                                                <img src="{{ data.user.profile.profile_picture.url }}" class="contact-avatar" style="width: 40px; height: 40px;">
+                                            {% else %}
+                                                <img src="{% static 'img/default-avatar.png' %}" class="contact-avatar" style="width: 40px; height: 40px;">
+                                            {% endif %}
+                                        </div>
+                                        <div style="line-height: 1.2;">
+                                            <span class="d-block fw-bold" style="font-size: 0.9rem;">{{ data.user.username }}</span>
+                                            <small class="text-muted" style="font-size: 0.75rem;">Sugerencia</small>
+                                        </div>
+                                    </a>
+                                    <div>
+                                        {% if data.status == 'PENDING_SENT' %}
+                                            <a href="{% url 'cancel_friend_request' data.request_id %}" class="btn btn-sm btn-warning rounded-circle" title="Cancelar"><i class="bi bi-x"></i></a>
+                                        {% elif data.status == 'PENDING_RECEIVED' %}
+                                            <a href="{% url 'accept_friend_request' data.request_id %}" class="btn btn-sm btn-primary rounded-circle" title="Aceptar"><i class="bi bi-check"></i></a>
+                                        {% else %} 
+                                            <a href="{% url 'send_friend_request' data.user.id %}" class="btn btn-sm btn-outline-primary rounded-circle" title="Agregar"><i class="bi bi-person-plus-fill"></i></a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
                 </div>
             </aside>
 
-        </div> </main>
+        </div> 
+    </main>
 
     <div id="site-footer"></div>
 
-    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Notificaciones</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div id="notifications-list"><p class="text-center text-muted p-3">Cargando...</p></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button></div></div></div></div>
+    
+    <div class="modal fade" id="createPostModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Notificaciones</h5>
+                    <h5 class="modal-title">Crear Publicación</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-0">
-                    <div id="notifications-list">
-                        <p class="text-center text-muted p-3">Cargando...</p>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-body">
+                    <form id="createPostForm" enctype="multipart/form-data">
+                        <div class="mb-2">{{ create_post_form.title }}</div>
+                        <div class="mb-2">{{ create_post_form.text }}</div>
+                        <div class="mb-3">
+                             <label class="form-label small text-muted mb-1"><i class="bi bi-eye"></i> Privacidad</label>
+                             {{ create_post_form.visibility }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-map"></i> Vincular Itinerario (Opcional)</label>
+                            {{ create_post_form.itinerary }}
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small text-muted mb-1"><i class="bi bi-image"></i> Agregar Foto</label>
+                            {{ create_post_form.image }}
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Publicar</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="modal fade modal-facebook" id="commentsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 90% !important; margin: 1.75rem auto;">
             <div class="modal-content">
                 <div class="modal-body">
                     <div class="row h-100 g-0">
                         <div class="col-md-8 facebook-media-col" id="modalImageContainer">
-                            <img src="" id="modalPostImage" alt="Post Image">
-                            <div id="modalNoImage" class="text-white d-none">
-                                <h4>Publicación de texto</h4>
-                            </div>
+                            <img src="" id="modalPostImage" alt="Image">
+                            <div id="modalNoImage" class="text-white d-none"><h4>Contenido de texto</h4></div>
                         </div>
                         <div class="col-md-4 facebook-comments-col">
                             <div class="fb-comments-header d-flex align-items-center justify-content-between">
@@ -306,18 +400,14 @@
                                 </div>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-
                             <div class="fb-comments-body" id="modalCommentsList">
                                 <p class="text-center text-muted mt-4">Cargando comentarios...</p>
                             </div>
-
                             <div class="fb-comments-footer">
                                 <form id="commentForm" class="d-flex">
-                                    <input type="hidden" id="modalPostId">
-                                    <input type="text" id="commentInput" class="form-control rounded-pill me-2" placeholder="Escribe un comentario..." autocomplete="off">
-                                    <button type="submit" class="btn btn-primary rounded-circle">
-                                        <i class="bi bi-send-fill"></i>
-                                    </button>
+                                    <input type="hidden" id="modalObjectId">
+                                    <input type="hidden" id="modalObjectType"> <input type="text" id="commentInput" class="form-control rounded-pill me-2" placeholder="Escribe un comentario..." autocomplete="off">
+                                    <button type="submit" class="btn btn-primary rounded-circle"><i class="bi bi-send-fill"></i></button>
                                 </form>
                             </div>
                         </div>
@@ -332,71 +422,24 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        
-        // 1. TOASTS
-        const toastElList = document.querySelectorAll('.toast');
-        const toastList = [...toastElList].map(toastEl => {
-            const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-            toast.show();
-            return toast;
-        });
-
-        // Helper CSRF
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
+        [...document.querySelectorAll('.toast')].map(toastEl => new bootstrap.Toast(toastEl, { delay: 3000 }).show());
+        function getCookie(name) {let cookieValue = null;if (document.cookie && document.cookie !== '') {const cookies = document.cookie.split(';');for (let i = 0; i < cookies.length; i++) {const cookie = cookies[i].trim();if (cookie.substring(0, name.length + 1) === (name + '=')) {cookieValue = decodeURIComponent(cookie.substring(name.length + 1));break;}}}return cookieValue;}
         const csrftoken = getCookie('csrftoken');
+        
+        // --- LIKES DE POSTS ---
+        document.querySelectorAll('.like-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');const countSpan = this.querySelector('.like-count');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {countSpan.textContent = data.count;if (data.liked) {icon.classList.replace('bi-heart', 'bi-heart-fill');icon.classList.add('text-danger');} else {icon.classList.replace('bi-heart-fill', 'bi-heart');icon.classList.remove('text-danger');}}}).catch(error => console.error('Error:', error));});});
+        
+        // --- GUARDAR POSTS ---
+        document.querySelectorAll('.save-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {if (data.saved) {icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');icon.classList.add('text-primary');} else {icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');icon.classList.remove('text-primary');}}}).catch(error => console.error('Error:', error));});});
 
-        // 2. LIKES
-        const likeButtons = document.querySelectorAll('.like-btn');
-        likeButtons.forEach(btn => {
+        // --- GUARDAR ITINERARIOS (NUEVO) ---
+        document.querySelectorAll('.save-itinerary-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const url = this.getAttribute('data-url');
                 const icon = this.querySelector('i');
-                const countSpan = this.querySelector('.like-count');
-                
                 fetch(url, {
                     method: 'POST',
-                    headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        countSpan.textContent = data.count;
-                        if (data.liked) {
-                            icon.classList.replace('bi-heart', 'bi-heart-fill');
-                            icon.classList.add('text-danger');
-                        } else {
-                            icon.classList.replace('bi-heart-fill', 'bi-heart');
-                            icon.classList.remove('text-danger');
-                        }
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            });
-        });
-
-        // 3. GUARDAR
-        const saveButtons = document.querySelectorAll('.save-btn');
-        saveButtons.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const url = this.getAttribute('data-url');
-                const icon = this.querySelector('i');
-                
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
+                    headers: {'X-CSRFToken': csrftoken, 'Content-Type': 'application/json'}
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -409,110 +452,141 @@
                             icon.classList.remove('text-primary');
                         }
                     }
+                });
+            });
+        });
+
+        // --- CALIFICAR ITINERARIOS (ESTRELLAS) ---
+        document.querySelectorAll('.star-btn').forEach(star => {
+            star.addEventListener('click', function() {
+                const widget = this.closest('.star-rating-widget');
+                const itineraryId = widget.dataset.itineraryId;
+                const value = this.dataset.value;
+                const stars = widget.querySelectorAll('.star-btn');
+                const avgDisplay = widget.querySelector('.avg-display');
+
+                // CORRECCIÓN: Usamos /api/posts/ para que coincida con la URL real
+                fetch(`/api/posts/itinerary/rate/${itineraryId}/`, {
+                    method: 'POST',
+                    headers: {'X-CSRFToken': csrftoken, 'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `score=${value}`
                 })
-                .catch(error => console.error('Error:', error));
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        // Actualizar visualmente las estrellas
+                        stars.forEach(s => {
+                            if(s.dataset.value <= value) {
+                                s.classList.remove('bi-star');
+                                s.classList.add('bi-star-fill', 'text-warning');
+                            } else {
+                                s.classList.remove('bi-star-fill', 'text-warning');
+                                s.classList.add('bi-star');
+                            }
+                        });
+                        avgDisplay.textContent = data.new_average + "/5";
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => console.error("Error rating:", err));
             });
         });
 
-        // 4. COMENTARIOS
-        const commentsModalEl = document.getElementById('commentsModal');
-        const commentsModal = new bootstrap.Modal(commentsModalEl);
-        const commentBtns = document.querySelectorAll('.comment-btn');
-
-        const modalImg = document.getElementById('modalPostImage');
-        const modalNoImg = document.getElementById('modalNoImage');
-        const modalAvatar = document.getElementById('modalAuthorAvatar');
-        const modalAuthor = document.getElementById('modalAuthorName');
-        const modalText = document.getElementById('modalPostText');
-        const modalList = document.getElementById('modalCommentsList');
-        const modalPostIdInput = document.getElementById('modalPostId');
-        const commentForm = document.getElementById('commentForm');
-        const commentInput = document.getElementById('commentInput');
+        // --- CREAR POST ---
+        const createPostForm = document.getElementById('createPostForm'); if (createPostForm) {createPostForm.addEventListener('submit', function(e) {e.preventDefault();const formData = new FormData(this);fetch("{% url 'posts:create_post' %}", { method: 'POST', headers: { 'X-CSRFToken': csrftoken }, body: formData }).then(response => response.json()).then(data => { if (data.status === 'success') { location.reload(); } else { alert('Error al crear. Revisa los datos.'); }});});}
         
-        let replyingToCommentId = null;
-        const replyIndicator = document.createElement('div');
-        replyIndicator.className = 'replying-to-alert d-none';
-        commentForm.parentNode.insertBefore(replyIndicator, commentForm);
-
-        window.cancelReply = function() {
-            replyingToCommentId = null;
-            replyIndicator.classList.add('d-none');
-            replyIndicator.innerHTML = '';
-            commentInput.placeholder = "Escribe un comentario...";
-        }
-
-        commentBtns.forEach(btn => {
+        // --- LÓGICA DE COMENTARIOS HÍBRIDA (POST E ITINERARIOS) ---
+        const commentsModal = new bootstrap.Modal(document.getElementById('commentsModal'));
+        const modalImg = document.getElementById('modalPostImage'); 
+        const modalNoImg = document.getElementById('modalNoImage'); 
+        const modalAvatar = document.getElementById('modalAuthorAvatar'); 
+        const modalAuthor = document.getElementById('modalAuthorName'); 
+        const modalText = document.getElementById('modalPostText'); 
+        const modalList = document.getElementById('modalCommentsList'); 
+        const modalObjectIdInput = document.getElementById('modalObjectId'); 
+        const modalObjectTypeInput = document.getElementById('modalObjectType'); 
+        const commentForm = document.getElementById('commentForm'); 
+        const commentInput = document.getElementById('commentInput'); 
+        let replyingToCommentId = null; 
+        const replyIndicator = document.createElement('div'); replyIndicator.className = 'replying-to-alert d-none'; commentForm.parentNode.insertBefore(replyIndicator, commentForm);
+        
+        window.cancelReply = function() {replyingToCommentId = null;replyIndicator.classList.add('d-none');replyIndicator.innerHTML = '';commentInput.placeholder = "Escribe un comentario...";}
+        
+        document.querySelectorAll('.comment-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                const postId = this.dataset.postId;
-                const imgUrl = this.dataset.imageUrl;
-                const author = this.dataset.author;
-                const avatar = this.dataset.authorAvatar;
-                const text = this.dataset.text;
+                const objectId = this.dataset.objectId; 
+                const objectType = this.dataset.objectType; // 'post' o 'itinerary'
+                const imgUrl = this.dataset.imageUrl; 
+                
+                cancelReply(); 
+                modalObjectIdInput.value = objectId; 
+                modalObjectTypeInput.value = objectType;
 
-                cancelReply();
-                modalPostIdInput.value = postId;
-                modalAuthor.textContent = author;
-                modalAvatar.src = avatar;
-                modalText.textContent = text;
-
+                modalAuthor.textContent = this.dataset.author; 
+                modalAvatar.src = this.dataset.authorAvatar; 
+                modalText.textContent = this.dataset.text; 
+                
                 if (imgUrl) {
-                    modalImg.src = imgUrl;
-                    modalImg.classList.remove('d-none');
-                    modalNoImg.classList.add('d-none');
+                    modalImg.src = imgUrl; modalImg.classList.remove('d-none'); modalNoImg.classList.add('d-none');
                 } else {
-                    modalImg.classList.add('d-none');
-                    modalNoImg.classList.remove('d-none');
-                }
+                    modalImg.classList.add('d-none'); modalNoImg.classList.remove('d-none');
+                } 
+                
+                modalList.innerHTML = '<p class="text-center text-muted mt-4"><div class="spinner-border text-primary" role="status"></div></p>'; 
+                commentsModal.show(); 
 
-                modalList.innerHTML = '<p class="text-center text-muted mt-4"><div class="spinner-border text-primary" role="status"></div></p>';
-                commentsModal.show();
+                // CORRECCIÓN: Usamos /api/posts/ al inicio
+                let loadUrl = objectType === 'post' 
+                    ? `/api/posts/comments/load/${objectId}/` 
+                    : `/api/posts/itinerary/comments/load/${objectId}/`;
 
-                fetch(`/api/posts/comments/load/${postId}/`)
-                    .then(res => res.json())
-                    .then(data => {
-                        modalList.innerHTML = '';
-                        if (data.comments.length === 0) {
-                            modalList.innerHTML = '<p id="no-comments-msg" class="text-center text-muted mt-5">Sé el primero en comentar.</p>';
-                        } else {
-                            data.comments.forEach(c => {
-                                addCommentToDOM(c);
-                            });
-                            modalList.scrollTop = modalList.scrollHeight;
-                        }
-                    });
+                fetch(loadUrl).then(res => res.json()).then(data => {
+                    modalList.innerHTML = '';
+                    if (data.comments.length === 0) {
+                        modalList.innerHTML = '<p id="no-comments-msg" class="text-center text-muted mt-5">Sé el primero en comentar.</p>';
+                    } else {
+                        data.comments.forEach(c => addCommentToDOM(c));
+                        modalList.scrollTop = modalList.scrollHeight;
+                    }
+                })
+                .catch(err => {
+                    console.error("Error cargando comentarios:", err);
+                    modalList.innerHTML = '<p class="text-danger text-center mt-4">Error al cargar comentarios.</p>';
+                });
             });
         });
-
+        
         commentForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const text = commentInput.value.trim();
-            const postId = modalPostIdInput.value;
-
+            const objectId = modalObjectIdInput.value;
+            const objectType = modalObjectTypeInput.value;
             if (!text) return;
-
+            
             const formData = new FormData();
             formData.append('text', text);
-            if (replyingToCommentId) {
-                formData.append('parent_id', replyingToCommentId);
-            }
+            if (replyingToCommentId) { formData.append('parent_id', replyingToCommentId); }
+            
+            // CORRECCIÓN: Usamos /api/posts/ al inicio
+            let addUrl = objectType === 'post' 
+                    ? `/api/posts/comments/add/${objectId}/` 
+                    : `/api/posts/itinerary/comments/add/${objectId}/`;
 
-            fetch(`/api/posts/comments/add/${postId}/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrftoken },
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
+            fetch(addUrl, {method: 'POST',headers: { 'X-CSRFToken': csrftoken },body: formData}).then(res => res.json()).then(data => {
                 if (data.status === 'success') {
                     if (replyingToCommentId) {
                         const parentContainer = document.getElementById(`replies-${replyingToCommentId}`);
                         if (parentContainer) {
-                            const replyHtml = generateCommentHTML(data.new_comment); 
+                            const replyHtml = generateCommentHTML(data.new_comment);
                             parentContainer.insertAdjacentHTML('beforeend', replyHtml);
                         }
                     } else {
                         addCommentToDOM(data.new_comment);
                         modalList.scrollTop = modalList.scrollHeight;
+                        // Actualizar contador
+                        const countSpan = document.querySelector(`.comment-btn[data-object-id="${objectId}"][data-object-type="${objectType}"] .comment-count`);
+                        if(countSpan) countSpan.textContent = parseInt(countSpan.textContent) + 1;
                     }
                     commentInput.value = '';
                     cancelReply();
@@ -521,111 +595,16 @@
                 }
             });
         });
-
+        
         function generateCommentHTML(c) {
             const deleteBtn = c.is_owner ? `<small class="delete-action ms-2 text-danger" style="cursor:pointer;" onclick="deleteComment(${c.id}, this)">Eliminar</small>` : '';
             const likeClass = c.is_liked ? 'text-danger' : '';
-            
-            return `
-                <div class="mb-3 comment-item" id="comment-${c.id}">
-                    <div class="d-flex">
-                        <img src="${c.avatar}" class="comment-avatar me-2">
-                        <div>
-                            <div class="comment-bubble">
-                                <strong class="d-block mb-1" style="font-size: 0.9em;">${c.user}</strong>
-                                <span style="font-size: 0.95em;">${c.text}</span>
-                            </div>
-                            <div class="ms-2 mt-1 comment-actions d-flex align-items-center">
-                                <small class="${likeClass} me-3" style="cursor:pointer; font-weight:bold;" onclick="likeComment(${c.id}, this)">
-                                    ${c.is_liked ? 'Te gusta' : 'Me gusta'} <span class="count">${c.likes_count > 0 ? '('+c.likes_count+')' : ''}</span>
-                                </small>
-                                <small class="me-3" style="cursor:pointer;" onclick="replyTo(${c.id}, '${c.user}')">Responder</small>
-                                <small class="text-muted fw-normal">${c.created_at}</small>
-                                ${deleteBtn}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="comment-replies" id="replies-${c.id}" style="margin-left: 40px;">
-                        ${c.replies ? c.replies.map(r => generateCommentHTML(r)).join('') : ''}
-                    </div>
-                </div>
-            `;
+            return `<div class="mb-3 comment-item" id="comment-${c.id}"><div class="d-flex"><img src="${c.avatar}" class="comment-avatar me-2"><div><div class="comment-bubble"><strong class="d-block mb-1" style="font-size: 0.9em;">${c.user}</strong><span style="font-size: 0.95em;">${c.text}</span></div><div class="ms-2 mt-1 comment-actions d-flex align-items-center"><small class="${likeClass} me-3" style="cursor:pointer; font-weight:bold;" onclick="likeComment(${c.id}, this)">${c.is_liked ? 'Te gusta' : 'Me gusta'} <span class="count">${c.likes_count > 0 ? '('+c.likes_count+')' : ''}</span></small><small class="me-3" style="cursor:pointer;" onclick="replyTo(${c.id}, '${c.user}')">Responder</small><small class="text-muted fw-normal">${c.created_at}</small>${deleteBtn}</div></div></div><div class="comment-replies" id="replies-${c.id}" style="margin-left: 40px;">${c.replies ? c.replies.map(r => generateCommentHTML(r)).join('') : ''}</div></div>`;
         }
-
-        function addCommentToDOM(c) {
-            const noMsg = document.getElementById('no-comments-msg');
-            if (noMsg) noMsg.remove();
-            const html = generateCommentHTML(c);
-            modalList.insertAdjacentHTML('beforeend', html);
-        }
-
-        window.replyTo = function(commentId, username) {
-            replyingToCommentId = commentId;
-            replyIndicator.classList.remove('d-none');
-            replyIndicator.innerHTML = `<small class="ms-2">Respondiendo a <strong>${username}</strong> <a href="#" onclick="cancelReply(); return false;" class="text-danger ms-1">Cancelar</a></small>`;
-            commentInput.placeholder = `Escribe una respuesta a ${username}...`;
-            commentInput.focus();
-        }
-
-        window.likeComment = function(commentId, element) {
-            fetch(`/api/posts/comments/like/${commentId}/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrftoken }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    const countText = data.count > 0 ? `(${data.count})` : '';
-                    element.innerHTML = `${data.liked ? 'Te gusta' : 'Me gusta'} <span class="count">${countText}</span>`;
-                    if (data.liked) element.classList.add('text-danger');
-                    else element.classList.remove('text-danger');
-                }
-            });
-        }
-
-        window.deleteComment = function(commentId, element) {
-            if (!confirm("¿Estás seguro de eliminar este comentario?")) return;
-            fetch(`/api/posts/comments/delete/${commentId}/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrftoken }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    const commentDiv = document.getElementById(`comment-${commentId}`);
-                    if (commentDiv) commentDiv.remove();
-                }
-            });
-        }
-
-        // --- 5. AUTO-APERTURA DE MODAL (ROBUSTA) ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const postIdToOpen = urlParams.get('open_post');
-
-        if (postIdToOpen) {
-            console.log("Intentando abrir post ID:", postIdToOpen);
-            // Función para intentar abrir el modal (reintenta si no carga)
-            const tryOpenModal = () => {
-                const targetBtn = document.querySelector(`.comment-btn[data-post-id="${postIdToOpen}"]`);
-                if (targetBtn) {
-                    console.log("Botón encontrado. Abriendo modal...");
-                    targetBtn.scrollIntoView({ behavior: 'auto', block: 'center' });
-                    targetBtn.click();
-                    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-                    window.history.replaceState({path: newUrl}, '', newUrl);
-                    return true;
-                }
-                return false;
-            };
-
-            if (!tryOpenModal()) {
-                setTimeout(() => {
-                    if (!tryOpenModal()) {
-                        setTimeout(tryOpenModal, 1500);
-                    }
-                }, 500);
-            }
-        }
+        function addCommentToDOM(c) {const noMsg = document.getElementById('no-comments-msg');if (noMsg) noMsg.remove();const html = generateCommentHTML(c);modalList.insertAdjacentHTML('beforeend', html);}
+        window.replyTo = function(commentId, username) {replyingToCommentId = commentId;replyIndicator.classList.remove('d-none');replyIndicator.innerHTML = `<small class="ms-2">Respondiendo a <strong>${username}</strong> <a href="#" onclick="cancelReply(); return false;" class="text-danger ms-1">Cancelar</a></small>`;commentInput.placeholder = `Escribe una respuesta a ${username}...`;commentInput.focus();}
+        window.likeComment = function(commentId, element) {fetch(`/api/posts/comments/like/${commentId}/`, {method: 'POST',headers: { 'X-CSRFToken': csrftoken }}).then(res => res.json()).then(data => {if (data.status === 'success') {const countText = data.count > 0 ? `(${data.count})` : '';element.innerHTML = `${data.liked ? 'Te gusta' : 'Me gusta'} <span class="count">${countText}</span>`;if (data.liked) element.classList.add('text-danger');else element.classList.remove('text-danger');}});}
+        window.deleteComment = function(commentId, element) {if (!confirm("¿Estás seguro de eliminar este comentario?")) return;fetch(`/api/posts/comments/delete/${commentId}/`, {method: 'POST',headers: { 'X-CSRFToken': csrftoken }}).then(res => res.json()).then(data => {if (data.status === 'success') {const commentDiv = document.getElementById(`comment-${commentId}`);if (commentDiv) commentDiv.remove();}});}
     });
     </script>
 
