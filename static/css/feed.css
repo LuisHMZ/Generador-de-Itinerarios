@@ -18,6 +18,11 @@
     align-items: center;
     gap: 12px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+    transition: box-shadow 0.3s ease;
+}
+
+.search-floating:focus-within {
+    box-shadow: 0 8px 25px rgba(229, 123, 40, 0.2);
 }
 
 .user-mini {
@@ -27,7 +32,7 @@
     background: #e9ecef;
     display: inline-block;
     flex: 0 0 36px;
-    object-fit: cover; /* Para que tu avatar se vea bien */
+    object-fit: cover;
 }
 
 .placeholder-avatar {
@@ -54,10 +59,12 @@
     border-radius: 20px;
     font-weight: 600;
     text-decoration: none;
+    transition: all 0.2s;
 }
 .btn-new-post:hover {
     color: white;
     background: #d2691e;
+    transform: translateY(-1px);
 }
 
 /* --- FEED --- */
@@ -70,9 +77,14 @@
 .post-card {
     background: white;
     border-radius: 20px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.08);
     margin-bottom: 50px;
     overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-2px);
 }
 
 /* --- HEADER DE POST --- */
@@ -87,7 +99,9 @@
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    object-fit: cover; /* Para que la imagen se vea bien */
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .location {
@@ -96,25 +110,23 @@
     margin: 0;
 }
 
-/* --- FOTO: espacio/placeholder --- */
+/* --- FOTO (FEED) --- */
 .post-photo {
     width: 100%;
     height: 380px;
-    background: #f2f4f6;
+    background: #f8f9fa;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #c6ccd1;
+    color: #adb5bd;
     font-size: 42px;
     user-select: none;
 }
-/* Para cuando carguemos la imagen real */
 .post-photo img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
-
 .post-photo .placeholder-icon {
     display: inline-block;
     transform: translateY(-4px);
@@ -123,9 +135,10 @@
 /* --- DESCRIPCIÓN --- */
 .post-desc {
     padding: 15px 22px;
-    color: #555;
-    font-size: 14px;
+    color: #495057;
+    font-size: 15px;
     margin: 0;
+    line-height: 1.5;
 }
 
 /* --- ACCIONES --- */
@@ -136,18 +149,24 @@
     padding: 16px 22px 18px;
     font-size: 15px;
     color: #444;
+    border-top: 1px solid #f1f3f5;
 }
 
 .post-actions i {
-    font-size: 18px;
+    font-size: 20px;
     margin-right: 6px;
+    transition: transform 0.2s;
+}
+
+.post-actions .action-btn:hover i {
+    transform: scale(1.15);
 }
 
 .save {
     margin-left: auto;
 }
 
-/* --- CARRUSEL PERSONAS (AL FINAL) --- */
+/* --- CARRUSEL PERSONAS --- */
 .people-carousel {
     background: white;
     border-radius: 20px;
@@ -234,10 +253,6 @@
     background: #d2691e;
 }
 
-.btn-add-friend.added {
-    background: #28a745;
-}
-
 /* --- MODAL NOTIFICACIONES --- */
 .notification-item {
     padding: 15px;
@@ -245,239 +260,57 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    transition: background 0.2s;
 }
-
+.notification-item:hover {
+    background: #f8f9fa;
+}
 .notification-item:last-child {
     border-bottom: none;
 }
-
 .notification-avatar {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     background: #f2f4f6;
 }
-
 .notification-avatar img {
     width: 100%;
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
 }
-
-.notification-content {
-    flex: 1;
-}
-
-.notification-text {
-    font-size: 14px;
-    margin: 0;
-    color: #333;
-}
-
-.notification-time {
-    font-size: 12px;
-    color: #777;
-    margin: 0;
-}
+.notification-content { flex: 1; }
+.notification-text { font-size: 14px; margin: 0; color: #333; }
+.notification-time { font-size: 12px; color: #777; margin: 0; }
 
 /* ============================ */
-/* === MENÚ LATERAL (NUEVO) === */
+/* === MENÚ LATERAL IZQUIERDO === */
 /* ============================ */
-
-/* 1. HACE QUE EL MENÚ SE QUEDE FIJO AL BAJAR (STICKY) */
 .menu-lateral {
-  font-size: 15px;
-  
-  /* La magia para que se quede fijo: */
-  position: sticky;
-  
-  /* Se "pegará" a 90px del borde superior.
-    ¡Ajusta este número si tu header es más alto o más bajo!
-  */
-  top: 90px; 
+    font-size: 15px;
+    position: sticky;
+    top: 90px;
 }
 
-/* 2. DEFINE LA ANIMACIÓN DE HOVER (LA QUE PEDISTE) */
 .menu-item {
-  /* Prepara la animación para que dure 0.2 segundos */
-  transition: all 0.2s ease-in-out;
-  padding: 8px 10px;
-  border-radius: 10px;
+    transition: all 0.2s ease-in-out;
+    padding: 10px 15px;
+    border-radius: 12px;
+    color: #495057;
+    font-weight: 500;
 }
 
 .menu-item:hover {
-  /* Al pasar el mouse, se mueve 4px a la derecha */
-  background-color: #f6f6f6;
-  transform: translateX(4px);
+    background-color: #fff0e6;
+    color: #e57b28;
+    transform: translateX(4px);
 }
 
 .menu-item i {
-  width: 22px;
-  text-align: center;
-  color: #000000;
-}
-
-/* Modal estilo Facebook (Theater Mode) */
-.modal-facebook .modal-dialog {
-    max-width: 90%; /* Ocupa casi toda la pantalla */
-    height: 90vh;
-    margin: 1.75rem auto;
-}
-
-.modal-facebook .modal-content {
-    height: 100%;
-    border: none;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.modal-facebook .modal-body {
-    padding: 0;
-    height: 100%;
-}
-
-/* Columna Izquierda (Imagen) */
-.facebook-media-col {
-    background-color: #000; /* Fondo negro elegante */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-}
-
-.facebook-media-col img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-
-/* Columna Derecha (Comentarios) */
-.facebook-comments-col {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background-color: #fff;
-}
-
-.fb-comments-header {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-    flex-shrink: 0; /* No se encoge */
-}
-
-.fb-comments-body {
-    flex-grow: 1; /* Ocupa el espacio restante */
-    overflow-y: auto; /* Scroll solo en los comentarios */
-    padding: 15px;
-}
-
-.fb-comments-footer {
-    padding: 15px;
-    border-top: 1px solid #eee;
-    flex-shrink: 0;
-}
-
-/* Estilo de un comentario individual */
-.comment-bubble {
-    background-color: #f0f2f5;
-    border-radius: 18px;
-    padding: 8px 12px;
-    display: inline-block;
-    margin-left: 10px;
-}
-
-.comment-avatar {
-    width: 32px; 
-    height: 32px; 
-    border-radius: 50%; 
-    object-fit: cover;
-}
-
-/* Estilos para comentarios anidados */
-.comment-replies {
-    margin-left: 40px; /* Indentación */
-    border-left: 2px solid #f0f2f5; /* Línea guía sutil */
-    padding-left: 10px;
-}
-
-/* Estilos para los botones pequeños debajo del comentario */
-.comment-actions small {
-    cursor: pointer;
-    margin-right: 10px;
-    font-weight: 600;
-    color: #65676b;
-    font-size: 12px;
-}
-.comment-actions small:hover {
-    text-decoration: underline;
-}
-.comment-actions .delete-action:hover {
-    color: red;
-}
-
-/* Input cuando estás respondiendo */
-.replying-to-alert {
-    font-size: 12px;
-    color: #65676b;
-    padding: 0 10px 5px;
-}
-
-/* En: static/css/feed.css */
-
-/* === BARRA LATERAL DERECHA (CONTACTOS) === */
-.right-sidebar-sticky {
-    position: sticky;
-    top: 90px; /* Se pega a la misma altura que el menú izquierdo */
-}
-
-.contacts-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.contact-item {
-    display: flex;
-    align-items: center;
-    padding: 8px 10px;
-    border-radius: 8px;
-    text-decoration: none;
-    color: #333;
-    transition: background-color 0.2s;
-}
-
-.contact-item:hover {
-    background-color: #e4e6eb;
-    color: #000;
-}
-
-.contact-avatar-wrapper {
-    position: relative;
-    margin-right: 12px;
-}
-
-.contact-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.online-indicator {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 10px;
-    height: 10px;
-    background-color: #31a24c; /* Verde Facebook */
-    border: 2px solid #fff;
-    border-radius: 50%;
-}
-
-.contact-name {
-    font-weight: 500;
-    font-size: 0.95rem;
+    width: 24px;
+    text-align: center;
+    color: #000000;
 }
 
 /* === BARRA LATERAL DERECHA === */
@@ -485,14 +318,213 @@
     position: sticky;
     top: 90px;
     max-height: calc(100vh - 100px);
-    overflow-y: auto; /* Permite hacer scroll */
-    
-    /* ▼▼▼ OCULTAR BARRA DE SCROLL ▼▼▼ */
-    -ms-overflow-style: none;  /* IE y Edge */
-    scrollbar-width: none;  /* Firefox */
+    overflow-y: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    padding-left: 10px;
+}
+.right-sidebar-sticky::-webkit-scrollbar { display: none; }
+
+.contacts-list { list-style: none; padding: 0; margin: 0; }
+.contact-item { display: flex; align-items: center; padding: 8px 10px; border-radius: 12px; text-decoration: none; color: #333; transition: background-color 0.2s; margin-bottom: 4px; }
+.contact-item:hover { background-color: #f1f3f5; }
+.contact-avatar-wrapper { position: relative; margin-right: 12px; }
+.contact-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #dee2e6; }
+.online-indicator { position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background-color: #31a24c; border: 2px solid #fff; border-radius: 50%; }
+.contact-name { font-weight: 600; font-size: 0.9rem; color: #343a40; }
+
+/* ============================================================ */
+/* === MODAL ESTILO "TEATRO" (Horizontal / Facebook Style) === */
+/* ============================================================ */
+
+.modal-facebook .modal-dialog {
+    /* Ocupa gran parte de la pantalla para verse inmersivo */
+    max-width: 90vw !important; 
+    height: 90vh;
+    margin: 1.75rem auto;
 }
 
-/* Ocultar barra en Chrome, Safari y Opera */
-.right-sidebar-sticky::-webkit-scrollbar {
-    display: none;
+.modal-facebook .modal-content {
+    height: 100%;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    background: black; /* Para que no se vean bordes blancos feos en la zona de la foto */
+    box-shadow: 0 12px 28px 0 rgba(0,0,0,0.2), 0 2px 4px 0 rgba(0,0,0,0.1); /* Sombra elegante */
+}
+
+.modal-facebook .modal-body {
+    padding: 0;
+    height: 100%;
+    background: white;
+}
+
+/* Forzamos que el ROW ocupe toda la altura */
+.modal-facebook .row {
+    height: 100%;
+    margin: 0;
+}
+
+/* --- COLUMNA IZQUIERDA (IMAGEN) --- */
+.facebook-media-col {
+    background-color: #000; /* Fondo negro cine */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0;
+    overflow: hidden;
+}
+
+.facebook-media-col img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* La imagen se ajusta sin recortarse */
+}
+
+#modalNoImage {
+    background: linear-gradient(135deg, #E57B28 0%, #fab1a0 100%);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+    flex-direction: column;
+}
+
+/* --- COLUMNA DERECHA (COMENTARIOS) --- */
+.facebook-comments-col {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #fff;
+    border-left: 1px solid #e9ecef;
+    padding: 0;
+}
+
+/* Cabecera del autor (Fija arriba) */
+.fb-comments-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f2f5;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.fb-comments-header strong {
+    font-size: 0.95rem;
+    color: #050505;
+}
+
+/* Cuerpo de comentarios (Con scroll) */
+.fb-comments-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px 20px;
+    
+    /* Ocultar barra de scroll fea pero permitir scroll */
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+/* Pie de página (Input fijo abajo) */
+.fb-comments-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #f0f2f5;
+    flex-shrink: 0;
+    background-color: #fff;
+}
+
+/* --- ESTILOS DE BURBUJAS DE CHAT --- */
+.comment-item {
+    margin-bottom: 12px;
+}
+
+.comment-bubble {
+    background-color: #f0f2f5;
+    border-radius: 18px;
+    padding: 8px 12px;
+    display: inline-block;
+    max-width: 90%;
+    position: relative;
+}
+
+.comment-bubble strong {
+    display: block;
+    font-size: 0.85rem;
+    color: #050505;
+    margin-bottom: 2px;
+}
+
+.comment-bubble span {
+    font-size: 0.9rem;
+    color: #050505;
+    line-height: 1.4;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Botones pequeños bajo el comentario (Responder, Me gusta) */
+.comment-actions {
+    margin-left: 12px;
+    margin-top: 2px;
+}
+
+.comment-actions small {
+    cursor: pointer;
+    margin-right: 12px;
+    font-weight: 600;
+    color: #65676b;
+    font-size: 12px;
+}
+
+.comment-actions small:hover {
+    text-decoration: underline;
+}
+
+/* Input de comentarios */
+#commentForm {
+    background-color: #f0f2f5;
+    border-radius: 20px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+}
+
+#commentInput {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    font-size: 0.95rem;
+    padding-left: 10px;
+}
+
+#commentForm button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e57b28;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+#commentForm button:hover {
+    transform: scale(1.1);
+    background: #d2691e;
+}
+
+#commentForm button i {
+    font-size: 0.9rem;
+    color: white;
 }

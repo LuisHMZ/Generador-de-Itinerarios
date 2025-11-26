@@ -304,7 +304,9 @@
                             <li class="text-muted small ms-2">No hay amigos conectados.</li>
                         {% endfor %}
                     </ul>
+
                     <hr class="my-4">
+
                     <h6 class="text-muted fw-bold mb-3 ms-2 text-uppercase" style="font-size: 0.8rem;">Sugerencias</h6>
                     <ul class="contacts-list">
                         {% for data in users_with_status %}
@@ -426,37 +428,12 @@
         function getCookie(name) {let cookieValue = null;if (document.cookie && document.cookie !== '') {const cookies = document.cookie.split(';');for (let i = 0; i < cookies.length; i++) {const cookie = cookies[i].trim();if (cookie.substring(0, name.length + 1) === (name + '=')) {cookieValue = decodeURIComponent(cookie.substring(name.length + 1));break;}}}return cookieValue;}
         const csrftoken = getCookie('csrftoken');
         
-        // --- LIKES DE POSTS ---
-        document.querySelectorAll('.like-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');const countSpan = this.querySelector('.like-count');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {countSpan.textContent = data.count;if (data.liked) {icon.classList.replace('bi-heart', 'bi-heart-fill');icon.classList.add('text-danger');} else {icon.classList.replace('bi-heart-fill', 'bi-heart');icon.classList.remove('text-danger');}}}).catch(error => console.error('Error:', error));});});
-        
-        // --- GUARDAR POSTS ---
-        document.querySelectorAll('.save-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {if (data.saved) {icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');icon.classList.add('text-primary');} else {icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');icon.classList.remove('text-primary');}}}).catch(error => console.error('Error:', error));});});
+        // --- EVENT LISTENERS (Likes, Saves, etc) ---
+        document.querySelectorAll('.like-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');const countSpan = this.querySelector('.like-count');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {countSpan.textContent = data.count;if (data.liked) {icon.classList.replace('bi-heart', 'bi-heart-fill');icon.classList.add('text-danger');} else {icon.classList.replace('bi-heart-fill', 'bi-heart');icon.classList.remove('text-danger');}}});});});
+        document.querySelectorAll('.save-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {if (data.saved) {icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');icon.classList.add('text-primary');} else {icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');icon.classList.remove('text-primary');}}});});});
+        document.querySelectorAll('.save-itinerary-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(res => res.json()).then(data => {if (data.status === 'success') {if (data.saved) {icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');icon.classList.add('text-primary');} else {icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');icon.classList.remove('text-primary');}}});});});
 
-        // --- GUARDAR ITINERARIOS (NUEVO) ---
-        document.querySelectorAll('.save-itinerary-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const url = this.getAttribute('data-url');
-                const icon = this.querySelector('i');
-                fetch(url, {
-                    method: 'POST',
-                    headers: {'X-CSRFToken': csrftoken, 'Content-Type': 'application/json'}
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        if (data.saved) {
-                            icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');
-                            icon.classList.add('text-primary');
-                        } else {
-                            icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');
-                            icon.classList.remove('text-primary');
-                        }
-                    }
-                });
-            });
-        });
-
-        // --- CALIFICAR ITINERARIOS (ESTRELLAS) ---
+        // --- ESTRELLAS ---
         document.querySelectorAll('.star-btn').forEach(star => {
             star.addEventListener('click', function() {
                 const widget = this.closest('.star-rating-widget');
@@ -464,136 +441,38 @@
                 const value = this.dataset.value;
                 const stars = widget.querySelectorAll('.star-btn');
                 const avgDisplay = widget.querySelector('.avg-display');
-
-                // CORRECCIÓN: Usamos /api/posts/ para que coincida con la URL real
-                fetch(`/api/posts/itinerary/rate/${itineraryId}/`, {
-                    method: 'POST',
-                    headers: {'X-CSRFToken': csrftoken, 'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: `score=${value}`
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if(data.status === 'success') {
-                        // Actualizar visualmente las estrellas
-                        stars.forEach(s => {
-                            if(s.dataset.value <= value) {
-                                s.classList.remove('bi-star');
-                                s.classList.add('bi-star-fill', 'text-warning');
-                            } else {
-                                s.classList.remove('bi-star-fill', 'text-warning');
-                                s.classList.add('bi-star');
-                            }
-                        });
-                        avgDisplay.textContent = data.new_average + "/5";
-                    } else {
-                        alert(data.message);
-                    }
-                })
-                .catch(err => console.error("Error rating:", err));
+                fetch(`/api/posts/itinerary/rate/${itineraryId}/`, {method: 'POST',headers: {'X-CSRFToken': csrftoken, 'Content-Type': 'application/x-www-form-urlencoded'},body: `score=${value}`})
+                .then(res => res.json()).then(data => {if(data.status === 'success') {stars.forEach(s => {if(s.dataset.value <= value) {s.classList.remove('bi-star');s.classList.add('bi-star-fill', 'text-warning');} else {s.classList.remove('bi-star-fill', 'text-warning');s.classList.add('bi-star');}});avgDisplay.textContent = data.new_average + "/5";} else {alert(data.message);}});
             });
         });
 
         // --- CREAR POST ---
         const createPostForm = document.getElementById('createPostForm'); if (createPostForm) {createPostForm.addEventListener('submit', function(e) {e.preventDefault();const formData = new FormData(this);fetch("{% url 'posts:create_post' %}", { method: 'POST', headers: { 'X-CSRFToken': csrftoken }, body: formData }).then(response => response.json()).then(data => { if (data.status === 'success') { location.reload(); } else { alert('Error al crear. Revisa los datos.'); }});});}
         
-        // --- LÓGICA DE COMENTARIOS HÍBRIDA (POST E ITINERARIOS) ---
+        // --- COMENTARIOS (HÍBRIDO POST/ITINERARIO) ---
         const commentsModal = new bootstrap.Modal(document.getElementById('commentsModal'));
-        const modalImg = document.getElementById('modalPostImage'); 
-        const modalNoImg = document.getElementById('modalNoImage'); 
-        const modalAvatar = document.getElementById('modalAuthorAvatar'); 
-        const modalAuthor = document.getElementById('modalAuthorName'); 
-        const modalText = document.getElementById('modalPostText'); 
-        const modalList = document.getElementById('modalCommentsList'); 
-        const modalObjectIdInput = document.getElementById('modalObjectId'); 
-        const modalObjectTypeInput = document.getElementById('modalObjectType'); 
-        const commentForm = document.getElementById('commentForm'); 
-        const commentInput = document.getElementById('commentInput'); 
-        let replyingToCommentId = null; 
-        const replyIndicator = document.createElement('div'); replyIndicator.className = 'replying-to-alert d-none'; commentForm.parentNode.insertBefore(replyIndicator, commentForm);
-        
+        const modalImg = document.getElementById('modalPostImage'); const modalNoImg = document.getElementById('modalNoImage'); const modalAvatar = document.getElementById('modalAuthorAvatar'); const modalAuthor = document.getElementById('modalAuthorName'); const modalText = document.getElementById('modalPostText'); const modalList = document.getElementById('modalCommentsList'); const modalObjectIdInput = document.getElementById('modalObjectId'); const modalObjectTypeInput = document.getElementById('modalObjectType'); const commentForm = document.getElementById('commentForm'); const commentInput = document.getElementById('commentInput'); let replyingToCommentId = null; const replyIndicator = document.createElement('div'); replyIndicator.className = 'replying-to-alert d-none'; commentForm.parentNode.insertBefore(replyIndicator, commentForm);
         window.cancelReply = function() {replyingToCommentId = null;replyIndicator.classList.add('d-none');replyIndicator.innerHTML = '';commentInput.placeholder = "Escribe un comentario...";}
         
         document.querySelectorAll('.comment-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                const objectId = this.dataset.objectId; 
-                const objectType = this.dataset.objectType; // 'post' o 'itinerary'
-                const imgUrl = this.dataset.imageUrl; 
-                
-                cancelReply(); 
-                modalObjectIdInput.value = objectId; 
-                modalObjectTypeInput.value = objectType;
-
-                modalAuthor.textContent = this.dataset.author; 
-                modalAvatar.src = this.dataset.authorAvatar; 
-                modalText.textContent = this.dataset.text; 
-                
-                if (imgUrl) {
-                    modalImg.src = imgUrl; modalImg.classList.remove('d-none'); modalNoImg.classList.add('d-none');
-                } else {
-                    modalImg.classList.add('d-none'); modalNoImg.classList.remove('d-none');
-                } 
-                
+                const objectId = this.dataset.objectId; const objectType = this.dataset.objectType; 
+                cancelReply(); modalObjectIdInput.value = objectId; modalObjectTypeInput.value = objectType;
+                modalAuthor.textContent = this.dataset.author; modalAvatar.src = this.dataset.authorAvatar; modalText.textContent = this.dataset.text; 
+                if (this.dataset.imageUrl) { modalImg.src = this.dataset.imageUrl; modalImg.classList.remove('d-none'); modalNoImg.classList.add('d-none'); } else { modalImg.classList.add('d-none'); modalNoImg.classList.remove('d-none'); } 
                 modalList.innerHTML = '<p class="text-center text-muted mt-4"><div class="spinner-border text-primary" role="status"></div></p>'; 
                 commentsModal.show(); 
-
-                // CORRECCIÓN: Usamos /api/posts/ al inicio
-                let loadUrl = objectType === 'post' 
-                    ? `/api/posts/comments/load/${objectId}/` 
-                    : `/api/posts/itinerary/comments/load/${objectId}/`;
-
-                fetch(loadUrl).then(res => res.json()).then(data => {
-                    modalList.innerHTML = '';
-                    if (data.comments.length === 0) {
-                        modalList.innerHTML = '<p id="no-comments-msg" class="text-center text-muted mt-5">Sé el primero en comentar.</p>';
-                    } else {
-                        data.comments.forEach(c => addCommentToDOM(c));
-                        modalList.scrollTop = modalList.scrollHeight;
-                    }
-                })
-                .catch(err => {
-                    console.error("Error cargando comentarios:", err);
-                    modalList.innerHTML = '<p class="text-danger text-center mt-4">Error al cargar comentarios.</p>';
-                });
+                let loadUrl = objectType === 'post' ? `/api/posts/comments/load/${objectId}/` : `/api/posts/itinerary/comments/load/${objectId}/`;
+                fetch(loadUrl).then(res => res.json()).then(data => {modalList.innerHTML = '';if (data.comments.length === 0) {modalList.innerHTML = '<p id="no-comments-msg" class="text-center text-muted mt-5">Sé el primero en comentar.</p>';} else {data.comments.forEach(c => addCommentToDOM(c));modalList.scrollTop = modalList.scrollHeight;}});
             });
         });
         
         commentForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const text = commentInput.value.trim();
-            const objectId = modalObjectIdInput.value;
-            const objectType = modalObjectTypeInput.value;
-            if (!text) return;
-            
-            const formData = new FormData();
-            formData.append('text', text);
-            if (replyingToCommentId) { formData.append('parent_id', replyingToCommentId); }
-            
-            // CORRECCIÓN: Usamos /api/posts/ al inicio
-            let addUrl = objectType === 'post' 
-                    ? `/api/posts/comments/add/${objectId}/` 
-                    : `/api/posts/itinerary/comments/add/${objectId}/`;
-
-            fetch(addUrl, {method: 'POST',headers: { 'X-CSRFToken': csrftoken },body: formData}).then(res => res.json()).then(data => {
-                if (data.status === 'success') {
-                    if (replyingToCommentId) {
-                        const parentContainer = document.getElementById(`replies-${replyingToCommentId}`);
-                        if (parentContainer) {
-                            const replyHtml = generateCommentHTML(data.new_comment);
-                            parentContainer.insertAdjacentHTML('beforeend', replyHtml);
-                        }
-                    } else {
-                        addCommentToDOM(data.new_comment);
-                        modalList.scrollTop = modalList.scrollHeight;
-                        // Actualizar contador
-                        const countSpan = document.querySelector(`.comment-btn[data-object-id="${objectId}"][data-object-type="${objectType}"] .comment-count`);
-                        if(countSpan) countSpan.textContent = parseInt(countSpan.textContent) + 1;
-                    }
-                    commentInput.value = '';
-                    cancelReply();
-                } else {
-                    alert("Error al comentar");
-                }
-            });
+            e.preventDefault(); const text = commentInput.value.trim(); if (!text) return;
+            const objectId = modalObjectIdInput.value; const objectType = modalObjectTypeInput.value;
+            const formData = new FormData(); formData.append('text', text); if (replyingToCommentId) { formData.append('parent_id', replyingToCommentId); }
+            let addUrl = objectType === 'post' ? `/api/posts/comments/add/${objectId}/` : `/api/posts/itinerary/comments/add/${objectId}/`;
+            fetch(addUrl, {method: 'POST',headers: { 'X-CSRFToken': csrftoken },body: formData}).then(res => res.json()).then(data => {if (data.status === 'success') {if (replyingToCommentId) {const p = document.getElementById(`replies-${replyingToCommentId}`);if (p) p.insertAdjacentHTML('beforeend', generateCommentHTML(data.new_comment));} else {addCommentToDOM(data.new_comment);modalList.scrollTop = modalList.scrollHeight;const countSpan = document.querySelector(`.comment-btn[data-object-id="${objectId}"][data-object-type="${objectType}"] .comment-count`);if(countSpan) countSpan.textContent = parseInt(countSpan.textContent) + 1;}commentInput.value = '';cancelReply();}});
         });
         
         function generateCommentHTML(c) {
@@ -605,6 +484,33 @@
         window.replyTo = function(commentId, username) {replyingToCommentId = commentId;replyIndicator.classList.remove('d-none');replyIndicator.innerHTML = `<small class="ms-2">Respondiendo a <strong>${username}</strong> <a href="#" onclick="cancelReply(); return false;" class="text-danger ms-1">Cancelar</a></small>`;commentInput.placeholder = `Escribe una respuesta a ${username}...`;commentInput.focus();}
         window.likeComment = function(commentId, element) {fetch(`/api/posts/comments/like/${commentId}/`, {method: 'POST',headers: { 'X-CSRFToken': csrftoken }}).then(res => res.json()).then(data => {if (data.status === 'success') {const countText = data.count > 0 ? `(${data.count})` : '';element.innerHTML = `${data.liked ? 'Te gusta' : 'Me gusta'} <span class="count">${countText}</span>`;if (data.liked) element.classList.add('text-danger');else element.classList.remove('text-danger');}});}
         window.deleteComment = function(commentId, element) {if (!confirm("¿Estás seguro de eliminar este comentario?")) return;fetch(`/api/posts/comments/delete/${commentId}/`, {method: 'POST',headers: { 'X-CSRFToken': csrftoken }}).then(res => res.json()).then(data => {if (data.status === 'success') {const commentDiv = document.getElementById(`comment-${commentId}`);if (commentDiv) commentDiv.remove();}});}
+        
+        // --- MANEJO DE NOTIFICACIONES (CORREGIDO) ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const openPostId = urlParams.get('open_post');
+        const openItinId = urlParams.get('open_itinerary');
+        
+        let targetSelector = null;
+        if (openPostId) {
+            targetSelector = `.comment-btn[data-object-id="${openPostId}"][data-object-type="post"]`;
+        } else if (openItinId) {
+            targetSelector = `.comment-btn[data-object-id="${openItinId}"][data-object-type="itinerary"]`;
+        }
+
+        if (targetSelector) {
+            const tryOpenModal = () => {
+                const targetBtn = document.querySelector(targetSelector);
+                if (targetBtn) {
+                    targetBtn.scrollIntoView({ behavior: 'auto', block: 'center' });
+                    targetBtn.click(); 
+                    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                    window.history.replaceState({path: newUrl}, '', newUrl);
+                    return true;
+                }
+                return false;
+            };
+            if (!tryOpenModal()) { setTimeout(() => { if (!tryOpenModal()) { setTimeout(tryOpenModal, 1500); } }, 500); }
+        }
     });
     </script>
 
