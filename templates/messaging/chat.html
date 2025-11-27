@@ -1,0 +1,355 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mensajes - MexTur</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <!-- NOTA: Ocultamos header/footer default en el CSS para este modo app si estorban, o los integramos mejor -->
+    <link rel="stylesheet" href="{% static 'css/header-footer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/feed.css' %}">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+
+    <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
+</head>
+<body>
+
+    <!-- Header General del Sitio -->
+    <div id="site-header"></div>
+
+    <!-- Contenedor Principal "Full Height" -->
+    <div class="container-fluid chat-wrapper">
+        <div class="row chat-layout-row">
+            
+            <!-- 1. MENÚ LATERAL (Izquierda) -->
+            <!-- d-none d-lg-block: Oculto en tablets y celulares para dar espacio -->
+            <div class="col-lg-2 d-none d-lg-block sidebar-col">
+                <div class="menu-lateral-container">
+                    <!-- Reutilizamos tu estructura de menú pero sin la tarjeta -->
+                    <div class="menu-lateral">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <a href="{% url 'profile_view' user.username %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
+                                    <i class="fa-solid fa-user fa-fw me-2"></i> Perfil
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="#" class="menu-item text-decoration-none d-flex align-items-center text-primary fw-bold bg-light rounded">
+                                    <i class="fa-solid fa-envelope fa-fw me-2"></i> Mensajes
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="#" class="menu-item text-decoration-none d-flex align-items-center text-dark">
+                                    <i class="fa-solid fa-map-location-dot fa-fw me-2"></i> Itinerarios
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="{% url 'saved_posts_view' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
+                                    <i class="fa-solid fa-bookmark fa-fw me-2"></i> Guardados
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="{% url 'friend_requests_view' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
+                                    <i class="fa-solid fa-users fa-fw me-2"></i> Amigos
+                                </a>
+                            </li>
+                            <li class="mt-4 pt-3 border-top">
+                                <a href="{% url 'home' %}" class="menu-item text-decoration-none d-flex align-items-center text-muted small">
+                                    <i class="fa-solid fa-arrow-left fa-fw me-2"></i> Volver al Inicio
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. LISTA DE CHATS (Centro/Izquierda) -->
+            <!-- col-md-4 en tablet, col-lg-3 en escritorio -->
+            <div class="col-md-4 col-lg-3 chat-sidebar">
+                <div class="conversations-container">
+                    <div class="conv-header">
+                        <h5 class="mb-3 fw-bold">Mensajes</h5>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" class="form-control bg-light border-start-0" placeholder="Buscar..." id="search-conversaciones">
+                        </div>
+                    </div>
+                    
+                    <div id="lista-conversaciones">
+                        <div class="text-center mt-5 text-muted">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. CHAT ACTIVO (Derecha) -->
+            <!-- col-md-8 en tablet, col-lg-7 en escritorio -->
+            <div class="col-md-8 col-lg-7 chat-main">
+                
+                <!-- ESTADO VACÍO (Visible al inicio) -->
+                <div id="empty-state">
+                    <i class="far fa-paper-plane fa-3x mb-3 text-secondary"></i>
+                    <h5 class="text-muted">Tus mensajes</h5>
+                    <p class="text-muted small">Elige una conversación para empezar</p>
+                </div>
+
+                <!-- INTERFAZ DE CHAT (Oculta hasta seleccionar) -->
+                <div id="active-chat-interface" class="chat-interface" style="display: none !important;">
+                    
+                    <!-- A. Header Fijo -->
+                    <div class="chat-header-bar">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-arrow-left" id="btn-back-mobile"></i>
+                            <a href="#" id="header-profile-link" class="text-decoration-none d-flex align-items-center text-dark">
+                                <img src="" id="header-avatar" width="40" height="40" class="rounded-circle object-fit-cover me-2">
+                                <div>
+                                    <h6 class="mb-0 fw-bold" id="header-name">Usuario</h6>
+                                    <small class="text-success d-flex align-items-center" style="font-size: 0.75rem;">
+                                        <i class="fas fa-circle me-1" style="font-size: 6px;"></i> En línea
+                                    </small>
+                                </div>
+                            </a>
+                        </div>
+                        <div>
+                            <button class="btn btn-link text-muted"><i class="fas fa-ellipsis-v"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- B. Área de Mensajes (Scroll) -->
+                    <div id="chat-container">
+                        <div id="messages-wrapper"></div>
+                    </div>
+
+                    <!-- C. Footer Fijo -->
+                    <div class="chat-footer-bar">
+                        <form id="chat-form" class="d-flex gap-2 align-items-center">
+                            <button class="btn btn-light rounded-circle text-muted border" type="button">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <input type="text" id="chat-input" class="form-control rounded-pill bg-light border-0" placeholder="Escribe un mensaje..." autocomplete="off">
+                            <button class="btn btn-primary rounded-circle" type="submit" style="background-color: #e57b28; border: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="site-footer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/headerFooter.js' %}" defer></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const API_LIST = "{% url 'messaging:api_list' %}";
+            const API_MSG_BASE = "/api/messaging/api/messages/"; 
+            const API_SEND_BASE = "/api/messaging/api/send/";
+            const CSRF_TOKEN = "{{ csrf_token }}";
+
+            let activeChatId = null;
+            let lastMessageId = 0;
+            let pollingInterval = null;
+
+            // UI References
+            const listaUI = document.getElementById('lista-conversaciones');
+            const emptyState = document.getElementById('empty-state');
+            const chatInterface = document.getElementById('active-chat-interface');
+            
+            const headerName = document.getElementById('header-name');
+            const headerAvatar = document.getElementById('header-avatar');
+            const headerLink = document.getElementById('header-profile-link');
+            
+            const messagesWrapper = document.getElementById('messages-wrapper');
+            const chatContainer = document.getElementById('chat-container'); // El div con scroll
+            
+            const input = document.getElementById('chat-input');
+            const form = document.getElementById('chat-form');
+            const btnBack = document.getElementById('btn-back-mobile');
+
+            // --- BACK BUTTON (MOBILE) ---
+            btnBack.addEventListener('click', function() {
+                document.body.classList.remove('mobile-chat-active');
+                if(pollingInterval) clearInterval(pollingInterval);
+                activeChatId = null;
+                // Refrescar lista al volver
+                loadConversationList();
+            });
+
+            loadConversationList();
+            checkURLForChat();
+
+            function checkURLForChat() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const openChatId = urlParams.get('open_chat');
+                if(openChatId) {
+                    setTimeout(() => loadChat(openChatId), 500);
+                }
+            }
+
+            function loadConversationList() {
+                fetch(API_LIST)
+                    .then(res => res.json())
+                    .then(data => {
+                        listaUI.innerHTML = '';
+                        if(data.conversations.length === 0) {
+                            listaUI.innerHTML = '<div class="p-4 text-center text-muted small">No tienes mensajes aún.</div>';
+                            // Revisar si hay ID en URL aunque la lista esté vacía (chat nuevo)
+                            checkURLForChatOnEmpty(data.conversations);
+                            return;
+                        }
+                        
+                        data.conversations.forEach(chat => {
+                            const activeClass = chat.id == activeChatId ? 'active' : '';
+                            const item = `
+                                <a href="#" class="conversacion-item ${activeClass}" onclick="loadChat(${chat.id}, '${chat.name}', '${chat.avatar}', '${chat.username}')">
+                                    <img src="${chat.avatar}" alt="Avatar" width="48" height="48" class="rounded-circle object-fit-cover">
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <h6 class="mb-0 text-truncate fw-semibold" style="font-size: 0.95rem; color: #333;">${chat.name}</h6>
+                                            <small class="text-muted ms-2" style="font-size: 0.75rem;">${chat.time}</small>
+                                        </div>
+                                        <p class="mb-0 text-truncate text-muted" style="font-size: 0.85rem;">${chat.preview}</p>
+                                    </div>
+                                </a>
+                            `;
+                            listaUI.insertAdjacentHTML('beforeend', item);
+                        });
+                        
+                        // Verificar si el chat de la URL existe en la lista
+                        checkURLForChatOnEmpty(data.conversations);
+                    });
+            }
+
+            function checkURLForChatOnEmpty(conversations) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const openChatId = urlParams.get('open_chat');
+                if (openChatId && activeChatId != openChatId) {
+                    const target = conversations ? conversations.find(c => c.id == openChatId) : null;
+                    if (target) {
+                        loadChat(openChatId, target.name, target.avatar, target.username);
+                    } else {
+                        // Chat nuevo
+                        loadChat(openChatId, 'Nuevo Chat', '{% static "img/default-avatar.png" %}', '');
+                    }
+                }
+            }
+
+            window.loadChat = function(chatId, name, avatar, username) {
+                document.body.classList.add('mobile-chat-active');
+                if(activeChatId === chatId) return;
+                
+                activeChatId = chatId;
+                lastMessageId = 0;
+
+                // Switch Views
+                emptyState.style.setProperty('display', 'none', 'important');
+                chatInterface.style.setProperty('display', 'flex', 'important');
+                
+                // Set Header Info
+                if(name) headerName.textContent = name;
+                if(avatar) headerAvatar.src = avatar;
+                
+                if(username) {
+                    headerLink.href = `/perfil/${username}/`;
+                    headerLink.style.pointerEvents = 'auto';
+                } else {
+                    headerLink.href = '#';
+                    headerLink.style.pointerEvents = 'none';
+                }
+
+                // Reset Messages
+                messagesWrapper.innerHTML = '<div class="loading-overlay"><div class="spinner-border text-primary" role="status"></div></div>';
+
+                fetchMessages(true);
+
+                if(pollingInterval) clearInterval(pollingInterval);
+                pollingInterval = setInterval(() => fetchMessages(false), 3000);
+            };
+
+            function fetchMessages(isFirstLoad) {
+                if(!activeChatId) return;
+                const url = isFirstLoad ? `${API_MSG_BASE}${activeChatId}/` : `${API_MSG_BASE}${activeChatId}/?last_id=${lastMessageId}`;
+
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        if(isFirstLoad) messagesWrapper.innerHTML = '';
+                        
+                        // Actualizar header si era chat nuevo
+                        if (isFirstLoad && data.chat_partner) {
+                             if (headerName.textContent === 'Nuevo Chat' || headerName.textContent === 'Usuario') {
+                                 headerName.textContent = data.chat_partner.name;
+                                 headerAvatar.src = data.chat_partner.avatar;
+                                 if(data.chat_partner.username) {
+                                     headerLink.href = `/perfil/${data.chat_partner.username}/`;
+                                     headerLink.style.pointerEvents = 'auto';
+                                 }
+                             }
+                        }
+
+                        if(data.messages.length > 0) {
+                            data.messages.forEach(msg => {
+                                if(document.getElementById(`msg-${msg.id}`)) return;
+                                
+                                const isMe = msg.is_me;
+                                const typeClass = isMe ? 'enviada' : 'recibida';
+                                
+                                const html = `
+                                    <div class="burbuja-mensaje ${typeClass}" id="msg-${msg.id}">
+                                        ${!isMe ? `<img src="${msg.avatar}" class="avatar-mensaje">` : ''}
+                                        <div class="texto-mensaje">
+                                            <div>${msg.content}</div>
+                                            <div class="text-end mt-1" style="font-size: 0.65rem; opacity: 0.7;">${msg.time}</div>
+                                        </div>
+                                    </div>
+                                `;
+                                messagesWrapper.insertAdjacentHTML('beforeend', html);
+                                lastMessageId = Math.max(lastMessageId, msg.id);
+                            });
+                            
+                            // Scroll to bottom
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                            
+                            if(!isFirstLoad) loadConversationList();
+                        } else if (isFirstLoad) {
+                            messagesWrapper.innerHTML = '<div class="text-center mt-5 text-muted small">Envía un mensaje para comenzar.</div>';
+                        }
+                    });
+            }
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const text = input.value.trim();
+                if(!text || !activeChatId) return;
+                
+                const formData = new FormData();
+                formData.append('content', text);
+                input.value = ''; 
+                input.focus();
+                
+                fetch(`${API_SEND_BASE}${activeChatId}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': CSRF_TOKEN },
+                    body: formData
+                }).then(res => res.json()).then(data => {
+                    if(data.status === 'success') {
+                        fetchMessages(false);
+                        setTimeout(loadConversationList, 500); 
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

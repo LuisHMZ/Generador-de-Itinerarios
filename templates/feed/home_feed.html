@@ -9,7 +9,10 @@
     </title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- CORRECCIÓN 1: Importar correctamente los Iconos -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
     <link rel="stylesheet" href="{% static 'css/header-footer.css' %}">
@@ -18,7 +21,6 @@
 
     <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" crossorigin="anonymous"></script>
     <style>
         /* Estilo simple para las estrellas interactivas */
         .star-rating-widget .bi-star, .star-rating-widget .bi-star-fill {
@@ -27,6 +29,23 @@
         }
         .star-rating-widget .bi-star:hover, .star-rating-widget .bi-star-fill:hover {
             color: #ffc107 !important; /* Amarillo al pasar el mouse */
+        }
+
+        /* --- AJUSTE DEL MODAL (Para que abrace la imagen) --- */
+        .modal-facebook .modal-dialog {
+            width: fit-content !important; /* Se ajusta al contenido */
+            max-width: 95vw !important;    /* Pero no se pasa del ancho de pantalla */
+            margin: 1.5rem auto;
+        }
+        
+        .modal-facebook .modal-content {
+            width: 100%;
+            max-width: 600px; /* Ancho máximo de la tarjeta */
+            margin: 0 auto;   /* Centrado */
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
         }
     </style>
 </head>
@@ -53,6 +72,7 @@
     <main class="container py-4" style="background-color: #f8f9fa;">
         <div class="row gx-4">
 
+            <!-- BARRA LATERAL IZQUIERDA -->
             <aside class="col-lg-2 col-md-3 d-none d-md-block">
                 <div class="menu-lateral p-3 bg-white rounded-4 shadow-sm">
                     <ul class="list-unstyled mb-0">
@@ -62,7 +82,7 @@
                             </a>
                         </li>
                         <li class="mb-3">
-                            <a href="#" class="menu-item text-decoration-none d-flex align-items-center text-dark">
+                            <a href="{% url 'messaging:inbox' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
                                 <i class="fa-solid fa-envelope"></i> <span class="ms-2">Mensajes</span>
                             </a>
                         </li>
@@ -85,6 +105,7 @@
                 </div>
             </aside>
 
+            <!-- COLUMNA CENTRAL (FEED) -->
             <div class="col-lg-7 col-md-9">
                 
                 {% if not is_saved_view %}
@@ -109,6 +130,7 @@
                 <div id="feed-container">
                     {% for item in feed_items %}
                         
+                        <!-- POST ESTÁNDAR -->
                         {% if item.feed_type == 'post' %}
                             {% with post=item %}
                             <article class="post-card mb-4">
@@ -186,7 +208,7 @@
                             </article>
                             {% endwith %}
 
-
+                        <!-- ITINERARIO -->
                         {% elif item.feed_type == 'itinerary' %}
                             <article class="post-card mb-4" style="border-left: 5px solid #E57B28;"> 
                                 <header class="post-header">
@@ -214,7 +236,6 @@
                                     {% endif %}
                                     <div class="position-absolute bottom-0 start-0 w-100 p-2" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); color: white;">
                                         <h5 class="m-0">{{ item.title }}</h5>
-                                        
                                         <div class="d-flex align-items-center star-rating-widget" data-itinerary-id="{{ item.id }}">
                                             {% with user_score=item.user_rating|default:0 %}
                                                 <i class="bi bi-star{% if user_score >= 1 %}-fill text-warning{% endif %} me-1 star-btn" data-value="1"></i>
@@ -242,7 +263,6 @@
                                     <p class="post-desc">{{ item.description|truncatewords:30 }}</p>
                                     
                                     <div class="d-flex align-items-center mt-3 pt-2 border-top">
-                                        
                                         <div class="action-btn comment-btn me-4" 
                                              style="cursor: pointer; color: #555;"
                                              data-object-id="{{ item.id }}"
@@ -282,13 +302,15 @@
 
             </div>
 
+            <!-- BARRA LATERAL DERECHA -->
             <aside class="col-lg-3 d-none d-lg-block">
                 <div class="right-sidebar-sticky">
+                    
                     <h6 class="text-muted fw-bold mb-3 ms-2 text-uppercase" style="font-size: 0.8rem;">Contactos</h6>
                     <ul class="contacts-list mb-4">
                         {% for friend in online_friends %}
                         <li>
-                            <a href="{% url 'profile_view' friend.username %}" class="contact-item">
+                            <a href="{% url 'messaging:start_conversation' friend.id %}" class="contact-item" title="Enviar mensaje">
                                 <div class="contact-avatar-wrapper">
                                     {% if friend.profile.profile_picture %}
                                         <img src="{{ friend.profile.profile_picture.url }}" class="contact-avatar">
@@ -327,12 +349,13 @@
                                         </div>
                                     </a>
                                     <div>
+                                        <!-- CORRECCIÓN 2: Usar iconos FontAwesome para asegurar que se vean -->
                                         {% if data.status == 'PENDING_SENT' %}
-                                            <a href="{% url 'cancel_friend_request' data.request_id %}" class="btn btn-sm btn-warning rounded-circle" title="Cancelar"><i class="bi bi-x"></i></a>
+                                            <a href="{% url 'cancel_friend_request' data.request_id %}" class="btn btn-sm btn-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" title="Cancelar"><i class="fas fa-times"></i></a>
                                         {% elif data.status == 'PENDING_RECEIVED' %}
-                                            <a href="{% url 'accept_friend_request' data.request_id %}" class="btn btn-sm btn-primary rounded-circle" title="Aceptar"><i class="bi bi-check"></i></a>
+                                            <a href="{% url 'accept_friend_request' data.request_id %}" class="btn btn-sm btn-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" title="Aceptar"><i class="fas fa-check"></i></a>
                                         {% else %} 
-                                            <a href="{% url 'send_friend_request' data.user.id %}" class="btn btn-sm btn-outline-primary rounded-circle" title="Agregar"><i class="bi bi-person-plus-fill"></i></a>
+                                            <a href="{% url 'send_friend_request' data.user.id %}" class="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" title="Agregar"><i class="fas fa-user-plus"></i></a>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -348,8 +371,10 @@
 
     <div id="site-footer"></div>
 
+    <!-- Modales -->
     <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Notificaciones</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div id="notifications-list"><p class="text-center text-muted p-3">Cargando...</p></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button></div></div></div></div>
     
+    <!-- Modal Crear Post -->
     <div class="modal fade" id="createPostModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -382,6 +407,7 @@
         </div>
     </div>
 
+    <!-- Modal Comentarios (HÍBRIDO) -->
     <div class="modal fade modal-facebook" id="commentsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 90% !important; margin: 1.75rem auto;">
             <div class="modal-content">
@@ -408,7 +434,8 @@
                             <div class="fb-comments-footer">
                                 <form id="commentForm" class="d-flex">
                                     <input type="hidden" id="modalObjectId">
-                                    <input type="hidden" id="modalObjectType"> <input type="text" id="commentInput" class="form-control rounded-pill me-2" placeholder="Escribe un comentario..." autocomplete="off">
+                                    <input type="hidden" id="modalObjectType">
+                                    <input type="text" id="commentInput" class="form-control rounded-pill me-2" placeholder="Escribe un comentario..." autocomplete="off">
                                     <button type="submit" class="btn btn-primary rounded-circle"><i class="bi bi-send-fill"></i></button>
                                 </form>
                             </div>
@@ -428,12 +455,10 @@
         function getCookie(name) {let cookieValue = null;if (document.cookie && document.cookie !== '') {const cookies = document.cookie.split(';');for (let i = 0; i < cookies.length; i++) {const cookie = cookies[i].trim();if (cookie.substring(0, name.length + 1) === (name + '=')) {cookieValue = decodeURIComponent(cookie.substring(name.length + 1));break;}}}return cookieValue;}
         const csrftoken = getCookie('csrftoken');
         
-        // --- EVENT LISTENERS (Likes, Saves, etc) ---
         document.querySelectorAll('.like-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');const countSpan = this.querySelector('.like-count');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {countSpan.textContent = data.count;if (data.liked) {icon.classList.replace('bi-heart', 'bi-heart-fill');icon.classList.add('text-danger');} else {icon.classList.replace('bi-heart-fill', 'bi-heart');icon.classList.remove('text-danger');}}});});});
         document.querySelectorAll('.save-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {if (data.saved) {icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');icon.classList.add('text-primary');} else {icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');icon.classList.remove('text-primary');}}});});});
         document.querySelectorAll('.save-itinerary-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(res => res.json()).then(data => {if (data.status === 'success') {if (data.saved) {icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');icon.classList.add('text-primary');} else {icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');icon.classList.remove('text-primary');}}});});});
 
-        // --- ESTRELLAS ---
         document.querySelectorAll('.star-btn').forEach(star => {
             star.addEventListener('click', function() {
                 const widget = this.closest('.star-rating-widget');
@@ -446,10 +471,8 @@
             });
         });
 
-        // --- CREAR POST ---
         const createPostForm = document.getElementById('createPostForm'); if (createPostForm) {createPostForm.addEventListener('submit', function(e) {e.preventDefault();const formData = new FormData(this);fetch("{% url 'posts:create_post' %}", { method: 'POST', headers: { 'X-CSRFToken': csrftoken }, body: formData }).then(response => response.json()).then(data => { if (data.status === 'success') { location.reload(); } else { alert('Error al crear. Revisa los datos.'); }});});}
         
-        // --- COMENTARIOS (HÍBRIDO POST/ITINERARIO) ---
         const commentsModal = new bootstrap.Modal(document.getElementById('commentsModal'));
         const modalImg = document.getElementById('modalPostImage'); const modalNoImg = document.getElementById('modalNoImage'); const modalAvatar = document.getElementById('modalAuthorAvatar'); const modalAuthor = document.getElementById('modalAuthorName'); const modalText = document.getElementById('modalPostText'); const modalList = document.getElementById('modalCommentsList'); const modalObjectIdInput = document.getElementById('modalObjectId'); const modalObjectTypeInput = document.getElementById('modalObjectType'); const commentForm = document.getElementById('commentForm'); const commentInput = document.getElementById('commentInput'); let replyingToCommentId = null; const replyIndicator = document.createElement('div'); replyIndicator.className = 'replying-to-alert d-none'; commentForm.parentNode.insertBefore(replyIndicator, commentForm);
         window.cancelReply = function() {replyingToCommentId = null;replyIndicator.classList.add('d-none');replyIndicator.innerHTML = '';commentInput.placeholder = "Escribe un comentario...";}
@@ -485,29 +508,17 @@
         window.likeComment = function(commentId, element) {fetch(`/api/posts/comments/like/${commentId}/`, {method: 'POST',headers: { 'X-CSRFToken': csrftoken }}).then(res => res.json()).then(data => {if (data.status === 'success') {const countText = data.count > 0 ? `(${data.count})` : '';element.innerHTML = `${data.liked ? 'Te gusta' : 'Me gusta'} <span class="count">${countText}</span>`;if (data.liked) element.classList.add('text-danger');else element.classList.remove('text-danger');}});}
         window.deleteComment = function(commentId, element) {if (!confirm("¿Estás seguro de eliminar este comentario?")) return;fetch(`/api/posts/comments/delete/${commentId}/`, {method: 'POST',headers: { 'X-CSRFToken': csrftoken }}).then(res => res.json()).then(data => {if (data.status === 'success') {const commentDiv = document.getElementById(`comment-${commentId}`);if (commentDiv) commentDiv.remove();}});}
         
-        // --- MANEJO DE NOTIFICACIONES (CORREGIDO) ---
         const urlParams = new URLSearchParams(window.location.search);
         const openPostId = urlParams.get('open_post');
         const openItinId = urlParams.get('open_itinerary');
-        
         let targetSelector = null;
-        if (openPostId) {
-            targetSelector = `.comment-btn[data-object-id="${openPostId}"][data-object-type="post"]`;
-        } else if (openItinId) {
-            targetSelector = `.comment-btn[data-object-id="${openItinId}"][data-object-type="itinerary"]`;
-        }
+        if (openPostId) { targetSelector = `.comment-btn[data-object-id="${openPostId}"][data-object-type="post"]`; } 
+        else if (openItinId) { targetSelector = `.comment-btn[data-object-id="${openItinId}"][data-object-type="itinerary"]`; }
 
         if (targetSelector) {
             const tryOpenModal = () => {
                 const targetBtn = document.querySelector(targetSelector);
-                if (targetBtn) {
-                    targetBtn.scrollIntoView({ behavior: 'auto', block: 'center' });
-                    targetBtn.click(); 
-                    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-                    window.history.replaceState({path: newUrl}, '', newUrl);
-                    return true;
-                }
-                return false;
+                if (targetBtn) { targetBtn.scrollIntoView({ behavior: 'auto', block: 'center' }); targetBtn.click(); const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname; window.history.replaceState({path: newUrl}, '', newUrl); return true; } return false;
             };
             if (!tryOpenModal()) { setTimeout(() => { if (!tryOpenModal()) { setTimeout(tryOpenModal, 1500); } }, 500); }
         }

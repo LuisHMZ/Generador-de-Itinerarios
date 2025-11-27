@@ -45,7 +45,7 @@ def simple_register_view(request):
                 return JsonResponse({'status': 'success', 'message': '¡Registro exitoso!'})
             else:
                 messages.success(request, '¡Registro exitoso! Ahora puedes iniciar sesión.')
-                return redirect('simple_login') # Asegúrate que esta URL name exista
+                return redirect('simple_login')
         else:
             if is_ajax:
                 return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
@@ -114,13 +114,13 @@ def home_feed_view(request):
             'user', 'user__profile'
         ).prefetch_related(
             'pictures', 'likes', 'saved_by', 'comments'
-        ).distinct() # distinct() es importante cuando usas Q con relaciones
+        ).distinct()
     except Exception:
         posts = []
 
     # 4. Obtener ITINERARIOS
     itineraries = Itinerary.objects.filter(
-         user_id__in=users_to_show # <--- También oculta los itinerarios públicos de desconocidos
+         user_id__in=users_to_show 
     ).select_related('user')
 
     # 5. Etiquetar tipos
@@ -210,12 +210,13 @@ def send_friend_request(request, to_user_id):
 
 @login_required
 def friend_requests_view(request):
-    pending_requests = FriendshipRequest.objects.filter(to_user=request.user, rejected__isnull=True).order_by('-created')
-    my_friends = Friend.objects.friends(request.user)
+    # --- CORRECCIÓN: Usamos los nombres exactos que el HTML espera ---
+    friend_requests = FriendshipRequest.objects.filter(to_user=request.user, rejected__isnull=True).order_by('-created')
+    friends = Friend.objects.friends(request.user)
+    
     context = {
-        'pending_requests': pending_requests,
-        'has_requests': pending_requests.exists(),
-        'my_friends': my_friends,
+        'friend_requests': friend_requests, # Antes era 'pending_requests'
+        'friends': friends,                 # Antes era 'my_friends'
     }
     return render(request, 'feed/friend_requests.html', context)
 
@@ -225,7 +226,6 @@ def accept_friend_request(request, request_id):
     try:
         friend_request.accept()
         try:
-            # CORREGIDO: Usamos 'profile_view' que es el name correcto en urls.py
             link = request.build_absolute_uri(reverse('profile_view', args=[request.user.username]))
         except Exception:
             link = '#' 
@@ -233,7 +233,7 @@ def accept_friend_request(request, request_id):
         messages.success(request, f"¡Ahora eres amigo de {friend_request.from_user.username}!")
     except Exception as e:
         messages.error(request, f"Error al aceptar: {e}")
-    return redirect('home')
+    return redirect('friend_requests_view') # Redirige a la misma lista para ver cambios
 
 @login_required
 def reject_friend_request(request, request_id):
@@ -243,7 +243,7 @@ def reject_friend_request(request, request_id):
         messages.warning(request, f"Has rechazado la solicitud.")
     except Exception as e:
         messages.error(request, f"Error al rechazar: {e}")
-    return redirect('home')
+    return redirect('friend_requests_view')
 
 @login_required
 def remove_friend(request, user_id):
@@ -254,7 +254,7 @@ def remove_friend(request, user_id):
         messages.success(request, f"Eliminaste a {friend_to_remove.username} de tus amigos.")
     except Exception as e:
         messages.error(request, f"Error al eliminar: {e}")
-    return redirect('home')
+    return redirect('friend_requests_view')
 
 @login_required
 def cancel_friend_request(request, request_id):

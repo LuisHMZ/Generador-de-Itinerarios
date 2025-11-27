@@ -528,3 +528,285 @@
     font-size: 0.9rem;
     color: white;
 }
+/* ========================================= */
+/* === ESTILOS DE SOLICITUDES DE AMISTAD === */
+/* ========================================= */
+
+.requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.request-card {
+    background-color: #fff;
+    border: 1px solid #f0f0f0; /* Borde muy sutil */
+    border-radius: 12px;
+    padding: 15px 20px;
+    transition: box-shadow 0.2s ease;
+}
+
+.request-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.request-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.placeholder-avatar {
+    background-color: #e9ecef;
+    font-size: 20px;
+}
+
+/* Botón ACEPTAR (Verde) */
+.btn-accept {
+    background-color: #28a745; /* Verde éxito */
+    color: white;
+    border: none;
+    padding: 6px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.btn-accept:hover {
+    background-color: #218838;
+    color: white;
+}
+
+/* Botón ELIMINAR (Borde Rojo, Fondo Blanco) */
+.btn-delete {
+    background-color: transparent;
+    color: #dc3545; /* Rojo */
+    border: 1px solid #dc3545;
+    padding: 6px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.btn-delete:hover {
+    background-color: #fff5f5; /* Rojo muy clarito al pasar el mouse */
+    color: #c82333;
+    border-color: #c82333;
+}
+
+/* Ajuste para móviles */
+@media (max-width: 576px) {
+    .request-card {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    .request-card .d-flex:last-child {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 10px;
+    }
+}
+
+/* ... (Mantén todo tu CSS anterior del Feed aquí) ... */
+
+/* ========================================= */
+/* === ESTILOS DE MENSAJERÍA (CHAT APP) === */
+/* ========================================= */
+
+/* Ajuste del Header del sitio para que no moleste el layout */
+#site-header {
+    height: auto;
+    flex-shrink: 0;
+    z-index: 100;
+    position: relative;
+}
+
+/* Contenedor Principal */
+.chat-wrapper {
+    height: calc(100vh - 80px); 
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+.chat-layout-row {
+    width: 100%;
+    height: 100%;
+    margin: 0 !important;
+    --bs-gutter-x: 0;
+}
+
+/* --- COLUMNAS --- */
+.sidebar-col, .chat-sidebar, .chat-main {
+    height: 100%;
+    padding: 0 !important;
+    border-right: 1px solid #e9ecef;
+}
+
+/* --- MENU LATERAL (Izquierda) --- */
+.menu-lateral-container {
+    height: 100%;
+    overflow-y: auto;
+    background-color: #fff;
+}
+.chat-menu-lateral { /* Clase específica para diferenciar si es necesario */
+    padding: 15px;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+/* --- LISTA DE CONVERSACIONES (Centro) --- */
+.conversations-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #fff;
+}
+
+.conv-header {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: #fff;
+}
+
+#lista-conversaciones {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* --- CHAT PRINCIPAL (Derecha) --- */
+.chat-interface {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #fff;
+    position: relative;
+}
+
+/* Header del Chat */
+.chat-header-bar {
+    height: 65px;
+    padding: 0 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #fff;
+    flex-shrink: 0;
+}
+
+/* Área de Mensajes (SCROLL INFINITO REAL) */
+#chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: #f7f9fc;
+    display: flex;
+    flex-direction: column;
+}
+
+#messages-wrapper {
+    margin-top: auto;
+    width: 100%;
+}
+
+/* Footer (Input) */
+.chat-footer-bar {
+    padding: 15px 20px;
+    background-color: #fff;
+    border-top: 1px solid #f0f0f0;
+    flex-shrink: 0;
+}
+
+/* --- ESTILOS VISUALES Y ARREGLO DE IMÁGENES --- */
+.conversacion-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f8f9fa;
+    transition: background 0.2s;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.conversacion-item:hover { background-color: #f8f9fa; }
+.conversacion-item.active { background-color: #f0f7ff; border-left: 3px solid #e57b28; }
+
+/* IMÁGENES DE AVATAR (FIX PARA QUE NO SE VEAN RARAS) */
+.conversacion-item img, 
+.chat-header-bar img,
+.avatar-mensaje {
+    object-fit: cover; /* Asegura que la imagen llene el círculo sin estirarse */
+    flex-shrink: 0;    /* IMPIDE que la imagen se aplaste si falta espacio */
+}
+
+.burbuja-mensaje { display: flex; margin-bottom: 8px; width: 100%; }
+.texto-mensaje {
+    padding: 10px 14px;
+    border-radius: 12px;
+    max-width: 75%;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    position: relative;
+    word-wrap: break-word;
+}
+
+.burbuja-mensaje.enviada { justify-content: flex-end; }
+.burbuja-mensaje.enviada .texto-mensaje {
+    background-color: #e57b28;
+    color: white;
+    border-bottom-right-radius: 2px;
+}
+
+.burbuja-mensaje.recibida { justify-content: flex-start; }
+.burbuja-mensaje.recibida .texto-mensaje {
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #e9ecef;
+    border-bottom-left-radius: 2px;
+}
+
+/* Avatares en el chat */
+.avatar-mensaje { 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 50%; 
+    margin-right: 10px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+}
+
+.burbuja-mensaje.enviada .avatar-mensaje { 
+    margin-right: 0; 
+    margin-left: 10px; 
+    display: none; 
+}
+
+/* Estado Vacío */
+#empty-state {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    background-color: #f8f9fa;
+}
+
+/* --- RESPONSIVE (MÓVIL) --- */
+#btn-back-mobile { display: none; cursor: pointer; font-size: 1.2rem; margin-right: 15px; color: #444; }
+
+@media (max-width: 768px) {
+    .chat-wrapper { height: calc(100vh - 60px); }
+    .sidebar-col { display: none !important; }
+    
+    .chat-sidebar { width: 100%; display: block; }
+    .chat-main { width: 100%; display: none; border-left: none; }
+
+    body.mobile-chat-active .chat-sidebar { display: none; }
+    body.mobile-chat-active .chat-main { display: flex; }
+    #btn-back-mobile { display: block; }
+}
