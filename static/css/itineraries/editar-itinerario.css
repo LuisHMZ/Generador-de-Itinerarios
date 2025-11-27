@@ -1,0 +1,143 @@
+/* CSS Específico para editar-itinerario.html */
+
+body {
+    background-color: #f8f9fa; /* Fondo gris claro general */
+}
+
+.titulo-editar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #1a2a3a;
+}
+
+.titulo-editar h1 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.edit-icon-link {
+    color: #777;
+    font-size: 1.2em;
+    text-decoration: none;
+}
+.edit-icon-link:hover {
+    color: #1a2a3a;
+}
+
+#form-editar-itinerario.card {
+    border: none;
+    border-radius: 12px;
+}
+
+#form-editar-itinerario .form-label {
+    font-weight: 500;
+    color: #1F3C5A; /* Azul oscuro solicitado */
+    margin-bottom: 0.3rem;
+    font-size: 0.95em;
+}
+
+#form-editar-itinerario .form-control,
+#form-editar-itinerario .form-select {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.95rem;
+}
+#form-editar-itinerario .form-control:focus,
+#form-editar-itinerario .form-select:focus {
+    background-color: #ffffff;
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+#form-editar-itinerario textarea.form-control {
+    min-height: 140px;
+    resize: vertical;
+}
+
+#form-editar-itinerario .input-group-text {
+    background-color: #f8f9fa;
+    border-right: none;
+    border-color: #ced4da;
+    border-radius: 8px 0 0 8px;
+    color: #6c757d;
+}
+#form-editar-itinerario .input-group input {
+    border-left: none;
+     border-radius: 0 8px 8px 0;
+}
+#form-editar-itinerario .input-group input:focus {
+    border-left: none;
+    box-shadow: none;
+}
+#form-editar-itinerario .input-group:focus-within .input-group-text {
+     border-color: #86b7fe;
+     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+#form-editar-itinerario .input-group:focus-within input {
+     border-color: #86b7fe;
+     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+     border-left: none;
+     z-index: 3;
+}
+
+
+.file-name-display {
+    border-radius: 8px 0 0 8px !important;
+    background-color: #f8f9fa !important;
+    cursor: default;
+}
+.file-input-hidden {
+    display: none;
+}
+.file-browse-btn {
+    border-radius: 0 8px 8px 0 !important;
+    border-left-width: 0;
+    background-color: #e9ecef;
+    color: #495057;
+    border-color: #ced4da;
+}
+.file-browse-btn:hover {
+     background-color: #dde1e5;
+}
+
+.boton-cancelar {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+    padding: 8px 25px;
+    font-weight: 500;
+}
+.boton-cancelar:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+.boton-siguiente {
+    background-color: #48bbbb; /* Color Teal */
+    border-color: #48bbbb;
+    color: white;
+    padding: 8px 25px;
+    font-weight: 500;
+}
+.boton-siguiente:hover {
+    background-color: #3a9a9a;
+    border-color: #3a9a9a;
+}
+
+/* Media Queries */
+@media (max-width: 767.98px) {
+    #form-editar-itinerario.card {
+        padding: 20px;
+    }
+    .titulo-editar h1 {
+        font-size: 1.5rem;
+    }
+    .d-flex.justify-content-between {
+        flex-direction: column-reverse;
+        gap: 10px;
+        align-items: stretch;
+    }
+}

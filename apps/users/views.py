@@ -118,7 +118,7 @@ def simple_login_view(request):
         if is_ajax:
             return JsonResponse({'status': 'already_authenticated', 'message': 'Ya has iniciado sesión.'})
         else:
-            return redirect('simple_register')  # Aún no tenemos home, se redirige al registro
+            return redirect('home')  # Aún no tenemos home, se redirige al registro
     
     # Manejo del formulario de login aquí
     if request.method == 'POST':

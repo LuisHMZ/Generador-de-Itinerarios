@@ -21,18 +21,39 @@ class TouristicPlace(models.Model):
     website = models.URLField(max_length=255, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
     opening_hours = models.TextField(blank=True)
+    photo = models.ImageField(upload_to='place_photos/', null=True, blank=True, help_text="Imagen representativa del lugar turístico.")
     # La tabla intermedia Place_Category se crea con esta relación
     categories = models.ManyToManyField(Category, related_name="places")
+
 
     def __str__(self):
         return self.name
 
 class Itinerary(models.Model):
+
+    # Opciones de status (Draft)
+    STATUS_CHOICES = [
+        ('draft', 'Borrador'),       # El usuario está creando
+        ('published', 'Publicado'),   # El usuario terminó y guardó
+        # ('archived', 'Archivado'), # Opcional a futuro
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     description = models.CharField(max_length=255, blank=True) # Corregido para no tener dos descripciones
     banner_pic = models.ImageField(upload_to='itinerary_banners/', null=True, blank=True)
+    # Campos adicionales para creación/edición desde la UI
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    category = models.CharField(max_length=50, blank=True)
     creation_date = models.DateTimeField(auto_now_add=True)
+
+    # Status (Draft)
+    status = models.CharField(
+        max_length=10, 
+        choices=STATUS_CHOICES, 
+        default='draft'  # ¡Importante!
+    )
 
     def __str__(self):
         return self.title

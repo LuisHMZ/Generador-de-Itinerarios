@@ -1,0 +1,242 @@
+/* CSS ESPECÍFICO para añadir-paradas.html */
+
+body {
+    background-color: #f8f9fa; /* Fondo gris claro */
+}
+
+/* Título del itinerario actual */
+.itinerario-titulo-container {
+    padding-left: 15px; /* Alineación con el contenido principal */
+    border-bottom: 2px solid #e9ecef; /* Línea divisoria */
+    padding-bottom: 10px;
+    margin-bottom: 30px;
+    margin-left: -12px; /* Ajuste para que la línea se extienda un poco más */
+    margin-right: -12px;
+}
+
+.itinerario-titulo-container h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #1F3C5A; /* Azul oscuro */
+}
+
+/* Títulos de secciones de tarjetas (Recomendaciones, Popular) */
+.card-title-lg {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #1F3C5A;
+    margin-bottom: 1.5rem;
+}
+
+/* Estilo general de las tarjetas de lugar */
+.lugar-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.lugar-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.lugar-card .card-img-top {
+    height: 120px; /* Altura fija para las imágenes */
+    object-fit: cover;
+}
+
+.lugar-card .card-body {
+    padding: 1rem;
+}
+
+.lugar-card .card-title-sm {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #334e68;
+    margin-bottom: 0.5rem;
+    white-space: nowrap; /* Evita que el texto se rompa */
+    overflow: hidden; /* Oculta el exceso */
+    text-overflow: ellipsis; /* Añade puntos suspensivos */
+}
+
+/* Badges de categoría */
+.categoria-badge {
+    font-size: 0.75rem;
+    padding: 0.3em 0.6em;
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+.categoria-badge.categoria-naturaleza {
+    background-color: #6cbf84; /* Verde claro */
+    color: #fff;
+}
+.categoria-badge.categoria-cultural {
+    background-color: #f39c12; /* Naranja */
+    color: #fff;
+}
+.categoria-badge.categoria-aventura {
+    background-color: #007bff; /* Azul */
+    color: #fff;
+}
+/* Añade más categorías según sea necesario */
+
+
+/* Botones 'Ver' y 'Añadir' en las tarjetas de recomendación */
+.btn-ver, .btn-add {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+}
+
+/* Columna de Mi Itinerario (Derecha) */
+.sticky-top {
+    top: 20px; /* Ajusta la posición pegajosa */
+}
+
+.card-header .input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.card-header .dropdown-toggle {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+}
+
+/* Elementos de la lista de itinerarios */
+#mi-itinerario-lugares-lista .list-group-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eee;
+    background-color: #fff;
+}
+#mi-itinerario-lugares-lista .list-group-item:first-child {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+#mi-itinerario-lugares-lista .list-group-item:last-child {
+    border-bottom: none;
+}
+
+
+.lugar-itinerario-item {
+    background-color: #ffffff; /* Fondo blanco */
+    border-radius: 8px; /* Bordes redondeados */
+    margin-bottom: 8px; /* Espacio entre items */
+    padding: 10px 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Sombra sutil */
+    align-items: center;
+}
+.lugar-itinerario-item:last-child {
+    margin-bottom: 0;
+}
+
+.orden-dia {
+    font-weight: 600;
+    color: #49A3A3; /* Color teal */
+    font-size: 1.1em;
+    min-width: 25px; /* Asegura un ancho mínimo */
+    text-align: center;
+}
+
+.lugar-itinerario-img {
+    width: 60px; /* Tamaño de la imagen pequeña */
+    height: 40px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.lugar-itinerario-nombre {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #334e68;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.categoria-badge.categoria-naturaleza-sm {
+    background-color: #d4edda; /* Verde muy claro */
+    color: #155724; /* Verde oscuro */
+    font-size: 0.7rem;
+    padding: 0.2em 0.5em;
+}
+.categoria-badge.categoria-cultural-sm {
+    background-color: #fff3cd; /* Amarillo muy claro */
+    color: #856404; /* Marrón oscuro */
+    font-size: 0.7rem;
+    padding: 0.2em 0.5em;
+}
+
+
+.btn-mover-arriba, .btn-mover-abajo, .btn-remove {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+}
+
+/* Botones Inferiores */
+.boton-atras, .boton-siguiente-paso {
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    border-radius: 8px;
+}
+
+.boton-atras {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+.boton-atras:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+.boton-siguiente-paso {
+    background-color: #48bbbb; /* Color Teal */
+    border-color: #48bbbb;
+    color: white;
+}
+.boton-siguiente-paso:hover {
+    background-color: #3a9a9a;
+    border-color: #3a9a9a;
+}
+
+/* Media Queries para responsividad */
+@media (max-width: 991.98px) { /* Para pantallas medianas y pequeñas */
+    .col-lg-7, .col-lg-5 {
+        flex: none; /* Desactiva flex-grow para estas columnas */
+        width: 100%; /* Ocupan todo el ancho */
+    }
+    .sticky-top {
+        position: static; /* Desactiva sticky en móvil */
+        top: auto;
+    }
+}
+@media (max-width: 767.98px) {
+    .row-cols-md-3 {
+        --bs-rows-cols-md: 2; /* 2 columnas en lugar de 3 en móviles */
+    }
+    .card-title-lg {
+        font-size: 1.1rem;
+    }
+    .itinerario-titulo-container h1 {
+        font-size: 1.5rem;
+    }
+}
+/* Corrección para sticky-top dentro de un .row (flex container) */
+@media (min-width: 992px) { /* Aplica solo en pantallas LG y superiores (cuando las columnas están lado a lado) */
+    .row.flex-lg-nowrap {
+        align-items: flex-start; /* Cambia el align-items default de 'stretch' a 'start' */
+    }
+}
+/* --- Corrección del problema de superposición --- */
+.header-global {
+    position: relative;
+    z-index: 1030; /* Asegura que el header esté por encima de sticky-top */
+}
+
+.sticky-top {
+    position: sticky !important;
+    top: 100px; /* Ajusta según la altura del header */
+    z-index: 1020; /* Menor que el header para que no se superponga */
+}

@@ -1,0 +1,348 @@
+/* ==================== ESTILOS HEADER GLOBAL (Nuevo Diseño con Hamburguesa) ==================== */
+.header-global {
+    background-color: #49A3A3; /* Color teal */
+    padding: 10px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-bottom: none;
+}
+
+.header-contenido {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    position: relative; /* allow absolutely positioned centered title */
+    justify-content: space-between; /* Logo a la izquierda, menú a la derecha */
+    align-items: center;
+}
+
+/* Título centrado dentro del header (responsivo) */
+.header-titulo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-weight: bold;
+    color: #1F3C5A;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none; 
+    white-space: nowrap;
+}
+
+.header-titulo .header-titulo-text {
+    margin: 0;
+    font-size: clamp(1.4rem, 2.5vw, 1.2rem); /* responsivo */
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+/* Imagen del logo (ahora visible) */
+.logo-img {
+    height: 40px; /* Ajusta el tamaño según tu imagen */
+    margin-right: 10px; /* Espacio entre imagen y texto */
+    display: block; /* Asegura que sea visible */
+}
+
+/* Logo de texto MEX TUR */
+.logo-texto { /* Contenedor para el texto del logo si es necesario separarlo */
+    display: flex; /* Asegura que MEX y TUR estén juntos */
+    align-items: baseline; /* Alinea la base de las letras */
+    text-decoration: none;
+}
+.logo-mex {
+    color: #1F3C5A; /* Azul oscuro */
+    font-size: 1.8em; /* Ajusta tamaño */
+    font-weight: 700;
+}
+.logo-tur {
+    color: #ffffff; /* Blanco */
+    font-size: 1.8em;
+    font-weight: 700;
+}
+/* Oculta .nombre-marca si no lo usas */
+.nombre-marca {
+    display: none;
+}
+
+/* ====================MENU  DESPLEGLABE ==================== */
+
+.dropdown {
+      position: relative;
+    }
+
+    /* Botón principal */
+    .dropdown .btn {
+      background-color: #49A3A3;
+      border-radius: 12px;
+      padding: 10px 14px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+
+    .dropdown .btn:hover {
+      background-color: #49A3A3;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+
+    /* Icono de tres puntos */
+    .dropdown .bi-three-dots-vertical {
+      font-size: 1.3rem;
+      color: #495057;
+    }
+
+    /* Estilos del menú desplegable */
+    .dropdown-menu {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+      animation: fadeIn 0.25s ease-in-out;
+      overflow: hidden;
+    }
+
+    .dropdown-menu a {
+      display: block;
+      padding: 10px 18px;
+      color: #212529;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .dropdown-menu a:hover {
+      background-color: #49A3A3;
+      color: #fff;
+    }
+
+    /* Animación de aparición */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+/* ==================== MEDIA QUERIES (Ajuste Básico) ==================== */
+/* Si quieres mostrar los enlaces en pantallas grandes en lugar de la hamburguesa */
+@media (min-width: 769px) {
+    .boton-menu-hamburguesa {
+        display: none; /* Oculta la hamburguesa en pantallas grandes */
+    }
+    .navegacion-principal {
+        display: flex; /* Muestra los enlaces de navegación */
+        gap: 30px;
+    }
+    .navegacion-principal a {
+        text-decoration: none;
+        color: #ffffff;
+        font-weight: 500;
+        font-size: 1em;
+        transition: color 0.3s ease;
+    }
+    .navegacion-principal a:hover,
+    .navegacion-principal a.activo {
+        color: #e0f2f1;
+    }
+}
+
+/* ==================== MENÚ RESPONSIVE (para pantallas pequeñas) ==================== */
+@media (max-width: 768px) {
+  .navegacion-principal {
+    position: absolute;
+    top: 70px; /* debajo del header */
+    right: 0;
+    width: 100%;
+    background-color: #49A3A3;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+    display: none; /* oculto por defecto */
+    transition: all 0.3s ease;
+  }
+
+  .navegacion-principal.activo {
+    display: flex; /* se muestra cuando se abre */
+  }
+
+  .navegacion-principal a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.2em;
+  }
+
+  .navegacion-principal a:hover {
+    color: #e0f2f1;
+  }
+}
+
+
+/* ==================== ESTILOS FOOTER GLOBAL (Teal con Títulos Azules) ==================== */
+.footer-global {
+    background-color: #49A3A3; /* Color teal */
+    color: #ffffff; /* Texto general blanco */
+    padding-top: 40px;
+    margin-top: 50px;
+}
+
+.footer-contenido {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 30px;
+    padding-bottom: 30px;
+}
+
+.footer-seccion {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Logo Footer */
+.footer-logo { /* Contenedor H3 */
+    font-size: 1.8em;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    line-height: 1.2;
+}
+.footer-logo-mex {
+    color: #1F3C5A; /* Azul oscuro */
+}
+.footer-logo-tur {
+    color: #ffffff; /* Blanco */
+}
+
+.footer-logo-tagline p {
+    font-size: 0.95em;
+    line-height: 1.5;
+    margin: 0;
+    max-width: 300px;
+    color: #ffffff; /* Texto blanco */
+}
+
+/* Títulos de sección */
+.footer-seccion h3:not(.footer-logo) { /* Aplica a H3 excepto al del logo */
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #1F3C5A; /* Azul oscuro solicitado */
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+/* Enlaces */
+.footer-enlaces nav a {
+    color: #ffffff; /* Blanco */
+    text-decoration: none;
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1em;
+    transition: color 0.3s ease;
+}
+
+.footer-enlaces nav a:hover {
+    color: #e0f2f1;
+    text-decoration: underline;
+}
+
+/* Contacto */
+.footer-contacto p {
+    margin: 0 0 10px 0;
+    font-size: 1em;
+    line-height: 1.5;
+     color: #ffffff; /* Blanco */
+}
+
+.footer-seccion .redes-sociales,
+.footer-seccion .logo-footer-img {
+    display: none;
+}
+
+.copyright {
+    text-align: center;
+    font-size: 0.85em;
+    color: #e0f2f1; /* Blanco tenue */
+    padding: 15px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.3); /* Línea separadora blanca translúcida */
+    margin-top: 20px;
+    max-width: 100%;
+    background-color: transparent;
+}
+
+/* ==================== MEDIA QUERIES (Básico) ==================== */
+@media (max-width: 768px) {
+    .navegacion-principal {
+        display: none;
+    }
+    /* mantener logo a la izquierda y hamburguesa a la derecha en móvil */
+    .header-contenido {
+        justify-content: space-between;
+    }
+    .footer-contenido {
+       flex-direction: column;
+       align-items: center;
+       text-align: center;
+    }
+
+    .footer-seccion {
+        min-width: 100%;
+        margin-bottom: 20px;
+    }
+
+     .footer-logo-tagline p {
+        max-width: none;
+    }
+}
+
+/* ==================== REGLAS GLOBALES (NUEVO) ==================== */
+
+/* Asegurar footer siempre abajo (sticky footer) para todas las páginas */
+html, body {
+    height: 100%;
+}
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* garantiza altura mínima de ventana */
+}
+
+/* Hacer que el main ocupe el espacio disponible */
+main,
+.container-fluid.my-4, /* algunos archivos usan container-fluid como main visual */
+.container.my-5,
+.page-main {
+    flex: 1 0 auto;
+}
+
+/* Footer se empuja al fondo cuando el contenido es corto */
+.footer-global {
+    margin-top: auto;
+    width: 100%;
+    /* mantener comportamiento visual existente */
+    position: relative;
+    z-index: 1;
+}
+
+/* Si en alguna página se hubiese hecho footer position:fixed, forzamos comportamiento relativo en móvil */
+@media (max-width: 768px) {
+    .footer-global {
+        position: relative !important;
+    }
+}

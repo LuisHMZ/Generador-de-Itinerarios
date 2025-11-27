@@ -1,0 +1,151 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista previa - {{ itinerary.title }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/itineraries/header-footer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/itineraries/ver-itinerario-final.css' %}">
+</head>
+<body {% if itinerary %} data-itinerary-id="{{ itinerary.id }}" {% endif %}>
+<!-- HEADER, después se va a quitar -->
+  <header class="header-global">
+    <div class="header-contenido">
+      <a href="{% url 'home' %}" class="logo-link">
+        <img src="{% static 'img/logo.png' %}" alt="Logo MexTur" class="logo-img">
+        <div class="logo-texto">
+          <span class="logo-mex">MEX</span><span class="logo-tur">TUR</span>
+        </div>
+      </a>
+        <div class="header-titulo"><h5 class="header-titulo-text">Mi Itinerario</h5></div>
+            <div class="dropdown">
+                <button class="btn" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="img/bar.png" alt="Icono Menú" style="width: 24px; height: 24px;">
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <li><a class="dropdown-item" href=""><i class="bi bi-eye me-2"></i>Mi perfil</a></li>
+                <li><a class="dropdown-item" href=""><i class="bi bi-pencil-square me-2"></i>Mensajes</a></li>
+                <li><a class="dropdown-item" href=""><i class="bi bi-plus-circle me-2"></i>Solicitudes</a></li>
+                <li><a class="dropdown-item" href=""><i class="bi bi-plus-circle me-2"></i>Cerrar sesion</a></li></ul>
+            </div>
+        </div>
+  </header>
+    <main class="container my-5 d-flex justify-content-center">
+        <div class="itinerary-card card shadow-sm">
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <h1 class="h4 itinerary-title">{{ itinerary.title }}</h1>
+                    <div class="mb-3 itinerary-tags">
+                        <span class="badge tag-cultura">{{ itinerary.category }}</span>
+                    </div>
+                    <div class="mb-4 itinerary-main-image">
+                        <img src="{{ itinerary.banner_pic.url |default:'/static/img/placeholder.png' }}" alt="Imagen principal del itinerario {{ itinerary.title }}" class="img-fluid rounded">
+                    </div>
+                    <div class="mb-4 itinerary-description">
+                        <p>{{ itinerary.description }}</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Del {{ itinerary.start_date|date:"d M, Y" }} al {{ itinerary.end_date|date:"d M, Y" }}</span>
+                </div>
+                <hr>
+
+                <div class="itinerary-days">
+                {% if stops_by_day %}
+                    {% for day, stops in stops_by_day %}
+                        <div class="day-section mb-4">
+                            <h3 class="day-header">
+                                <span>Día {{ day }}</span>
+                                <!--Aun no hay logica para el dia especifico-->
+                                <!--<span class="day-date">18/10/2025</span>-->
+                            </h3>
+                            <div class="list-group list-group-flush day-stops">
+                                {% for stop in stops %}
+                                <div class="card-lugar-itinerario"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#modalDetallesLugar"
+                                data-lat="{{ stop.touristic_place.lat }}"
+                                data-lng="{{ stop.touristic_place.long }}"
+                                data-nombre="{{ stop.touristic_place.name }}"
+                                data-img="{{ stop.touristic_place.photo.url|default_if_none:'/static/img/placeholder.png' }}"
+                                data-direccion="{{ stop.touristic_place.address }}"
+                                data-descripcion="{{ stop.touristic_place.description|escapejs }}"
+                                data-website="{{ stop.touristic_place.website }}"
+                                data-phone="{{ stop.touristic_place.phone_number }}"
+                                data-rating="{{ stop.touristic_place.external_api_rating|default:'N/A' }}"
+                                >
+                                    <div class="list-group-item stop-item">
+                                        
+                                        <span class="stop-number">{{ stop.placement }}</span>
+                                        {% if stop.touristic_place.photo %}
+                                        <img src="{{ stop.touristic_place.photo.url }}" alt="{{ stop.touristic_place.name }}" class="stop-image">
+                                        {% endif %}
+                                        <span class="stop-name">{{ stop.touristic_place.name }}</span>
+                                        <span class="badge tag-naturaleza">{{ stop.touristic_place.category }}</span>
+                                        <div class="btn-ver-detalles">
+                                            <div class="stop-actions ms-auto">
+                                                <button class="btn btn-sm btn-outline-info btn-ver-stop">Ver</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    <p class="text-muted">No hay paradas añadidas a este itinerario.</p>
+                {% endif %}
+
+                <!--Sección del mapa-->
+                <div class="route-section mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2 route-header">
+                            <h3 class="h5 mb-0"><i class="fas fa-route me-2"></i> Rutas</h3>
+                            <div>
+                                <label for="dia-mapa-select" class="visually-hidden">Día</label>
+                                <select id="dia-mapa-select" class="form-select form-select-sm">
+                                    <option value="todos">Todos</option>
+                                    {% for day, stops in stops_by_day %}
+                                    <option value="{{ day }}">Día {{ day }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                    </div>
+                    <div class="mapa-placeholder-final rounded">
+                        <div id="map-preview" style="height: 400px; width: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'add_stops' itinerary.id %}" class="btn btn-outline-secondary">Atrás</a>
+                    
+                    {% csrf_token %}
+                    <button type="submit" id="boton_publicar_itinerario" class="btn btn-primary">Publicar</button>
+                    
+                </div>
+            </div>
+        </div>
+    </main>
+    <div class="modal fade modal-detalle-lugar" id="modalDetallesLugar" tabindex="-1" ...>
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body" id="modalDetallesBody">
+                    </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
+            crossorigin="anonymous"></script>
+    <script src="{% static 'js/itineraries/publish_itinerary.js' %}"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_API_KEY }}&libraries=places,marker,geometry&callback=initMap" defer></script>
+</body>
+</html>
