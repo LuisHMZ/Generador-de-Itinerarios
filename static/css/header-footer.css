@@ -1,0 +1,289 @@
+/* static/css/header-footer.css */
+
+/* ==================== ESTILOS HEADER GLOBAL (Nuevo Diseño con Hamburguesa) ==================== */
+.header-global {
+    background-color: #49A3A3; /* Color teal */
+    padding: 10px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-bottom: none;
+}
+
+.header-contenido {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    position: relative;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Título centrado dentro del header (responsivo) */
+.header-titulo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-weight: bold;
+    color: #1F3C5A;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none; 
+    white-space: nowrap;
+}
+
+.header-titulo .header-titulo-text {
+    margin: 0;
+    font-size: clamp(1.4rem, 2.5vw, 1.2rem); /* responsivo */
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.logo-img {
+    height: 40px;
+    margin-right: 10px;
+    display: block;
+}
+
+.logo-texto { 
+    display: flex;
+    align-items: baseline;
+    text-decoration: none;
+}
+.logo-mex {
+    color: #1F3C5A; /* Azul oscuro */
+    font-size: 1.8em; 
+    font-weight: 700;
+}
+.logo-tur {
+    color: #ffffff; /* Blanco */
+    font-size: 1.8em;
+    font-weight: 700;
+}
+.nombre-marca {
+    display: none;
+}
+
+/* --- Acciones del Header (donde están los 3 botones) --- */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.btn-profile, .btn-notification, .btn-menu {
+    position: relative;
+    background: transparent;
+    border: none;
+    color: #000000; /* NEGRO */
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    padding: 8px;
+}
+.btn-profile {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+}
+.btn-profile:hover {
+    color: #000000;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transform: scale(1.1);
+}
+.btn-notification {
+    font-size: 22px;
+    width: 40px;
+    height: 40px;
+}
+.btn-notification:hover {
+    color: #000000;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transform: scale(1.1);
+}
+.notification-count {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+.btn-menu {
+    font-size: 28px;
+    width: 50px;
+    height: 50px;
+    font-weight: bold;
+}
+.btn-menu:hover {
+    color: #000000;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transform: scale(1.1);
+}
+.dropdown-menu {
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 8px;
+    min-width: 200px;
+}
+.dropdown-item {
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin: 2px 0;
+    transition: all 0.2s;
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+.dropdown-item:hover {
+    background: #e57b28;
+    color: white;
+}
+.dropdown-divider {
+    margin: 8px 0;
+}
+
+/* ==================== ESTILOS FOOTER GLOBAL ==================== */
+.footer-global {
+    background-color: #49A3A3; /* Color teal */
+    color: #ffffff; /* Texto general blanco */
+    padding-top: 40px;
+    margin-top: 50px;
+}
+
+.footer-contenido {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 30px;
+    padding-bottom: 30px;
+}
+.footer-seccion {
+    flex: 1;
+    min-width: 200px;
+}
+.footer-logo { 
+    font-size: 1.8em;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    line-height: 1.2;
+}
+.footer-logo-mex {
+    color: #1F3C5A; /* Azul oscuro */
+}
+.footer-logo-tur {
+    color: #ffffff; /* Blanco */
+}
+.footer-logo-tagline p {
+    font-size: 0.95em;
+    line-height: 1.5;
+    margin: 0;
+    max-width: 300px;
+    color: #ffffff;
+}
+.footer-seccion h3:not(.footer-logo) {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #1F3C5A; /* Azul oscuro solicitado */
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.footer-enlaces nav a {
+    color: #ffffff; 
+    text-decoration: none;
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1em;
+    transition: color 0.3s ease;
+}
+.footer-enlaces nav a:hover {
+    color: #e0f2f1;
+    text-decoration: underline;
+}
+.footer-contacto p {
+    margin: 0 0 10px 0;
+    font-size: 1em;
+    line-height: 1.5;
+    color: #ffffff;
+}
+.footer-seccion .redes-sociales,
+.footer-seccion .logo-footer-img {
+    display: none;
+}
+.copyright {
+    text-align: center;
+    font-size: 0.85em;
+    color: #e0f2f1; 
+    padding: 15px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    margin-top: 20px;
+    max-width: 100%;
+    background-color: transparent;
+}
+@media (max-width: 768px) {
+    .header-contenido {
+        justify-content: space-between;
+    }
+    .footer-contenido {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .footer-seccion {
+        min-width: 100%;
+        margin-bottom: 20px;
+    }
+    .footer-logo-tagline p {
+        max-width: none;
+    }
+}
+/* Reglas globales para el sticky footer */
+html, body {
+    height: 100%;
+}
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+main,
+.container-fluid.my-4,
+.container.my-5,
+.page-main,
+.feed-wrapper { /* Agregamos tu wrapper */
+    flex: 1 0 auto;
+}
+.footer-global {
+    margin-top: auto;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}

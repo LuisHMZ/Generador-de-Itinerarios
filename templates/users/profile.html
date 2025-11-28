@@ -1,0 +1,213 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Perfil de {{ profile_user.username }} - MexTur</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'css/header-footer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/feed.css' %}">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+
+    <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" crossorigin="anonymous"></script>
+</head>
+
+<body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
+        {% if messages %}
+            {% for message in messages %}
+            {% with tag=message.tags %}
+            <div class="toast align-items-center text-bg-{% if tag == 'error' %}danger{% elif tag == 'warning' %}warning{% else %}success{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">{{ message }}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div id="site-header"></div>
+
+    <main class="profile-container container my-4">
+        <div class="row gx-4">
+            
+            <div class="col-lg-3 col-md-4">
+                <div class="profile-card bg-white rounded-4 shadow-sm p-4 text-center">
+                    <div class="profile-avatar mb-3">
+                        {% if profile_user.profile.profile_picture %}
+                            <img src="{{ profile_user.profile.profile_picture.url }}" alt="Avatar de {{ profile_user.username }}">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto">
+                        {% endif %}
+                    </div>
+                    <h4 class="profile-username mb-1">{{ profile_user.username }}</h4>
+                    <p class="profile-handle text-muted">@{{ profile_user.username }}</p>
+                    <p class="profile-location text-muted"><i class="bi bi-geo-alt-fill me-1"></i>Ciudad de México</p>
+
+                    <div class="profile-stats row mt-4 mb-4">
+                        <div class="col">
+                            <span class="d-block fw-bold">{{ profile_user.friends.count }}</span>
+                            <small class="text-muted">Amigos</small>
+                        </div>
+                        <div class="col">
+                            <span class="d-block fw-bold">{{ user_posts.count }}</span>
+                            <small class="text-muted">Publicaciones</small>
+                        </div>
+                        <div class="col">
+                            <span class="d-block fw-bold">0</span>
+                            <small class="text-muted">Likes</small>
+                        </div>
+                    </div>
+
+                    <div class="profile-actions">
+                        {% if is_self %}
+                            <a href="#" class="btn btn-mextur w-100 mb-2"><i class="bi bi-pencil-square me-2"></i>Crear publicación</a>
+                            <a href="#" class="btn btn-mextur w-100 mb-2"><i class="bi bi-bookmark-fill me-2"></i>Favoritos</a>
+                            <a href="#" class="btn btn-mextur w-100"><i class="bi bi-gear-fill me-2"></i>Configuración</a>
+                        {% else %}
+                            {% if friendship_status == 'FRIENDS' %}
+                                <a href="#" class="btn btn-primary w-100 mb-2"><i class="bi bi-envelope-fill me-2"></i>Enviar Mensaje</a>
+                                <a href="{% url 'remove_friend' profile_user.id %}" class="btn btn-outline-danger w-100"><i class="bi bi-person-dash-fill me-2"></i>Eliminar Amigo</a>
+                            {% elif friendship_status == 'PENDING_SENT' %}
+                                <a href="{% url 'cancel_friend_request' pending_request_id %}" class="btn btn-warning w-100 mb-2"><i class="bi bi-hourglass-split me-2"></i>Cancelar Solicitud</a>
+                            {% elif friendship_status == 'PENDING_RECEIVED' %}
+                                <a href="{% url 'accept_friend_request' pending_request_id %}" class="btn btn-success w-100 mb-2"><i class="bi bi-person-check-fill me-2"></i>Aceptar Solicitud</a>
+                                <a href="{% url 'reject_friend_request' pending_request_id %}" class="btn btn-outline-danger w-100"><i class="bi bi-person-x-fill me-2"></i>Rechazar Solicitud</a>
+                            {% else %}
+                                <a href="{% url 'send_friend_request' profile_user.id %}" class="btn btn-success w-100 mb-2"><i class="bi bi-person-plus-fill me-2"></i>Agregar Amigo</a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 col-md-8">
+                
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="mb-0">Publicaciones</h3>
+                    
+                </div>
+                
+                {% if user_posts %}
+                    <div id="profile-posts-container">
+                        {% for post in user_posts %}
+                            <article class="post-card mb-4">
+                                <header class="post-header">
+                                    {% if post.user.profile.profile_picture %}
+                                        <img src="{{ post.user.profile.profile_picture.url }}" class="avatar" alt="{{ post.user.username }}">
+                                    {% else %}
+                                        <img src="{% static 'img/default-avatar.png' %}" class="avatar" alt="Avatar por defecto">
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ post.user.username }}</strong>
+                                        {% if post.location %}
+                                            <p class="location">{{ post.location }}</p>
+                                        {% endif %}
+                                    </div>
+                                </header>
+                                <div class="post-photo" role="img">
+                                    {% with pictures=post.pictures.all %}
+                                    {% if pictures %}
+                                        <img src="{{ pictures.0.pic_url.url }}" alt="Foto del post">
+                                    {% else %}
+                                        <span class="placeholder-icon"><i class="bi bi-image"></i></span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                                
+                                {% if post.title %}
+                                    <h5 class="post-title" style="padding: 0 16px; margin-top: 10px; font-weight: bold;">
+                                        {{ post.title }}
+                                    </h5>
+                                {% endif %}
+                                <p class="post-desc">{{ post.text }}</p>
+    
+                                <footer class="post-actions">
+                                    <div><i class="bi bi-heart"></i> {{ post.likes.count | default:0 }}</div>
+                                    <div><i class="bi bi-chat"></i> {{ post.comments.count | default:0 }}</div>
+                                    <div><i class="bi bi-star-fill"></i> {{ post.rating | default:"N/A" }}/5</div>
+                                    <div class="save"><i class="bi bi-bookmark"></i></div>
+                                </footer>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-secondary text-center">
+                        {% if is_self %}
+                            Aún no tienes publicaciones.
+                        {% else %}
+                            Este usuario aún no tiene publicaciones.
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-3 col-md-0 d-none d-lg-block">
+                
+                <!-- Barra de búsqueda con ancho reducido y altura aumentada -->
+                <div class="input-group mb-3 profile-sidebar-search" style="border-radius: 20px; background-color: #f6f6f6;">
+                    <span class="input-group-text bg-transparent border-0" id="search-icon">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control bg-transparent border-0" placeholder="Buscar..." aria-label="Buscar" aria-describedby="search-icon" style="box-shadow: none;">
+                </div>
+
+                <div class="preferences-card bg-white rounded-4 shadow-sm">
+                    <h5>Preferencias</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li><a href="#">Naturaleza</a></li>
+                        <li><a href="#">Gastronomía</a></li>
+                        <li><a href="#">Cultura</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        </div> 
+    </main>
+    <div id="site-footer"></div>
+
+    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notificationsModalLabel">Notificaciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="notifications-list">
+                        <p class="text-center text-muted p-3">Cargando...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/headerFooter.js' %}" defer></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const toastElList = document.querySelectorAll('.toast');
+            const toastList = [...toastElList].map(toastEl => {
+                const toast = new bootstrap.Toast(toastEl, {
+                    delay: 3000
+                });
+                toast.show();
+                return toast;
+            });
+        });
+    </script>
+</body>
+</html>

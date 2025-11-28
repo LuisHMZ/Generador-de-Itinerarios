@@ -1,0 +1,194 @@
+/* static/css/profile.css */
+
+.profile-container {
+    max-width: 1200px; /* Limita el ancho del contenido del perfil */
+}
+
+.profile-card {
+    position: sticky; /* Menú lateral fijo */
+    top: 90px; /* Ajusta según la altura de tu header */
+    border: none;
+    padding: 25px;
+}
+
+.profile-avatar {
+    width: 150px;  
+    height: 150px; 
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 15px;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-username {
+    font-weight: bold;
+    color: #333;
+}
+
+.profile-handle {
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.profile-location {
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.profile-stats .col {
+    border-right: 1px solid #eee;
+}
+
+.profile-stats .col:last-child {
+    border-right: none;
+}
+
+.profile-actions .btn {
+    font-size: 0.95em;
+    padding: 8px 15px;
+}
+
+.preferences-card {
+    position: sticky; /* Menú lateral fijo */
+    top: 90px; /* Ajusta según la altura de tu header */
+    border: none;
+    padding: 25px;
+}
+
+.preferences-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.preferences-card li {
+    font-size: 0.95em;
+    color: #555;
+    display: flex;
+    align-items: center;
+}
+
+.preferences-card li i {
+    color: #007bff; /* Color de los íconos de preferencia */
+    margin-right: 10px;
+}
+
+/* Estilos para que los posts se vean bien en el perfil */
+#profile-posts-container .post-card {
+    margin-bottom: 20px; /* Espacio entre posts en la columna del perfil */
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* ... (Todo tu CSS de .profile-card, .profile-avatar, etc. va aquí arriba) ... */
+
+/* ============================ */
+/* === ESTILOS DE BOTONES === */
+/* ============================ */
+
+/* Botón naranja principal */
+.btn-mextur {
+    background-color: #E57B28;
+    border-color: #E57B28;
+    color: #ffffff;
+    font-weight: 500;
+}
+.btn-mextur:hover {
+    background-color: #c96a22; /* Un naranja un poco más oscuro */
+    border-color: #c96a22;
+    color: #ffffff;
+}
+
+/* Botón naranja de borde */
+.btn-mextur-outline {
+    background-color: transparent;
+    border-color: #E57B28;
+    color: #E57B28;
+    font-weight: 500;
+}
+.btn-mextur-outline:hover {
+    background-color: #E57B28;
+    color: #ffffff;
+}
+
+
+/* ... (Tus otros estilos de .profile-card, .btn-mextur, etc. van aquí arriba) ... */
+
+
+
+.preferences-card {
+    position: sticky;
+    top: 90px;
+    border: none;
+    padding: 25px; /* Aumentamos el padding de nuevo */
+    background-color: #fff;
+    border-radius: 16px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+
+.profile-sidebar-search .form-control,
+.profile-sidebar-search .input-group-text {
+    font-size: 1rem; /* <-- Letra un poco más grande (16px) */
+    padding-top: 0.65rem; /* <-- MÁS ALTO */
+    padding-bottom: 0.65rem; /* <-- MÁS ALTO */
+}
+.profile-sidebar-search .form-control:focus {
+    box-shadow: none; /* Mantiene el estilo limpio */
+}
+
+
+.preferences-card {
+    position: sticky;
+    top: 90px;
+    border: none;
+    padding: 20px; /* Padding interior */
+    background-color: #fff;
+    border-radius: 16px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-top: 1.5rem; /* Separación de la búsqueda */
+}
+
+/* Título ADENTRO */
+.preferences-card h5 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #334d6e;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.preferences-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Contenido MÁS CHICO */
+.preferences-card li {
+    font-size: 0.95rem; 
+    text-align: center;
+    /* Ya no necesitamos padding aquí, lo pondremos en el enlace */
+}
+
+
+.preferences-card a {
+    display: block; /* Hace que el enlace ocupe todo el ancho */
+    padding: 10px 8px; /* Padding para hacerlo "clickeable" */
+    color: #333; /* Color de texto normal */
+    text-decoration: none; /* Quita el subrayado */
+    border-radius: 8px; /* Bordes redondeados para el hover */
+    transition: background-color 0.2s ease; /* Animación de hover */
+}
+
+.preferences-card a:hover {
+    background-color: #f6f6f6; /* Fondo gris claro al pasar el mouse */
+    color: #000;
+}
+/* --- ▲▲▲ FIN DEL CÓDIGO AÑADIDO ▲▲▲ --- */
