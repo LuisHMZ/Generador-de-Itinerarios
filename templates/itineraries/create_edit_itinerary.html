@@ -15,12 +15,9 @@
 {% block content %}
     <main class="container my-5">
         <div class="titulo-editar mb-4">
-            <h1 class="h3">{{ mode|default:"Crear" }} Itinerario:
-                <span id="nombre-itinerario-titulo">{% if itinerary %}{{ itinerary.title|default:"[Nombre del Itinerario]"|escape }}{% else %}[Nombre del Itinerario]{% endif %}</span>
-                <input type="text" id="input-editar-titulo" class="form-control d-none" value="" style="display: inline-block; width: auto; font-size: inherit; margin-left: 5px;">
+            <h1 class="h3">{{ mode|default:"Crear" }} Itinerario
+                
             </h1>
-            <a href="#" class="edit-icon-link" id="boton-editar-titulo"><i class="fas fa-pencil-alt"></i></a>
-            <a href="#" class="edit-icon-link d-none" id="boton-guardar-titulo"><i class="fas fa-check"></i></a>
         </div>
 
         <form id="form-editar-itinerario" class="card shadow-sm p-4 p-md-5 bg-white" method="post" enctype="multipart/form-data">
