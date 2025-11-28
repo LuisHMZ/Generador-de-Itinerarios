@@ -41,7 +41,6 @@ class Itinerary(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     category = models.CharField(max_length=50, blank=True)
-    location = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     status = models.CharField(
