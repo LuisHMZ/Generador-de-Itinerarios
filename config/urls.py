@@ -49,7 +49,7 @@ urlpatterns = [
     # Rutas WEB (HTML)
     
     # --- CORRECCIÓN AQUÍ: Usamos post_views.feed_view ---
-    path('home/', post_views.feed_view, name='home'),
+    path('', post_views.feed_view, name='home'),
 
     path('saved/', post_views.saved_posts_view, name='saved_posts_view'),
 
