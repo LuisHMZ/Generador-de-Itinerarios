@@ -2,9 +2,6 @@
 
 from .base import * # Importa toda la configuración base
 
-# --- Configuración de Producción ---
-DEBUG = False
-
 ALLOWED_HOSTS = ['mextur-dominio.com'] # El dominio de despliegue
 
 # --- Base de Datos de Supabase (leyendo desde el .env) ---

@@ -3,9 +3,6 @@
 
 from .base import * # Importa toda la configuración base
 
-# --- Configuración de Desarrollo ---
-DEBUG = True
-
 ALLOWED_HOSTS = []
 
 # --- Base de Datos Local ---
