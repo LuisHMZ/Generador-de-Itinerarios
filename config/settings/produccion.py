@@ -1,20 +1,26 @@
 # config/settings/production.py
 
 from .base import * # Importa toda la configuración base
+import dj_database_url
+import os
 
-ALLOWED_HOSTS = ['mextur-dominio.com'] # El dominio de despliegue
+# --- Configuración de Producción ---
+# 1. SEGURIDAD
+SECRET_KEY = os.environ.get('SECRET_KEY')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
-# --- Base de Datos de Supabase (leyendo desde el .env) ---
+# 2. BASE DE DATOS (Supabase Postgres)
+# Lee la variable DATABASE_URL que pondrás en Render
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # --- Configuración de Archivos Multimedia (Media) con Supabase Storage ---
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
@@ -25,9 +31,10 @@ AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
 AWS_S3_FILE_OVERWRITE = False  # No sobrescribir archivos con el mismo nombre
-AWS_DEFAULT_ACL = 'public-read'  # Hace que los archivos sean públicos por defecto
-AWS_S3_REGION_NAME = 'us-east-1' # Supabase usa una región por defecto
-AWS_S3_SIGNATURE_VERSION = 's3v4'
+# Configuraciones para que funcione bien
+AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+AWS_DEFAULT_ACL = 'public-read' # Para que las fotos sean visibles
+AWS_QUERYSTRING_AUTH = False    # Para que las URLs sean limpias (sin firmas temporales)
 
 # --- Configuración de MEDIA_URL ---
 MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/object/public/{AWS_STORAGE_BUCKET_NAME}/'
