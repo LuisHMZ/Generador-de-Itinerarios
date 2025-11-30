@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('itineraries', '0004_itinerarystop_lat_itinerarystop_long'),
+        ('itineraries', '0003_itinerarystop_lat_itinerarystop_long_and_more'),
     ]
 
     operations = [
