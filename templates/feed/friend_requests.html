@@ -21,7 +21,7 @@
 
 <body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
 
-    <div id="site-header"></div>
+    {% include 'snippets/header.html' %}
 
     <main class="container py-4" style="background-color: #f8f9fa;">
         <div class="row gx-4">
@@ -118,7 +118,7 @@
         </div>
     </main>
 
-    <div id="site-footer"></div>
+    {% include 'snippets/footer.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/headerFooter.js' %}" defer></script>

@@ -67,7 +67,7 @@
         {% endif %}
     </div>
 
-    <div id="site-header"></div>
+    {% include 'snippets/header.html' %}
 
     <main class="container py-4" style="background-color: #f8f9fa;">
         <div class="row gx-4">
@@ -258,7 +258,7 @@
                                         </div>
                                     </div>
 
-                                    <a href="#" class="btn btn-sm w-100 btn-mextur-outline mt-3" style="border: 1px solid #E57B28; color: #E57B28;">
+                                    <a href="{% url 'itineraries:view_itinerary' item.id %}" class="btn btn-sm w-100 btn-mextur-outline mt-3" style="border: 1px solid #E57B28; color: #E57B28;">
                                         Ver Detalles
                                     </a>
                                 </div>
@@ -341,7 +341,8 @@
         </div> 
     </main>
 
-    <div id="site-footer"></div>
+    <!-- Footer -->
+    {% include 'snippets/footer.html' %}
 
     <!-- Modales -->
     <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Notificaciones</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div id="notifications-list"><p class="text-center text-muted p-3">Cargando...</p></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button></div></div></div></div>

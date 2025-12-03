@@ -35,7 +35,7 @@
         {% endif %}
     </div>
 
-    <div id="site-header"></div>
+    {% include 'snippets/header.html' %}
 
     <main class="profile-container container my-4">
         <div class="row gx-4">
@@ -176,7 +176,7 @@
             
         </div> 
     </main>
-    <div id="site-footer"></div>
+    {% include 'snippets/footer.html' %}
 
     <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable">
