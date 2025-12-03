@@ -24,6 +24,9 @@ urlpatterns = [
     # Vista API para optimizar el orden de las paradas de un día usando el algoritmo del "Vecino más Cercano"
     path('itineraries/<int:itinerary_id>/stops/optimize/', views.optimize_stops_view, name='optimize_stops'),
 
+    # Vista API para cambiar la privacidad de un itinerario
+    path('itineraries/<int:itinerary_id>/privacy/', views.update_privacy_view, name='change_itinerary_privacy'),
+
     # Rutas registradas por el router (p.ej. api/itineraries/)
     path('', include(router.urls)),
 ]
