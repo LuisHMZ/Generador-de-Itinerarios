@@ -1097,8 +1097,34 @@ def view_itinerary_view(request, itinerary_id):
       - itinerary: objeto Itinerary
       - stops_by_day: lista de tuplas (day_number, [stops ordenadas por placement])
     """
-    itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+    # Obtén el itinerario sin filtrar por usuario: comprobar permisos abajo
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id)
     stops_qs = ItineraryStop.objects.filter(itinerary=itinerary).select_related('touristic_place')
+
+    # Permisos de visualización:
+    # - El propietario siempre puede ver
+    # - Si no es propietario: sólo puede ver itinerarios publicados
+    #   y que sean 'public' o 'friends' (en este último caso, debe ser amigo)
+    is_owner = (request.user == itinerary.user)
+    if not is_owner:
+        # Debe estar publicado
+        if itinerary.status != 'published':
+            raise Http404('Itinerario no disponible.')
+
+        # Comprobar privacidad
+        privacy = getattr(itinerary, 'privacy', 'public')
+        if privacy == 'public':
+            pass
+        elif privacy == 'friends':
+            try:
+                friends_ids = [f.id for f in Friend.objects.friends(itinerary.user)]
+            except Exception:
+                friends_ids = []
+            if request.user.id not in friends_ids:
+                raise Http404('No tienes permiso para ver este itinerario.')
+        else:
+            # 'private' u otras opciones => no permitido
+            raise Http404('No tienes permiso para ver este itinerario.')
 
     stops_by_day = []
     current_day = None
@@ -1123,6 +1149,7 @@ def view_itinerary_view(request, itinerary_id):
         'itinerary': itinerary,
         'stops_by_day': stops_by_day,
         'GOOGLE_API_KEY': google_api_key,
+        'is_owner': is_owner,
     }
 
     return render(request, 'itineraries/view_itinerary.html', context)
