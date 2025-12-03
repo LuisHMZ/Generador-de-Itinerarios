@@ -475,14 +475,90 @@ def nearby_places_api_view(request):
 
 # Vistas para la creación de itinerarios (HTML)
 
+from django.shortcuts import render, get_object_or_404, reverse
+from django.http import JsonResponse, Http404
+from django.contrib.auth.decorators import login_required
+from .models import Itinerary
+
 @login_required
-def create_itinerary_view(request):
-    context = {
-        'itinerary': None, # Pasa None para indicar que es creación
-        'categorias': CATEGORIAS_PRINCIPALES, # Pasa las categorías para el formulario
-        'mode': 'Crear',    # Indica al template que estamos en modo creación
-    }
-    return render(request, 'itineraries/create_edit_itinerary.html', context)
+def create_edit_itinerary_view(request, itinerary_id=None):
+    
+    # 1. LOGICA COMÚN: Intentar obtener el itinerario si hay ID
+    itinerary = None
+    if itinerary_id:
+        # Nota: Aquí NO filtramos por status='draft' porque el dueño 
+        # debe poder abrir su itinerario 'published' para editarlo (y que pase a draft)
+        itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+
+    # ====================================================
+    # CASO GET: Servir el HTML (Lo que ya hacías)
+    # ====================================================
+    if request.method == 'GET':
+        context = {
+            'itinerary': itinerary,
+            'categorias': CATEGORIAS_PRINCIPALES,
+            'mode': 'Editar' if itinerary else 'Crear'
+        }
+        return render(request, 'itineraries/create_edit_itinerary.html', context)
+
+    # ====================================================
+    # CASO POST: Procesar los datos (Reemplaza al ViewSet)
+    # ====================================================
+    if request.method == 'POST':
+        # Validar que sea AJAX (opcional, pero buena práctica con tu JS actual)
+        # En Django moderno a veces request.is_ajax() está depreciado, 
+        # se puede checar el header 'X-Requested-With' si es necesario.
+        
+        try:
+            # A. RECOGER DATOS DEL FORM
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            start_date = request.POST.get('start_date') or None
+            end_date = request.POST.get('end_date') or None
+            category = request.POST.get('category')
+            banner_pic = request.FILES.get('banner_pic') # ¡Fácil manejo de archivos!
+
+            # B. GUARDAR (Crear o Actualizar)
+            if itinerary:
+                # --- MODO EDICIÓN ---
+                itinerary.title = title
+                itinerary.description = description
+                itinerary.start_date = start_date
+                itinerary.end_date = end_date
+                itinerary.category = category
+                
+                if banner_pic:
+                    itinerary.banner_pic = banner_pic
+                
+                # ¡Aquí aplicamos tu regla de negocio fácilmente!
+                itinerary.status = 'draft' 
+                
+                itinerary.save()
+                
+                # Redirección al paso 2
+                next_url = reverse('itineraries:add_stops', args=[itinerary.id])
+                
+            else:
+                # --- MODO CREACIÓN ---
+                itinerary = Itinerary.objects.create(
+                    user=request.user,
+                    title=title,
+                    description=description,
+                    start_date=start_date,
+                    end_date=end_date,
+                    category=category,
+                    banner_pic=banner_pic,
+                    status='draft'
+                )
+                next_url = reverse('itineraries:add_stops', args=[itinerary.id])
+
+            return JsonResponse({'success': True, 'redirect_url': next_url})
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+    # Método no permitido
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 @login_required
 def add_stops_view(request, itinerary_id):
@@ -528,14 +604,15 @@ def add_stops_view(request, itinerary_id):
     return render(request, 'itineraries/add_stops.html', context)
 
 
-@login_required
-def edit_itinerary_view(request, itinerary_id):
-    itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
-    context = {
-        'itinerary': itinerary, 
-        'mode': 'Editar',        
-    }
-    return render(request, 'itineraries/create_edit_itinerary.html', context)
+# @login_required
+# def edit_itinerary_view(request, itinerary_id):
+#     itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+#     context = {
+#         'itinerary': itinerary, 
+#         'categorias': CATEGORIAS_PRINCIPALES,
+#         'mode': 'Editar',        
+#     }
+#     return render(request, 'itineraries/create_edit_itinerary.html', context)
 
 
 @api_view(['GET'])
@@ -1020,13 +1097,9 @@ def view_itinerary_view(request, itinerary_id):
       - itinerary: objeto Itinerary
       - stops_by_day: lista de tuplas (day_number, [stops ordenadas por placement])
     """
-    # Obtiene el itinerario asegurando que pertenece al usuario autenticado y está publicado
-    itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user, status='published')
-
-    # Obtén las paradas ordenadas (el modelo ya define ordering por day_number, placement)
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
     stops_qs = ItineraryStop.objects.filter(itinerary=itinerary).select_related('touristic_place')
 
-    # Agrupar por día
     stops_by_day = []
     current_day = None
     current_list = []
@@ -1044,9 +1117,79 @@ def view_itinerary_view(request, itinerary_id):
     if current_day is not None:
         stops_by_day.append((current_day, current_list))
 
+    google_api_key = os.environ.get('GOOGLE_API_KEY')
+
     context = {
         'itinerary': itinerary,
         'stops_by_day': stops_by_day,
+        'GOOGLE_API_KEY': google_api_key,
     }
 
     return render(request, 'itineraries/view_itinerary.html', context)
+
+# Vista para listar los itinerarios del usuario autenticado
+@login_required
+def my_itineraries_view(request):
+    """
+    Muestra la lista de itinerarios del usuario autenticado.
+    Contexto enviado a la plantilla:
+      - itineraries: lista de Itinerary del usuario
+    """
+    # Ordenar por fecha de creación descendente
+    itineraries = Itinerary.objects.filter(user=request.user).order_by('-created_at')
+
+    # Lógica de filtrado
+    status_filter = request.GET.get('status')
+
+    if status_filter == 'published':
+        itineraries = itineraries.filter(status='published')
+    elif status_filter == 'draft':
+        itineraries = itineraries.filter(status='draft')
+    # Si el filtro es 'all' o no está presente, mostramos todos
+
+    context = {
+        'itineraries': itineraries,
+        'status_filter': status_filter or 'all', # Para mantener el estado del filtro en la plantilla
+    }
+
+    return render(request, 'feed/user_itineraries.html', context)
+
+
+# Vista para eliminar un itinerario
+@require_POST # Solo permite POST para mayor seguridad
+@login_required
+def delete_itinerary_view(request, itinerary_id):
+    """
+    Elimina un itinerario del usuario autenticado.
+    Redirige a la vista de 'mis itinerarios' después de la eliminación.
+    """
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+    
+    try:
+        itinerary.delete()
+        # Mensaje de éxito y recarga
+        messages.success(request, "El itinerario ha sido eliminado correctamente.")
+        return redirect('itineraries:my_itineraries')
+    except Exception as e:
+        messages.error(request, f'Error al eliminar el itinerario: {str(e)}')
+
+
+@require_POST
+@login_required
+def update_privacy_view(request, itinerary_id):
+    import json
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+    
+    try:
+        data = json.loads(request.body)
+        new_privacy = data.get('privacy')
+        
+        if new_privacy in ['public', 'friends', 'private']:
+            itinerary.privacy = new_privacy
+            itinerary.save()
+            return JsonResponse({'success': True})
+        return JsonResponse({'error': 'Opción inválida'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+
