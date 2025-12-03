@@ -74,35 +74,7 @@
 
             <!-- BARRA LATERAL IZQUIERDA -->
             <aside class="col-lg-2 col-md-3 d-none d-md-block">
-                <div class="menu-lateral p-3 bg-white rounded-4 shadow-sm">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-3">
-                            <a href="{% url 'profile_view' user.username %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                <i class="fa-solid fa-user"></i> <span class="ms-2">Perfil</span>
-                            </a>
-                        </li>
-                        <li class="mb-3">
-                            <a href="{% url 'messaging:inbox' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                <i class="fa-solid fa-envelope"></i> <span class="ms-2">Mensajes</span>
-                            </a>
-                        </li>
-                        <li class="mb-3">
-                            <a href="#" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                <i class="fa-solid fa-map-location-dot"></i> <span class="ms-2">Mis Itinerarios</span>
-                            </a>
-                        </li>
-                        <li class="mb-3">
-                            <a href="{% url 'saved_posts_view' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                <i class="fa-solid fa-bookmark"></i> <span class="ms-2">Guardados</span>
-                            </a>
-                        </li>
-                        <li class="mb-3">
-                            <a href="{% url 'friend_requests_view' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                <i class="fa-solid fa-users"></i> <span class="ms-2">Amigos</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+                {% include 'itineraries/snippets/sidebar_left.html' %}
             </aside>
 
             <!-- COLUMNA CENTRAL (FEED) -->
