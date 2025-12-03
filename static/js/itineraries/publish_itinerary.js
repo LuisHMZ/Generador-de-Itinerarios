@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				// Redirigir a la vista pública/preview del itinerario
 				// Suposición razonable: la ruta pública es /itineraries/<id>/
 				// Por ahora redirigimos al home
-				window.location.href = '/home/';
+				window.location.href = '/';
 			} else {
 				let errorData;
 				try { errorData = await response.json(); } catch (e) { errorData = { detail: response.statusText }; }
