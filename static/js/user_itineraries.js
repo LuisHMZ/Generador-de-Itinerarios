@@ -54,7 +54,7 @@ window.abrirModalBorrar = function(id, title) {
 
 window.cambiarPrivacidad = async function(id, nuevaPrivacidad) {
     try {
-        const response = await fetch(`api/itineraries/${id}/privacy/`, {
+        const response = await fetch(`/api/itineraries/${id}/privacy/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
