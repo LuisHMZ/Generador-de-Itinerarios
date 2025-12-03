@@ -1,0 +1,73 @@
+{% load static %}
+
+<div class="right-sidebar-sticky">
+    <!--- Amigos en línea --->
+    <h6 class="text-muted fw-bold mb-3 ms-2 text-uppercase" style="font-size: 0.8rem;">Contactos</h6>
+    <ul class="contacts-list mb-4">
+        {% for friend in online_friends %}
+        <li>
+            <a href="{% url 'messaging:start_conversation' friend.id %}" class="contact-item" title="Enviar mensaje">
+                <div class="contact-avatar-wrapper">
+                    {% if friend.profile.profile_picture %}
+                    <img src="{{ friend.profile.profile_picture.url }}" class="contact-avatar">
+                    {% else %}
+                    <img src="{% static 'img/default-avatar.png' %}" class="contact-avatar">
+                    {% endif %}
+                    <div class="online-indicator"></div>
+                </div>
+                <span class="contact-name">{{ friend.username }}</span>
+            </a>
+        </li>
+        {% empty %}
+        <li class="text-muted small ms-2">No hay amigos conectados.</li>
+        {% endfor %}
+    </ul>
+
+    <hr class="my-4">
+
+    <!--- Sugerencias de amigos -->
+    <h6 class="text-muted fw-bold mb-3 ms-2 text-uppercase" style="font-size: 0.8rem;">Sugerencias</h6>
+    <ul class="contacts-list">
+        {% for data in users_with_status %}
+        {% if data.status != 'FRIENDS' %}
+        <li class="mb-3">
+            <div class="d-flex align-items-center justify-content-between p-2 rounded hover-bg-light">
+                <a href="{% url 'profile_view' data.user.username %}"
+                    class="d-flex align-items-center text-decoration-none text-dark">
+                    <div class="contact-avatar-wrapper me-2">
+                        {% if data.user.profile.profile_picture %}
+                        <img src="{{ data.user.profile.profile_picture.url }}" class="contact-avatar"
+                            style="width: 40px; height: 40px;">
+                        {% else %}
+                        <img src="{% static 'img/default-avatar.png' %}" class="contact-avatar"
+                            style="width: 40px; height: 40px;">
+                        {% endif %}
+                    </div>
+                    <div style="line-height: 1.2;">
+                        <span class="d-block fw-bold" style="font-size: 0.9rem;">{{ data.user.username }}</span>
+                        <small class="text-muted" style="font-size: 0.75rem;">Sugerencia</small>
+                    </div>
+                </a>
+                <div>
+                    <!-- CORRECCIÓN 2: Usar iconos FontAwesome para asegurar que se vean -->
+                    {% if data.status == 'PENDING_SENT' %}
+                    <a href="{% url 'cancel_friend_request' data.request_id %}"
+                        class="btn btn-sm btn-warning rounded-circle d-flex align-items-center justify-content-center"
+                        style="width: 32px; height: 32px; padding: 0;" title="Cancelar"><i class="fas fa-times"></i></a>
+                    {% elif data.status == 'PENDING_RECEIVED' %}
+                    <a href="{% url 'accept_friend_request' data.request_id %}"
+                        class="btn btn-sm btn-primary rounded-circle d-flex align-items-center justify-content-center"
+                        style="width: 32px; height: 32px; padding: 0;" title="Aceptar"><i class="fas fa-check"></i></a>
+                    {% else %}
+                    <a href="{% url 'send_friend_request' data.user.id %}"
+                        class="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
+                        style="width: 32px; height: 32px; padding: 0;" title="Agregar"><i
+                            class="fas fa-user-plus"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+</div>
