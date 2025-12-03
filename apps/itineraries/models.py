@@ -53,6 +53,18 @@ class Itinerary(models.Model):
     likes = models.ManyToManyField(User, related_name='liked_itineraries', blank=True)
     saved_by = models.ManyToManyField(User, related_name='saved_itineraries', blank=True)
 
+    # --- NUEVO CAMPO: PRIVACIDAD (Audiencia) ---
+    PRIVACY_CHOICES = [
+        ('public', 'Público'),       # Visible para todos en el Feed
+        ('friends', 'Solo Amigos'),  # Visible solo para seguidores/amigos
+        ('private', 'Solo Yo'),      # Oculto (como un archivo personal)
+    ]
+    privacy = models.CharField(
+        max_length=10, 
+        choices=PRIVACY_CHOICES, 
+        default='public' # O 'private', según tu preferencia
+    )
+
     def total_likes(self):
         return self.likes.count()
 
