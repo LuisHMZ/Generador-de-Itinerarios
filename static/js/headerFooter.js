@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // --- 1. LECTURA DE URLs DE DJANGO (Variables dinámicas) ---
     const logoutUrl = document.body.dataset.logoutUrl || '#';
-    const homeUrl = '/home/'; 
+    const homeUrl = '/'; 
     // Leemos el username del body para el enlace de perfil
     const currentUsername = document.body.dataset.username || '';
     const profileUrl = currentUsername ? `/perfil/${currentUsername}/` : '#';
