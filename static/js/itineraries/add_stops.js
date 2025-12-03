@@ -259,6 +259,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchResultsContainer = document.getElementById('search-results-container');
     const btnSiguiente = document.getElementById('btn-siguiente');
 
+    // Prevent adding more than 10 places per day.
+    // Este listener se registra en fase de captura para interceptar
+    // clicks antes del handler existente y evitar duplicar cambios.
+    document.addEventListener('click', (event) => {
+        try {
+            const target = event.target.closest ? event.target.closest('.btn-add') : null;
+            if (!target) return; // No es un botón de agregar
+
+            // Asegura estructura de datos para el día actual
+            if (!miItinerarioActual[currentDay]) miItinerarioActual[currentDay] = [];
+
+            const count = miItinerarioActual[currentDay].length;
+            if (count >= 10) {
+                // Evita que el evento siga y muestra mensaje amigable
+                event.stopImmediatePropagation();
+                event.preventDefault();
+                showInlineError('No puedes agregar más de 10 lugares en un mismo día.');
+                // Feedback visual breve sobre el botón
+                target.classList.add('disabled');
+                setTimeout(() => target.classList.remove('disabled'), 700);
+                return;
+            }
+        } catch (e) {
+            // No bloquear en caso de error inesperado
+            console.error('Error en el control de límite de lugares:', e);
+        }
+    }, true); // capture = true
+
     // Referencias para la sección dinámica de día (plantilla ahora tiene un único contenedor)
     const seccionDias = document.getElementById('seccion-dias');
     const tituloDia = document.getElementById('titulo-dia');
@@ -289,6 +317,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Define el número máximo de días
     const MAX_DIAS = 3;
+    // Límite de lugares por día
+    const MAX_PLACES_PER_DAY = 10;
 
 
     if (!miItinerarioLista || !buscadorLugares) {
@@ -767,6 +797,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return; // No añadir
         }
 
+        // Restricción: no permitir más de MAX_PLACES_PER_DAY por día
+        if (miItinerarioActual[currentDay].length >= MAX_PLACES_PER_DAY) {
+            // Mostrar mensaje inline si es posible, y fallback con alert
+            try {
+                showInlineError(`No puedes añadir más de ${MAX_PLACES_PER_DAY} lugares por día.`);
+            } catch (e) {
+                alert(`No puedes añadir más de ${MAX_PLACES_PER_DAY} lugares por día.`);
+            }
+            return; // No añadir
+        }
+
         miItinerarioActual[currentDay].push(nuevoLugar);
         actualizarListaItinerario(); // Refresca la UI
         
@@ -1156,6 +1197,38 @@ document.addEventListener('DOMContentLoaded', () => {
         // Formatear datos para la API (con validaciones para evitar enviar paradas vacías)
         const stopsPayload = [];
         let invalidFound = false;
+
+        // Validación adicional: ningún día puede tener más de 10 lugares
+        for (const d in miItinerarioActual) {
+            const arr = miItinerarioActual[d] || [];
+            if (arr.length > 10) {
+                showInlineError(`El día ${d} tiene más de 10 lugares. Elimina algunos antes de guardar.`);
+                btnSiguiente.disabled = false;
+                btnSiguiente.textContent = 'Siguiente';
+                return;
+            }
+        }
+
+        // Validación adicional: ningún día puede quedar vacío.
+        // Se respeta el número total de días que envía el backend (dataset),
+        // si no está presente se usa las claves presentes en `miItinerarioActual`.
+        let totalDias = parseInt(document.body.dataset.totalDias, 10);
+        if (!Number.isFinite(totalDias) || totalDias <= 0) {
+            // Calcula el máximo día presente en el objeto como fallback
+            const keys = Object.keys(miItinerarioActual).map(k => parseInt(k, 10)).filter(Number.isFinite);
+            totalDias = keys.length > 0 ? Math.max(...keys) : 1;
+        }
+
+        for (let diaCheck = 1; diaCheck <= totalDias; diaCheck++) {
+            const arr = miItinerarioActual[diaCheck] || [];
+            if (arr.length === 0) {
+                showInlineError(`El día ${diaCheck} no puede estar vacío. Añade al menos una parada.`);
+                btnSiguiente.disabled = false;
+                btnSiguiente.textContent = 'Siguiente';
+                return;
+            }
+        }
+
         for (const day in miItinerarioActual) {
             const dayArr = miItinerarioActual[day] || [];
             dayArr.forEach((lugar, index) => {
