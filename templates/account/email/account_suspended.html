@@ -1,0 +1,44 @@
+{% load i18n %}
+
+<div style="font-family: 'Poppins', sans-serif; padding: 20px; background-color: #f8f9fa; color: #2c3e50; max-width: 100%; margin: 0 auto;">
+    <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+
+        <h1 style="color: #1F3C5A; font-weight: 600; margin-bottom: 20px;">
+            <span style="color: #49a3a3">Mex</span><span style="color: #f39c12">Tur</span>!
+        </h1>
+        
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 15px;">
+            Hola <strong>{{ username }}</strong>,
+        </p>
+        
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 15px;">
+            {% blocktrans %}Te informamos que tu cuenta en MexTur ha sido <strong>suspendida temporalmente</strong> por un administrador.{% endblocktrans %}
+        </p>
+        
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
+            {% blocktrans %}Mientras tu cuenta esté suspendida, no podrás acceder a la plataforma ni consultar tu perfil.{% endblocktrans %}
+        </p>
+
+        <div style="background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 4px; padding: 15px; margin-bottom: 25px; text-align: left;">
+            <h5 style="margin-top: 0; margin-bottom: 10px; font-size: 16px; font-weight: bold; color: #856404;">
+                <span style="font-size: 18px; margin-right: 5px;">&#9432;</span> 
+                ¿Por qué sucede esto?
+            </h5>
+            
+            <p style="margin: 0; font-size: 14px; line-height: 1.5; text-align: justify;">
+                Esto puede deberse a una violación de nuestros términos de servicio o por motivos de seguridad. Si crees que esto es un error, por favor contáctanos.
+            </p>
+
+        </div>
+
+        <a href="mailto:soporte@mextur.com?subject=Aclaración sobre cuenta suspendida - {{ username }}" target="_blank" style="display: inline-block; background-color: #f39c12; color: #ffffff; padding: 12px 25px; margin: 0 auto 25px; border-radius: 5px; text-decoration: none; font-weight: 600; font-size: 16px;">
+            Contactar a Soporte
+        </a>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        
+        <p style="color: #7d7d7d; font-size: 12px; margin: 0;">
+            &copy; {% now "Y" %} MexTur. Todos los derechos reservados.
+        </p>
+    </div>
+</div>

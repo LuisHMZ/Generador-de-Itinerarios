@@ -1,0 +1,104 @@
+/* Contenedor principal del panel */
+.admin-container {
+    background-color: #fff;
+    border: 1px solid #e9ecef;
+    min-height: 80vh; /* Para que ocupe buena altura */
+}
+
+/* --- SIDEBAR --- */
+.admin-sidebar {
+    background-color: #fff;
+}
+
+.admin-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e9ecef;
+}
+
+.admin-nav .nav-link {
+    color: #495057;
+    font-weight: 500;
+    padding: 10px 15px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    background: none;
+    border: none;
+    text-align: left;
+}
+
+.admin-nav .nav-link:hover {
+    background-color: #f1f3f5;
+    color: #212529;
+}
+
+/* Flecha del acordeón giratoria */
+.btn-collapse .transition-icon {
+    transition: transform 0.3s ease;
+}
+.btn-collapse:not(.collapsed) .transition-icon {
+    transform: rotate(180deg);
+}
+.btn-collapse:not(.collapsed) {
+    color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+/* --- BUSCADOR --- */
+.search-admin {
+    min-width: 300px;
+}
+.search-admin input:focus {
+    box-shadow: none;
+    background-color: #fff !important;
+    border: 1px solid #ced4da !important;
+}
+
+/* --- LISTA DE ACTIVIDAD --- */
+.activity-item {
+    border-bottom: 1px solid #f1f3f5;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.5s ease;
+}
+.activity-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.activity-icon {
+    width: 40px;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.activity-content strong {
+    color: #212529;
+}
+
+/* --- IMÁGENES DE NOTIFICACIONES --- */
+.notification-img {
+    width: 100%;
+    max-width: 250px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    
+    /* Importante para UX */
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.notification-img:hover {
+    transform: scale(1.02);
+    opacity: 0.9;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}

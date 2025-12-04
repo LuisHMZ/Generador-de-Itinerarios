@@ -1,0 +1,413 @@
+{% extends "Adminbase.html" %}
+{% load static %}
+
+{% block title %}Permisos de Usuario - MexTur Admin{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/panel_admin.css' %}">
+    <link rel="stylesheet" href="{% static 'css/admin-permisos.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        .badge-status { padding: 0.5em 1em; border-radius: 20px; font-size: 0.85em; font-weight: 500; }
+        .bg-active { background-color: #d1e7dd; color: #0f5132; }
+        .bg-suspended { background-color: #f8d7da; color: #842029; }
+        
+        /* Estilos para los botones de acción circulares */
+        .btn-action {
+            width: 32px; height: 32px;
+            border-radius: 50%; border: none;
+            display: inline-flex; justify-content: center; align-items: center;
+            transition: all 0.2s; background: #f8f9fa; color: #6c757d;
+        }
+        .btn-action:hover { transform: translateY(-2px); }
+        .btn-ver-perfil:hover { background: #e7f1ff; color: #0d6efd; }
+        .btn-suspender:hover { background: #fff3cd; color: #ffc107; }
+        .btn-reactivar:hover { background: #d1e7dd; color: #198754; }
+        .btn-eliminar:hover { background: #f8d7da; color: #dc3545; }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+    <main class="container my-1 flex-grow-1">
+        <div class="row g-0 admin-container shadow-sm rounded-4 overflow-hidden">
+            
+            <aside class="col-lg-3 admin-sidebar p-4 border-end bg-light">
+                <div class="text-center mb-4 profile-section">
+                    {% if request.user.profile.profile_picture %}
+                        <img src="{{ request.user.profile.profile_picture.url }}" class="admin-avatar mb-3 rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                    {% else %}
+                        <img src="https://via.placeholder.com/100" alt="Admin" class="admin-avatar mb-3 rounded-circle">
+                    {% endif %}
+                    <h5 class="fw-bold mb-0">{{ request.user.first_name|default:request.user.username }}</h5>
+                    <small class="text-muted">{{ request.user.email }}</small>
+                </div>
+
+                <nav class="nav flex-column admin-nav">
+                    
+                    <div class="nav-item-group mb-2">
+                        <button class="nav-link btn-collapse w-100 d-flex justify-content-between align-items-center" 
+                                type="button" data-bs-toggle="collapse" data-bs-target="#menuUsuarios" aria-expanded="true">
+                            <span><i class="fas fa-users-cog fa-fw me-2"></i> Gestionar usuarios</span>
+                            <i class="fas fa-chevron-down small transition-icon"></i>
+                        </button>
+                        <div class="collapse show" id="menuUsuarios">
+                            <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
+                                <li>
+                                    <a href="{% url 'admin_login_logs' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                        Inicios de sesión
+                                    </a>
+                                </li>
+                                <li><a href="admin-permisos.html" class="d-block py-1 text-decoration-none fw-bold text-primary small">Permisos de usuario</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="nav-item-group mb-2">
+                        <button class="nav-link btn-collapse w-100 d-flex justify-content-between align-items-center collapsed" 
+                                type="button" data-bs-toggle="collapse" data-bs-target="#menuSistema">
+                            <span><i class="fas fa-cogs fa-fw me-2"></i> Gestionar sistema</span>
+                            <i class="fas fa-chevron-down small transition-icon"></i>
+                        </button>
+                        <div class="collapse" id="menuSistema">
+                            <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
+                                <li><a href="admin-reportes.html" class="d-block py-1 text-decoration-none text-secondary small">Reportes</a></li>
+                                <li>
+                                    <a href="{% url 'admin_places_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                        Administrar locaciones
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="nav-item-group mb-4">
+                        <button class="nav-link btn-collapse w-100 d-flex justify-content-between align-items-center collapsed" 
+                                type="button" data-bs-toggle="collapse" data-bs-target="#menuContenido">
+                            <span><i class="fas fa-folder-open fa-fw me-2"></i> Gestionar contenido</span>
+                            <i class="fas fa-chevron-down small transition-icon"></i>
+                        </button>
+                        <div class="collapse" id="menuContenido">
+                            <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
+                                <li><a href="admin-publicaciones.html" class="d-block py-1 text-decoration-none text-secondary small">Publicaciones</a></li>
+                                <li><a href="admin-itinerarios.html" class="d-block py-1 text-decoration-none text-secondary small">Itinerarios</a></li>
+                                <li><a href="admin-notificaciones.html" class="d-block py-1 text-decoration-none text-secondary small">Envío de notificaciones</a></li>
+                                <li><a href="admin-resenas.html" class="d-block py-1 text-decoration-none text-secondary small">Reseñas</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <a href="#" class="nav-link text-danger fw-semibold mt-auto" data-bs-toggle="modal" data-bs-target="#modalCerrarSesion">
+                        <i class="fas fa-sign-out-alt fa-fw me-2"></i> Cerrar sesión
+                    </a>
+                </nav>
+            </aside>
+
+            <section class="col-lg-9 p-4 bg-white d-flex flex-column">
+                <h2 class="fw-bold mb-4" style="color: #1F3C5A;">Permisos De Usuario</h2>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="get" class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+                    <div class="form-check form-switch custom-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" name="suspendidos" id="filtroSuspendidos" 
+                               {% if show_suspended %}checked{% endif %} onchange="this.form.submit()">
+                        <label class="form-check-label fw-medium" for="filtroSuspendidos">Ver solo usuarios suspendidos</label>
+                    </div>
+                    <div class="search-box position-relative" style="min-width: 300px;">
+                        <input type="text" name="q" class="form-control rounded-pill bg-light border-0 ps-4" 
+                               placeholder="Buscar Usuario..." value="{{ search_query|default:'' }}">
+                        <button type="submit" class="btn position-absolute text-muted" style="right: 5px; top: 2px;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="table-responsive mb-auto"> 
+                    <table class="table table-hover align-middle border">
+                        <thead class="table-dark" style="background-color: #1F3C5A;">
+                            <tr>
+                                <th scope="col" class="ps-4">Usuario</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Rol</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col" class="text-end pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user_item in users %}
+                            <tr>
+                                <td class="ps-4 fw-medium">
+                                    <div class="d-flex align-items-center">
+                                        {% if user_item.profile.profile_picture %}
+                                            <img src="{{ user_item.profile.profile_picture.url }}" 
+                                                alt="{{ user_item.username }}" 
+                                                class="rounded-circle me-2 border" 
+                                                style="width: 35px; height: 35px; object-fit: cover;">
+                                        
+                                        {% else %}
+                                            <div class="bg-secondary rounded-circle me-2 d-flex justify-content-center align-items-center text-white" 
+                                                style="width: 35px; height: 35px; font-size: 0.9em;">
+                                                {{ user_item.username|slice:":1"|upper }}
+                                            </div>
+                                        {% endif %}
+
+                                        <span class="fw-medium">{{ user_item.username }}</span>
+                                    </div>
+                                </td>
+                                <td class="text-muted small">{{ user_item.email }}</td>
+                                <td>
+                                    {% if user_item.is_superuser %}
+                                        <span class="badge bg-danger">Admin</span>
+                                    {% elif user_item.is_staff %}
+                                        <span class="badge bg-warning text-dark">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark border">Viajero</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user_item.is_active %}
+                                        <span class="badge-status bg-active"><i class="fas fa-check-circle me-1"></i> Activo</span>
+                                    {% else %}
+                                        <span class="badge-status bg-suspended"><i class="fas fa-ban me-1"></i> Suspendido</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <button class="btn-action btn-ver-perfil me-1" 
+                                            type="button"
+                                            data-accion="ver"
+                                            data-username="{{ user_item.username|escapejs }}"
+                                            data-email="{{ user_item.email|escapejs }}"
+                                            data-fullname="{{ user_item.get_full_name|default:'No especificado'|escapejs }}"
+                                            data-joined="{{ user_item.date_joined|date:'d/m/Y' }}"
+                                            data-lastlogin="{{ user_item.last_login|date:'d/m/Y H:i'|default:'Nunca' }}"
+                                            data-url="{% url 'admin_user_detail' user_item.id %}"
+                                            
+                                            onclick="gestionarModal(this)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+
+                                    {% if user_item.is_active %}
+                                        <button class="btn-action btn-suspender" 
+                                                type="button"
+                                                data-accion="suspender"
+                                                data-username="{{ user_item.username|escapejs }}"
+                                                data-url="{% url 'admin_toggle_status' user_item.id %}"
+                                                onclick="gestionarModal(this)">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    {% else %}
+                                        <button class="btn-action btn-reactivar" 
+                                                type="button"
+                                                data-accion="reactivar"
+                                                data-username="{{ user_item.username|escapejs }}"
+                                                data-url="{% url 'admin_toggle_status' user_item.id %}"
+                                                onclick="gestionarModal(this)">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                    {% endif %}
+
+                                    <button class="btn-action btn-eliminar ms-1" 
+                                            type="button"
+                                            data-accion="eliminar"
+                                            data-username="{{ user_item.username|escapejs }}"
+                                            data-url="{% url 'admin_delete_user' user_item.id %}"
+                                            onclick="gestionarModal(this)">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">No se encontraron usuarios.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <nav aria-label="Navegación" class="mt-4 d-flex justify-content-end">
+                    {% if users.has_other_pages %}
+                    <ul class="pagination">
+                        <li class="page-item {% if not users.has_previous %}disabled{% endif %}">
+                            <a class="page-link rounded-circle me-1" href="{% if users.has_previous %}?page={{ users.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if show_suspended %}&suspendidos=on{% endif %}{% else %}#{% endif %}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+
+                        {% for i in users.paginator.page_range %}
+                            {% if users.number == i %}
+                                <li class="page-item active">
+                                    <span class="page-link rounded-circle me-1">{{ i }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link rounded-circle me-1" href="?page={{ i }}{% if search_query %}&q={{ search_query }}{% endif %}{% if show_suspended %}&suspendidos=on{% endif %}">
+                                        {{ i }}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        <li class="page-item {% if not users.has_next %}disabled{% endif %}">
+                            <a class="page-link rounded-circle" href="{% if users.has_next %}?page={{ users.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if show_suspended %}&suspendidos=on{% endif %}{% else %}#{% endif %}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                    {% endif %}
+                </nav>
+                <div class="mt-5 pt-3 border-top">
+                    <a href="panel_administrador.html" class="btn btn-outline-secondary px-4 rounded-pill">
+                        <i class="fas fa-arrow-left me-2"></i> Regresar al Panel Principal
+                    </a>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <div class="modal fade" id="modalAcciones" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                
+                <div class="modal-body text-center pt-0 pb-4">
+                    <div id="modalIcono" class="mb-3">
+                        </div>
+                    <h4 id="modalTitulo" class="fw-bold mb-2">Titulo</h4>
+                    <p id="modalMensaje" class="text-muted px-4">Mensaje</p>
+                    
+                    <form id="formAccion" method="POST" action="">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center gap-2 mt-4">
+                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" id="btnConfirmarAccion" class="btn rounded-pill px-4">
+                                Confirmar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Inicializar Modal de Bootstrap
+    var modalAcciones = new bootstrap.Modal(document.getElementById('modalAcciones'));
+
+    // Elementos del Modal
+    const modalTitulo = document.getElementById('modalTitulo');
+    const modalMensaje = document.getElementById('modalMensaje');
+    const modalIcono = document.getElementById('modalIcono');
+    const btnConfirmar = document.getElementById('btnConfirmarAccion');
+    const formAccion = document.getElementById('formAccion');
+
+    // Función para configurar el modal antes de abrirlo
+    function prepararModal(accion, username, email, url, extraData = {}) {
+        
+        // Resetear clases del botón
+        btnConfirmar.className = "btn rounded-pill px-4";
+        formAccion.onsubmit = null; 
+        btnConfirmar.onclick = null; 
+        
+        // Si es solo ver, escondemos el botón de submit o lo cambiamos a un enlace simple
+        if(accion === 'ver') {
+            formAccion.onsubmit = function(e){ e.preventDefault(); modalAcciones.hide(); }; // Prevenir envío
+            btnConfirmar.type = "button"; // Cambiar a botón normal
+            btnConfirmar.onclick = function() { modalAcciones.hide(); };
+        } else {
+            formAccion.onsubmit = null; // Restaurar envío normal
+            btnConfirmar.type = "submit";
+            formAccion.action = url; // Asignar la URL de Django al formulario
+        }
+
+        switch(accion) {
+            case 'ver':
+                modalIcono.innerHTML = '<i class="fas fa-user-circle fa-4x text-primary"></i>';
+                
+                modalTitulo.textContent = `Perfil de ${username}`;
+                
+                // Usamos innerHTML para formatear los detalles con saltos de línea y negritas
+                modalMensaje.innerHTML = `
+                    <div class="text-start bg-light p-3 rounded small">
+                        <p class="mb-1"><strong><i class="fas fa-user me-2"></i>Nombre:</strong> ${extraData.fullname}</p>
+                        <p class="mb-1"><strong><i class="fas fa-envelope me-2"></i>Email:</strong> ${email}</p>
+                        <p class="mb-1"><strong><i class="fas fa-calendar-alt me-2"></i>Registro:</strong> ${extraData.joined}</p>
+                        <p class="mb-0"><strong><i class="fas fa-clock me-2"></i>Último acceso:</strong> ${extraData.lastLogin}</p>
+                    </div>
+                `;
+                
+                // Configurar botones
+                btnConfirmar.textContent = "Ir al perfil"; // Texto nuevo
+                btnConfirmar.classList.add("btn-primary", "text-white");
+                btnConfirmar.type = "button"; // Importante: que no haga submit
+                
+                // Acción al dar click: Redirigir a la URL del perfil
+                btnConfirmar.onclick = function() {
+                    window.location.href = url;
+                };
+                break;
+
+            case 'suspender':
+                modalIcono.innerHTML = '<i class="fas fa-ban fa-4x text-warning"></i>';
+                modalTitulo.textContent = "¿Suspender Usuario?";
+                modalMensaje.textContent = `El usuario ${username} perderá acceso al sistema temporalmente.`;
+                btnConfirmar.textContent = "Sí, Suspender";
+                btnConfirmar.classList.add("btn-warning");
+                btnConfirmar.type = "submit";
+                formAccion.action = url;
+                break;
+
+            case 'reactivar':
+                modalIcono.innerHTML = '<i class="fas fa-check-circle fa-4x text-success"></i>';
+                modalTitulo.textContent = "¿Reactivar Usuario?";
+                modalMensaje.textContent = `El usuario ${username} recuperará su acceso inmediatamente.`;
+                btnConfirmar.textContent = "Sí, Reactivar";
+                btnConfirmar.classList.add("btn-success", "text-white");
+                btnConfirmar.type = "submit";
+                formAccion.action = url;
+                break;
+
+            case 'eliminar':
+                modalIcono.innerHTML = '<i class="fas fa-trash-alt fa-4x text-danger"></i>';
+                modalTitulo.textContent = "¿Eliminar Permanentemente?";
+                modalMensaje.innerHTML = `Estás a punto de eliminar a <strong>${username}</strong>.<br>Esta acción no se puede deshacer.`;
+                btnConfirmar.textContent = "Sí, Eliminar";
+                btnConfirmar.classList.add("btn-danger");
+                btnConfirmar.type = "submit";
+                formAccion.action = url;
+                break;
+        }
+
+        modalAcciones.show();
+    }
+    function gestionarModal(boton) {
+        // Leemos los datos de las "cajitas" data-
+        var accion = boton.getAttribute('data-accion');
+        var username = boton.getAttribute('data-username');
+        var email = boton.getAttribute('data-email'); 
+        var url = boton.getAttribute('data-url');
+        var extraData = {
+            fullname: boton.getAttribute('data-fullname'),
+            joined: boton.getAttribute('data-joined'),
+            lastLogin: boton.getAttribute('data-lastlogin')
+        };
+        
+        // Llamamos a tu función original sin miedo a las comillas
+        prepararModal(accion, username, email, url, extraData);
+    }
+</script>
+{% endblock %}

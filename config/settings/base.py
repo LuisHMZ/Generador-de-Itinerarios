@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from dotenv import load_dotenv
 import sys
-
+from django.contrib.messages import constants as messages
 from pathlib import Path
 
 # Carga las variables del archivo .env
@@ -79,6 +79,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Middleware de allauth
     'allauth.account.middleware.AccountMiddleware',
+    'apps.users.middleware.UpdateLastSeenMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -102,9 +103,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Configuración del Backend de Email (para desarrollo)
 # Mostrará los emails en la consola en lugar de enviarlos realmente.
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Le dice a Django que use el servidor SMTP (Servidor de Correo Real)
-""" EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # Configuración del servidor de Gmail
 EMAIL_HOST = 'smtp.gmail.com'
@@ -118,7 +119,7 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 # Dirección "De:" por defecto para los correos enviados por tu app
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
+        
 
 
 # Password validation
@@ -250,3 +251,8 @@ RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
 
 # Opcional: Cambia el tema a oscuro si prefieres
 # RECAPTCHA_DEFAULT_THEME = 'dark'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+

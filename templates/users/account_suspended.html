@@ -1,0 +1,130 @@
+{% extends "_base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Cuenta Suspendida - MexTur{% endblock %}
+
+{% block extra_css %}
+    <!-- Reutilizamos estilos de login para el contenedor -->
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <style>
+        .suspended-icon {
+            color: #e74c3c; /* Rojo de error */
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            /* Pequeña animación de "negación" */
+            animation: shake 1s; 
+        }
+        
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .text-justify {
+            text-align: justify;
+        }
+    </style>
+{% endblock %}
+
+<!-- 
+    Sobrescribimos la barra de navegación.
+    Mostramos solo enlaces seguros, nada de login/registro.
+-->
+{% block navbar_links %}
+    <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}">Inicio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}">Contacto</a>
+        </li>
+    </ul>
+{% endblock navbar_links %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="container-register text-center" style="max-width: 650px; margin: 0 auto;">
+        
+        <div class="suspended-icon">
+            <i class="fas fa-user-lock"></i>
+        </div>
+
+        <h1 class="register-title" style="color: #e74c3c;">{% trans "Cuenta Suspendida" %}</h1>
+        
+        <!-- Saludo personalizado (se llena con JS) -->
+        <p class="register-subtitle lead">
+            Hola <strong id="suspended-username" style="color: var(--dark-color);">Usuario</strong>, lo sentimos, pero tu acceso ha sido desactivado temporalmente por un administrador.
+        </p>
+
+        <!-- Razón específica (se llena con JS) -->
+        <!-- <div class="alert alert-custom alert-error-custom" style="display: flex; text-align: left; align-items: start;">
+            <i class="fas fa-info-circle me-2 mt-1"></i>
+            <div>
+                <h5 class="fw-bold mb-1" style="font-size: 1rem;">Detalle del problema:</h5>
+                <p class="mb-0" id="suspended-reason">Tu cuenta ha sido suspendida por un administrador.</p>
+            </div> 
+        </div> -->
+
+        <!-- Información genérica -->
+        <div class="alert alert-warning mt-4 text-start" role="alert">
+            <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>¿Por qué sucede esto?</h5>
+            <p class="mb-0 text-justify">Esto puede deberse a una violación de nuestros términos de servicio o por motivos de seguridad. Si crees que esto es un error, por favor contáctanos.</p>
+        </div>
+
+
+
+        <!-- Botones de Acción -->
+        <div class="d-grid gap-2 mt-4">
+            <a href="mailto:soporte@mextur.com?subject=Apelación de suspensión de cuenta" class="btn btn-login">
+                <span><i class="fas fa-envelope me-2"></i> {% trans "Continuar" %}</span>
+            </a>
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary mt-2" style="border-radius: 8px; padding: 0.75rem;">
+                Volver al Inicio
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Leer parámetros de la URL (?message=...&username=...)
+        const urlParams = new URLSearchParams(window.location.search);
+        const message = urlParams.get('message');
+        const username = urlParams.get('username');
+
+        // 1. Actualizar el mensaje de razón
+        if (message) {
+            const reasonElement = document.getElementById('suspended-reason');
+            if (reasonElement) {
+                // Decodificar URI component para mostrar acentos y espacios correctamente
+                reasonElement.textContent = decodeURIComponent(message);
+            }
+        }
+
+        // 2. Actualizar el nombre de usuario
+        const userElement = document.getElementById('suspended-username');
+        if (userElement) {
+            if (username) {
+                userElement.textContent = decodeURIComponent(username);
+            } else {
+                // Si no viene nombre, ajustamos el texto para que no se vea raro
+                // Ejemplo: "Hola, lo sentimos..." en lugar de "Hola Usuario, lo sentimos..."
+                userElement.style.display = 'none'; 
+            }
+        }
+    });
+</script>
+{% endblock %}

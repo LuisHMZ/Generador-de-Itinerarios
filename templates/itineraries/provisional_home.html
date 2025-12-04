@@ -54,9 +54,14 @@
         
         <div class="mt-4 mx-auto w-100 w-md-75 d-flex justify-content-center">
             <div class="input-group search-bar">
-                <span class="input-group-text border-0 bg-transparent"><i class="fas fa-search text-muted"></i></span>
-                <input type="text" class="form-control border-0" placeholder="¿A dónde quieres viajar hoy?">
-                <button class="btn-explore btn" type="button"><span>Explora itinerarios</span></button>
+                <span class="input-group-text border-0 bg-transparent d-none d-sm-block">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text" class="form-control border-0 ps-5 ps-sm-0 pe-sm-1" placeholder="¿A dónde quieres viajar hoy?">
+                <button class="btn-explore btn btn-explore-min-width" type="button">
+                    <span class="d-none d-sm-inline">Explora itinerarios</span>
+                    <i class="fas fa-search d-sm-none"></i>
+                </button>
             </div>
         </div>
         <div class="mt-4 mx-auto w-100 w-md-75 d-flex justify-content-center">
@@ -73,7 +78,7 @@
                   Input:
                   Placeholder acortado para mejor visualización
                 -->
-                <input type="text" class="form-control border-0 ps-5 ps-sm-0" placeholder="¿A dónde quieres viajar hoy?">
+                <input type="text" class="form-control border-0 ps-5 ps-sm-0" placeholder="¿A dónde viajas hoy?">
                 <!-- 
                   Botón de la derecha:
                   Contiene AMBOS (texto e icono) y alterna su visibilidad
@@ -110,7 +115,7 @@
                   Input:
                   Placeholder acortado para mejor visualización
                 -->
-                <input type="text" class="form-control border-0 ps-3 ps-sm-0" placeholder="¿A dónde quieres viajar hoy?">
+                <input type="text" class="form-control border-0 ps-3 ps-sm-0" placeholder="¿A dónde viajas ahora?">
                 <!-- 
                   Botón de la derecha:
                   Contiene AMBOS (texto e icono) y alterna su visibilidad
