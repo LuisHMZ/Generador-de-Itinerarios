@@ -4,6 +4,7 @@ from django.urls import path
 from . import views 
 
 #Definimos el namespace para llamar a las rutas como "itinerarios:nombre_ruta"
+#app name = 'itineraries'
 app_name = 'itineraries'
 urlpatterns = [
     path('itineraries/create/', views.create_itinerary_view, name='create_itinerary'),
