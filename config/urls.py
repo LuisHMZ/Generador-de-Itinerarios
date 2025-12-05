@@ -45,7 +45,6 @@ urlpatterns = [
     path('api/messaging/', include('apps.messaging.urls')),
     path('api/posts/', include('apps.posts.urls')),
     path('api/reports/', include('apps.reports.urls')),
-<<<<<<< HEAD
     path('api/', include('apps.alertas.urls')),
 
 
@@ -61,12 +60,7 @@ urlpatterns = [
     path('', include('apps.itineraries.urls')),
     # Rutas de la app de usuarios (HTML)
     path('', include('apps.users.urls')),
-]
 
-# Añade esto al final:
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-=======
     path('register/', user_views.simple_register_view, name='simple_register'),
     path('login/', user_views.simple_login_view, name='simple_login'),
     path('logout/', user_views.simple_logout_view, name='simple_logout'),
@@ -82,6 +76,10 @@ if settings.DEBUG:
     # path('', include('apps.itineraries.urls_home')),  # Asumiendo que la app itineraries maneja la home
 ]
 
+# Añade esto al final:
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
->>>>>>> origin/feature/email-verification
+
+    
+
+

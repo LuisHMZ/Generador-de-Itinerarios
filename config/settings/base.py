@@ -1,3 +1,4 @@
+# git
 # config/settings.py
 import os
 from dotenv import load_dotenv
@@ -76,12 +77,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Middleware de allauth
     'allauth.account.middleware.AccountMiddleware',
-<<<<<<< HEAD
-
-    'apps.users.middleware.ActiveUserMiddleware',
-=======
-    'apps.users.middleware.UpdateLastSeenMiddleware',
->>>>>>> origin/feature/email-verification
+    'apps.users.middleware.ActiveUserUpdateMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -254,14 +250,11 @@ RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
 # Opcional: Cambia el tema a oscuro si prefieres
 # RECAPTCHA_DEFAULT_THEME = 'dark'
 
-<<<<<<< HEAD
+
 # Comentamos estas líneas porque dejaremos que allauth use su
 # redirección por defecto (que es /home/)
 # ACCOUNT_LOGIN_REDIRECT_URL = '/feed/'
 # LOGIN_REDIRECT_URL = '/feed/'
-=======
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-
->>>>>>> origin/feature/email-verification

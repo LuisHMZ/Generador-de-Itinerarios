@@ -1,11 +1,5 @@
-<<<<<<< HEAD
-from django.db.models import Q  
-from django.shortcuts import render, redirect, get_object_or_404 
-=======
 # apps/users/views.py
-
 from django.shortcuts import render, redirect, get_object_or_404
->>>>>>> origin/feature/email-verification
 from django.urls import reverse
 from django.http import JsonResponse
 from django.contrib import messages
@@ -137,30 +131,23 @@ def simple_register_view(request):
 
 def simple_login_view(request):
     if request.user.is_authenticated:
-<<<<<<< HEAD
-        return redirect('home') 
-=======
         # Detectar si es una petición AJAX/Fetch (usa la cabecera X-Requested-With)
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         if is_ajax:
             return JsonResponse({'status': 'already_authenticated', 'message': 'Ya has iniciado sesión.'})
         else:
             return redirect('home')  # Aún no tenemos home, se redirige al registro
->>>>>>> origin/feature/email-verification
     
     if request.method == 'POST':
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         form = AuthenticationForm(request, data=request.POST)
-<<<<<<< HEAD
-=======
         username_data = request.POST.get('username') # El form de Django usa 'username' para el input
         password_data = request.POST.get('password')
+
         # --- 1. VERIFICACIÓN MANUAL DE SUSPENSIÓN ---
         
         # ---------------------------------------------
 
-
->>>>>>> origin/feature/email-verification
         if form.is_valid():
             user = form.get_user()
             email_record = EmailAddress.objects.filter(user=user, email=user.email).first()
@@ -184,8 +171,6 @@ def simple_login_view(request):
             else:
                 return redirect('home')
         else:
-<<<<<<< HEAD
-=======
             # Si el formulario no es válido
             if username_data and password_data:
                 # Buscamos si el usuario existe para ver si está suspendido
@@ -205,17 +190,13 @@ def simple_login_view(request):
                         return redirect('account_suspended')
 
             # Si no estaba suspendido, entonces es contraseña incorrecta real
->>>>>>> origin/feature/email-verification
             if is_ajax:
                 return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
             else:
                 messages.error(request, 'Usuario o contraseña incorrectos.')
-<<<<<<< HEAD
-    else:
-=======
     
     else: # Si es una petición GET (mostrar el formulario)
->>>>>>> origin/feature/email-verification
+
         form = AuthenticationForm()
     return render(request, 'users/simple_login.html', {'form': form})
 
@@ -225,9 +206,7 @@ def simple_logout_view(request):
     if is_ajax:
         return JsonResponse({'status': 'success', 'message': 'Sesión cerrada.'})
     else:
-<<<<<<< HEAD
-        return redirect('simple_login')
-
+         return redirect('home')  
 
 # --- VISTA DEL FEED PRINCIPAL (MIXTO) ---
 
@@ -446,8 +425,6 @@ def profile_view(request, username):
         'pending_request_id': pending_request_id, 
     }
     return render(request, 'users/profile.html', context)
-=======
-        return redirect('home')  
 
 def account_suspended_view(request):
     """Muestra la página informativa de cuenta suspendida."""
@@ -640,4 +617,3 @@ def admin_login_logs(request):
     logs = paginator.get_page(page_number)
 
     return render(request, 'users/admin-login-logs.html', {'logs': logs})
->>>>>>> origin/feature/email-verification

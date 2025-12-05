@@ -1,11 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-<<<<<<< HEAD
 from apps.itineraries.models import Category
-=======
 import datetime
->>>>>>> origin/feature/email-verification
 
 # --- Modelos de la App `users` ---
 
