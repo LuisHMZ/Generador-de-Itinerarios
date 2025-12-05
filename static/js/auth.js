@@ -454,6 +454,11 @@ if (formSimpleLogin && alertSuccessDivLog && alertErrorDivLog && errorMessageSpa
                 successMessageSpanLog.textContent = data.message || 'Ya has iniciado sesión.';
                 alertSuccessDivLog.style.display = 'block';
                 setTimeout(() => { window.location.href = data.redirect_url || '/'; }, 1500);
+            }else if (data.status === 'suspended') { 
+                // --- ¡NUEVO CASO! ---
+                // Redirige a la página de cuenta suspendida
+                setTimeout(() => { window.location.href = data.redirect_url || '/'; }, 1500);
+            
             } else {
                  // Respuesta 200 pero con status != 'success' (raro)
                 errorMessageSpanLog.textContent = data.message || 'Ocurrió un error inesperado.';
@@ -463,7 +468,14 @@ if (formSimpleLogin && alertSuccessDivLog && alertErrorDivLog && errorMessageSpa
         .catch(error => {
             console.error('Error en el inicio de sesión (Respuesta Django):', error.data || error.message || error);
             let generalErrorMessage = 'Ocurrió un error inesperado.';
-            if (error.status === 403 && error.data && error.data.message) {
+            if (error.status === 403 && error.data && error.data.status === 'suspended') {
+                console.log("Cuenta suspendida. Redirigiendo...");
+                // Construimos la URL con el mensaje como parámetro
+                const redirectUrl = error.data.redirect_url || '/account-suspended/';
+                const message = encodeURIComponent(error.data.message || 'Tu cuenta ha sido suspendida.');
+                window.location.href = `${redirectUrl}?message=${message}`;
+                return; 
+            }else if (error.status === 403 && error.data && error.data.message) {
                 // Error 403: Email no verificado
                 generalErrorMessage = error.data.message; // "Debes verificar tu correo..."
             

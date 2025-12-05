@@ -1,7 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+<<<<<<< HEAD
 from apps.itineraries.models import Category
+=======
+import datetime
+>>>>>>> origin/feature/email-verification
 
 # --- Modelos de la App `users` ---
 
@@ -24,6 +28,10 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'Perfil de {self.user.username}'
+    def esta_en_linea(self):
+        # Consideramos "en línea" si se vio en los últimos 5 minutos
+        now = timezone.now()
+        return self.last_seen >= now - datetime.timedelta(minutes=5)
 
 class UserConnection(models.Model):
     class Status(models.TextChoices):
@@ -64,3 +72,19 @@ class PasswordHistory(models.Model):
 
 # NOTA: El modelo SocialAccount será manejado por la librería django-allauth,
 # por lo que no necesitas definirlo manualmente.
+
+class LoginLog(models.Model):
+    STATUS_CHOICES = [
+        ('success', 'Exitoso'),
+        ('failed', 'Fallido'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    username_attempt = models.CharField(max_length=150, blank=True) # Por si el usuario no existe (login fallido)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, blank=True) # Navegador/SO
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.username_attempt} - {self.status} - {self.timestamp}"

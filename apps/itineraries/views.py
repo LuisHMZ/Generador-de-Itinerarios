@@ -8,7 +8,7 @@ from django.conf import settings # Para acceder a la configuración del proyecto
 from django.shortcuts import render, get_object_or_404, redirect     # Para renderizar plantillas HTML y obtener objetos o 404
 from django.urls import reverse
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required  # Para requerir login en vistas basadas en funciones
+from django.contrib.auth.decorators import login_required, user_passes_test  # Para requerir login en vistas basadas en funciones
 
 # --- NUEVAS IMPORTACIONES (NECESARIAS PARA QUE FUNCIONE) ---
 from django.http import JsonResponse
@@ -31,11 +31,18 @@ from friendship.models import Friend, FriendshipRequest
 from django.contrib.auth import get_user_model
 from apps.posts.models import Post 
 
+#Importaciones de la logica para el email verification 
+from django.core.paginator import Paginator
+from django.db.models import Q
+from .forms import TouristicPlaceForm
+
 # --- Definimos el Modelo de User UNA SOLA VEZ ---
 User = get_user_model()
 
-
 from .utils import haversine  # Importa la función de utilidad para calcular distancias
+
+# Create your views here.
+from django.shortcuts import render
 
 # Tipos de Google Places v1 que SÍ queremos guardar
 # Basado en las llaves de MAPEO_CATEGORIAS de add_stops.js
@@ -66,6 +73,87 @@ def home_view(request):
     y ahora sirve el NUEVO diseño del feed (feed/feed.html)
     con datos REALES de la base de datos (Posts y Amigos).
     """
+    # No se necesita lógica especial, solo mostrar el HTML.
+    # El objeto 'request.user' está disponible automáticamente en la plantilla.
+    return render(request, 'itineraries/provisional_home.html')
+
+
+# --- GESTIÓN DE LUGARES (ADMIN) ---
+
+def es_admin(user):
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
+
+@login_required
+@user_passes_test(es_admin)
+def admin_places_list(request):
+    # Obtenemos todos los lugares ordenados por nombre
+    places_list = TouristicPlace.objects.all().order_by('name')
+
+    # Filtro de búsqueda (Nombre o Dirección)
+    query = request.GET.get('q')
+    if query:
+        places_list = places_list.filter(
+            Q(name__icontains=query) | 
+            Q(address__icontains=query)
+        )
+
+    # Paginación (10 lugares por página)
+    paginator = Paginator(places_list, 10)
+    page_number = request.GET.get('page')
+    places = paginator.get_page(page_number)
+
+    return render(request, 'itineraries/admin-locaciones.html', {
+        'places': places,
+        'search_query': query
+    })
+
+@login_required
+@user_passes_test(es_admin)
+def admin_place_create(request):
+    if request.method == 'POST':
+        form = TouristicPlaceForm(request.POST)
+        if form.is_valid():
+            lugar = form.save()
+            messages.success(request, f'Lugar "{lugar.name}" creado exitosamente.')
+            return redirect('admin_places_list')
+    else:
+        form = TouristicPlaceForm()
+    
+    return render(request, 'itineraries/admin-locaciones-form.html', {
+        'form': form, 
+        'titulo': 'Nuevo Lugar Turístico'
+    })
+
+@login_required
+@user_passes_test(es_admin)
+def admin_place_edit(request, place_id):
+    place = get_object_or_404(TouristicPlace, id=place_id)
+    
+    if request.method == 'POST':
+        form = TouristicPlaceForm(request.POST, instance=place)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Lugar "{place.name}" actualizado correctamente.')
+            return redirect('admin_places_list')
+    else:
+        form = TouristicPlaceForm(instance=place)
+    
+    return render(request, 'itineraries/admin-locaciones-form.html', {
+        'form': form, 
+        'titulo': f'Editar {place.name}'
+    })
+
+@login_required
+@user_passes_test(es_admin)
+@require_POST
+def admin_place_delete(request, place_id):
+    place = get_object_or_404(TouristicPlace, id=place_id)
+    nombre = place.name
+    place.delete()
+    messages.success(request, f'El lugar "{nombre}" ha sido eliminado.')
+    return redirect('admin_places_list')
+
+###################################################################################
     if request.user.is_authenticated:
         
         user = request.user

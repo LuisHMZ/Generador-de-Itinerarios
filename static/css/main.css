@@ -238,7 +238,7 @@ body {
 	color: #fff !important;
 	border: 0 !important;
 	height: 48px !important;
-	padding: 0 24px;
+	padding: 0 23px;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -319,9 +319,27 @@ body {
 }
 /* El span usará el color --dark-color de la regla .alert-custom span */
 /* .alert-error-custom span { ... } <-- (Sin regla específica aquí) */
-
+.alert-error {
+    background-color: rgba(231, 76, 60, 0.1);
+    border: 1px solid var(--error-color);
+    color: var(--error-color); /* El icono es rojo */
+}
 
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+@media (min-width: 576px) {
+    .btn-explore-min-width {
+        min-width: 80px; /* Reducido para el rango de 576px a 767px */
+        padding-left: 0.5rem; /* Ajuste de padding si es necesario */
+        padding-right: 0.5rem; /* Ajuste de padding si es necesario */
+    }
+}
+
+@media (min-width: 768px) {
+    .btn-explore-min-width {
+        min-width: 120px; /* Ancho más generoso para pantallas más grandes */
+    }
 }

@@ -1,0 +1,38 @@
+{% load i18n %}
+
+<div style="font-family: 'Poppins', sans-serif; padding: 20px; background-color: #f8f9fa; color: #2c3e50; max-width: 100%; margin: 0 auto;">
+    <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #ef5350;">
+
+        <h1 style="color: #1F3C5A; font-weight: 600; margin-bottom: 20px;">
+            <span style="color: #49a3a3">Mex</span><span style="color: #f39c12">Tur</span>!
+        </h1>
+        
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 15px;">
+            Hola <strong>{{ username }}</strong>,
+        </p>
+        
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 15px;">
+            {% blocktrans %}Como se solicitó, tu cuenta y todos los datos asociados han sido <strong>eliminados permanentemente</strong>.{% endblocktrans %}
+        </p>
+        
+        <div style="background-color: #ffebee; border-left: 4px solid #ef5350; padding: 15px; margin-bottom: 25px;">
+            <p style="color: #c62828; font-size: 14px; margin: 0;"> 
+                {% blocktrans %}Esta acción ya se ha completado y la información no se puede recuperar.{% endblocktrans %}
+            </p>
+        </div>
+        
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
+            {% blocktrans %}<strong>¿No fuiste tú?</strong> Si recibiste este correo y NO solicitaste la eliminación, es posible que tu contraseña haya sido vulnerada por un tercero.{% endblocktrans %}
+        </p>
+
+        <a href="mailto:seguridad@mextur.com?subject=ALERTA SEGURIDAD: Cuenta eliminada sin mi permiso - {{ username }}" target="_blank" style="display: inline-block; background-color: #f39c12; color: #ffffff; padding: 12px 25px; margin: 0 auto 25px; border-radius: 5px; text-decoration: none; font-weight: 600; font-size: 16px;">
+            Reportar Incidente de Seguridad
+        </a>
+        
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        
+        <p style="color: #7d7d7d; font-size: 12px; margin: 0;">
+            &copy; {% now "Y" %} MexTur. Todos los derechos reservados.
+        </p>
+    </div>
+</div>
