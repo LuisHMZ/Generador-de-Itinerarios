@@ -1,4 +1,3 @@
-# git
 # config/settings.py
 import os
 from dotenv import load_dotenv
@@ -77,7 +76,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Middleware de allauth
     'allauth.account.middleware.AccountMiddleware',
-    'apps.users.middleware.ActiveUserUpdateMiddleware',
+    'apps.users.middleware.ActiveUserMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
