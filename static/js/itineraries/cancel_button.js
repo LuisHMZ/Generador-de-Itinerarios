@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // window.history.back();
 
             // Opción 2: Redirigir a una página específica (ej. la lista de itinerarios)
-            window.location.href = 'mis-itinerarios.html'; // <-- CAMBIA A TU URL CORRECTA
+            window.location.href = '/itineraries'; // <-- CAMBIA A TU URL CORRECTA
         });
     }
 });

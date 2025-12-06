@@ -20,7 +20,10 @@
             </h1>
         </div>
 
-        <form id="form-editar-itinerario" class="card shadow-sm p-4 p-md-5 bg-white" method="post" enctype="multipart/form-data">
+        <form id="form-editar-itinerario" class="card shadow-sm p-4 p-md-5 bg-white" method="post"
+        data-itinerary-id="{{ itinerary.id|default:'' }}" 
+        data-itinerary-status="{{ itinerary.status|default:'draft' }}"
+        enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="itinerary_id" value=""> <div class="row g-4">
                 <div class="col-md-6">
@@ -35,9 +38,9 @@
                     <div class="mb-3">
                         <label for="categoria-itinerario" class="form-label">Categoría:</label>
                         <select class="form-select" id="categoria-itinerario" name="category">
-                            <option value="" selected disabled>Selecciona una categoría</option>
+                            <option value="" disabled {% if not itinerary %}selected{% endif %}>Selecciona una categoría</option>
                             {% for categoria in categorias %}
-                                <option value="{{ categoria }}" {% if itinerary and itinerary.category == categoria %}selected{% endif %}>{{ categoria }}</option>
+                                <option value="{{ categoria }}" {% if itinerary and itinerary.category|default:''|lower == categoria|lower %}selected{% endif %}>{{ categoria }}</option>
                             {% endfor %}
                             <!-- 
                             <option value="aventura" {% if itinerary and itinerary.category == 'aventura' %}selected{% endif %}>Aventura</option>
@@ -53,11 +56,11 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="start_date" class="form-label">Fecha de inicio:</label>
-                        <input type="date" class="form-control" id="fecha-inicio" name="start_date" value="{% if itinerary and itinerary.start_date %}{{ itinerary.start_date }}{% endif %}">
+                        <input type="date" class="form-control" id="fecha-inicio" name="start_date" value="{% if itinerary and itinerary.start_date %}{{ itinerary.start_date|date:'Y-m-d' }}{% endif %}">
                     </div>
                     <div class="mb-3">
                         <label for="end_date" class="form-label">Fecha de termino:</label>
-                        <input type="date" class="form-control" id="fecha-termino" name="end_date" value="{% if itinerary and itinerary.end_date %}{{ itinerary.end_date }}{% endif %}" disabled>
+                        <input type="date" class="form-control" id="fecha-termino" name="end_date" value="{% if itinerary and itinerary.end_date %}{{ itinerary.end_date|date:'Y-m-d' }}{% endif %}">
                         <div class="invalid-feedback">
                             La fecha de término no puede ser anterior a la fecha de inicio.
                         </div>
@@ -68,13 +71,13 @@
                             <span class="input-group-text"><i class="fas fa-camera"></i></span>
                             <input type="text" class="form-control file-name-display" placeholder="Ningún archivo seleccionado" readonly value="{% if itinerary and itinerary.banner_pic %}{{ itinerary.banner_pic.name }}{% endif %}">
                             <input type="file" class="form-control file-input-hidden" id="banner-pic" name="banner_pic" accept="image/*">
+                            <label class="btn btn-outline-secondary file-browse-btn" for="banner-pic">Cambiar</label>
                             {% if itinerary and itinerary.banner_pic %}
                                 <div class="mt-2">
                                     <small>Portada actual:</small>
                                     <img src="{{ itinerary.banner_pic.url }}" alt="{{ itinerary.title }}" style="max-height: 100px; width: auto;">
                                 </div>
                             {% endif %}
-                            <label class="btn btn-outline-secondary file-browse-btn" for="banner-pic">Cambiar</label>
                         </div>
                     </div>
                 </div>
@@ -82,14 +85,43 @@
 
             <div class="d-flex justify-content-between mt-5">
                 <button type="button" class="btn btn-secondary boton-cancelar">Cancelar</button>
+                {% if mode == "Crear" %}
                 <button type="submit" class="btn btn-primary boton-siguiente">Siguiente</button>
+                {% else %}
+                <button type="submit" class="btn btn-primary boton-guardar-cambios">Guardar Cambios</button>
+                {% endif %}
             </div>
         </form>
     </main>
+
+    <div class="modal fade" id="confirmEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning-subtle">
+                    <h5 class="modal-title text-warning-emphasis">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Atención
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Este itinerario está actualmente <strong>Publicado</strong>.</p>
+                    <p>Si guardas cambios, el estado cambiará automáticamente a <strong>Borrador</strong> y dejará de ser visible para otros usuarios hasta que lo vuelvas a publicar.</p>
+                    <p class="mb-0">¿Deseas continuar?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning text-dark fw-bold" id="btnConfirmarGuardado">
+                        Sí, guardar y pasar a Borrador
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'js/itineraries/edit_title.js' %}" defer></script>
+    <!-- <script src="{% static 'js/itineraries/edit_title.js' %}" defer></script> -->
     <!-- <script src="{% static 'js/itineraries/autofill_location.js' %}" defer></script> -->
     <script src="{% static 'js/itineraries/cancel_button.js' %}" defer></script>
     <script src="{% static 'js/itineraries/post_itinerary.js' %}" defer></script>

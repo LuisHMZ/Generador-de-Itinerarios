@@ -116,7 +116,7 @@ def simple_register_view(request):
                 messages.success(request, success_message)
                 # Ya no redirigimos a login, sino a una página informativa o a home
                 # Podrías crear una plantilla que diga "Revisa tu email"
-                return redirect('home') # O a una URL específica 'account_email_verification_sent' si la creas
+                return redirect('') # O a una URL específica 'account_email_verification_sent' si la creas
             # --- FIN AJUSTE RESPUESTA ---
         else:
             if is_ajax:
@@ -166,10 +166,10 @@ def simple_login_view(request):
             messages.success(request, f'Ha iniciado sesión exitosamente como {user.first_name or user.username}.')
             # Responde según si es fetch o no
             if is_ajax:
-                redirect_url = request.session.get('next', reverse('home'))
+                redirect_url = request.session.get('next', reverse('/'))
                 return JsonResponse({'status': 'success', 'message': '¡Inicio de sesión exitoso!', 'redirect_url': redirect_url})
             else:
-                return redirect('home')
+                return redirect('/')
         else:
             # Si el formulario no es válido
             if username_data and password_data:
@@ -298,7 +298,7 @@ def send_friend_request(request, to_user_id):
     sender = request.user
     if sender == recipient:
         messages.error(request, "No puedes enviarte solicitud a ti mismo.")
-        return redirect('home') 
+        return redirect('/') 
     
     try:
         if Friend.objects.are_friends(sender, recipient):
@@ -326,7 +326,7 @@ def send_friend_request(request, to_user_id):
         messages.error(request, f"Ya existe una solicitud pendiente.")
     except Exception as e:
         messages.error(request, f"Error: {e}")
-    return redirect('home')
+    return redirect('/')
 
 @login_required
 def friend_requests_view(request):
@@ -384,7 +384,7 @@ def cancel_friend_request(request, request_id):
         messages.success(request, "Solicitud cancelada.")
     except Exception as e:
         messages.error(request, f"Error al cancelar: {e}")
-    return redirect('home')
+    return redirect('/')
 
 
 # --- VISTA DE PERFIL ---

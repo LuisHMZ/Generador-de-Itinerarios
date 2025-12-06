@@ -1,0 +1,56 @@
+{% load static %}
+<header class="header-global">
+    <div class="header-contenido container d-flex justify-content-between align-items-center py-2">
+        <a href="/" class="logo-link d-flex align-items-center text-decoration-none"> 
+            <img src="{% static 'img/logo.png' %}" alt="Logo MexTur" class="logo-img" style="height:36px;">
+            <div class="logo-texto ms-2"><span class="logo-mex">MEX</span><span class="logo-tur">TUR</span></div>
+        </a>
+
+        <div class="header-titulo"><h5 class="header-titulo-text mb-0"></h5></div>
+
+        <div class="header-actions d-flex align-items-center gap-2">
+            {% if user.is_authenticated %}
+            <a href="/perfil/{{ user.username }}/" class="btn btn-profile" title="Mi Perfil">
+                <i class="bi bi-person-fill"></i>
+            </a>
+            {% else %}
+            <a href="#" class="btn btn-profile" title="Mi Perfil">
+                <i class="bi bi-person-fill"></i>
+            </a>
+            {% endif %}
+
+            <div class="notification-wrapper">
+                <button class="btn btn-notification position-relative" id="bell-button" type="button" title="Notificaciones">
+                    <i class="bi bi-bell-fill"></i>
+                    <span class="notification-count badge rounded-pill bg-danger" id="notification-badge-count" style="display:none; position: absolute; top: -6px; right: -6px;">0</span>
+                </button>
+            </div>
+
+            <div class="dropdown">
+                <button class="btn btn-menu" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" title="Menú">
+                    <i class="bi bi-list"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Configuración</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'simple_logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de notificaciones (vacío, será llenado por JS) -->
+    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-facebook">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="notificationsModalLabel">Notificaciones</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-0">
+            <div id="notifications-list" class="list-group list-group-flush"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+</header>

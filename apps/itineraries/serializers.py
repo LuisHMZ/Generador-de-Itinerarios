@@ -145,12 +145,11 @@ class ItinerarySerializer(serializers.ModelSerializer):
         # Añade los NUEVOS campos a la lista
         fields = [
             'id', 'user', 'user_username', 'title', 'description', 
-            'banner_pic', 'creation_date', 'stops',
+            'banner_pic', 'created_at', 'stops',
             'start_date', 'end_date', 'category'
         ]
         # user y creation_date siguen siendo solo lectura
-        read_only_fields = ['id', 'user', 'user_username', 'creation_date'] 
-
+        read_only_fields = ['id', 'user', 'user_username', 'created_at'] 
     def create(self, validated_data):
         # Saca 'stops' si existe, si no, usa lista vacía
         stops_data = validated_data.pop('stops', []) 

@@ -35,7 +35,7 @@
         {% endif %}
     </div>
 
-    <div id="site-header"></div>
+    {% include 'snippets/header.html' %}
 
     <main class="profile-container container my-4">
         <div class="row gx-4">
@@ -71,6 +71,9 @@
                     <div class="profile-actions">
                         {% if is_self %}
                             <a href="#" class="btn btn-mextur w-100 mb-2"><i class="bi bi-pencil-square me-2"></i>Crear publicación</a>
+                            <a href="{% url 'itineraries:my_itineraries' %}" class="btn btn-mextur w-100 mb-2">
+                                <i class="fa-solid fa-map-location-dot"></i> <span class="ms-2">Mis Itinerarios</span>
+                            </a>
                             <a href="#" class="btn btn-mextur w-100 mb-2"><i class="bi bi-bookmark-fill me-2"></i>Favoritos</a>
                             <a href="#" class="btn btn-mextur w-100"><i class="bi bi-gear-fill me-2"></i>Configuración</a>
                         {% else %}
@@ -173,7 +176,7 @@
             
         </div> 
     </main>
-    <div id="site-footer"></div>
+    {% include 'snippets/footer.html' %}
 
     <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable">

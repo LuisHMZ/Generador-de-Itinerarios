@@ -1,0 +1,337 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Mis Itinerarios - MexTur</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- CORRECCIÓN 1: Importar correctamente los Iconos -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'css/header-footer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/feed.css' %}">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+
+    <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
+    
+    <style>
+        /* Estilo simple para las estrellas interactivas */
+        .star-rating-widget .bi-star, .star-rating-widget .bi-star-fill {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .star-rating-widget .bi-star:hover, .star-rating-widget .bi-star-fill:hover {
+            color: #ffc107 !important; /* Amarillo al pasar el mouse */
+        }
+
+        /* --- AJUSTE DEL MODAL (Para que abrace la imagen) --- */
+        .modal-facebook .modal-dialog {
+            width: fit-content !important; /* Se ajusta al contenido */
+            max-width: 95vw !important;    /* Pero no se pasa del ancho de pantalla */
+            margin: 1.5rem auto;
+        }
+        
+        .modal-facebook .modal-content {
+            width: 100%;
+            max-width: 600px; /* Ancho máximo de la tarjeta */
+            margin: 0 auto;   /* Centrado */
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
+        {% if messages %}
+            {% for message in messages %}
+            {% with tag=message.tags %}
+            <div class="toast align-items-center text-bg-{% if tag == 'error' %}danger{% elif tag == 'warning' %}warning{% else %}success{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">{{ message }}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    {% include 'snippets/header.html' %}
+
+    <main class="container py-4" style="background-color: #f8f9fa;">
+        <div class="row gx-4">
+
+            <!-- BARRA LATERAL IZQUIERDA -->
+            <aside class="col-lg-2 col-md-3 d-none d-md-block">
+                {% include 'itineraries/snippets/sidebar_left.html' %}
+            </aside>
+
+            <!-- COLUMNA CENTRAL (FEED) -->
+            {% block content %}
+            <div class="col-md-6">
+            
+            <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
+                <h4 class="mb-0 fw-bold text-dark">Mis Itinerarios</h4>
+                
+                <a href="{% url 'itineraries:create_itinerary' %}" class="btn btn-primary shadow-sm">
+                    <i class="fas fa-plus me-2"></i>Nuevo Itinerario
+                </a>
+            </div>
+
+            <div class="d-flex mb-4">
+                <div class="btn-group w-100 shadow-sm" role="group">
+                    <a href="#" class="btn btn-outline-secondary filter-btn fw-semibold {% if current_filter == 'all' %}active{% endif %}" data-filter="all">
+                        Todos
+                    </a>
+                    <a href="#" class="btn btn-outline-success filter-btn fw-semibold {% if current_filter == 'published' %}active{% endif %}" data-filter="published">
+                        Publicados
+                    </a>
+                    <a href="#" class="btn btn-outline-warning filter-btn fw-semibold text-dark {% if current_filter == 'draft' %}active{% endif %}" data-filter="draft">
+                        Borradores
+                    </a>
+                </div>
+            </div>
+
+            {% if itineraries %}
+            <div class="row g-4"> {% for itinerary in itineraries %}
+                    <div class="col-12 col-md-6 col-xl-4"> <div class="card h-100 shadow-sm border-0">
+                            
+                            <div class="position-relative">
+                                {% if itinerary.banner_pic %}
+                                <img src="{{ itinerary.banner_pic.url }}" 
+                                    class="card-img-top" 
+                                    alt="{{ itinerary.title }}"
+                                    style="height: 180px; object-fit: cover;">
+                                {% else %}
+                                <img src="/static/img/placeholder.png" 
+                                    class="card-img-top" 
+                                    alt="{{ itinerary.title }}"
+                                    style="height: 180px; object-fit: cover;">
+                                {% endif %}
+                                
+                                <span class="position-absolute top-0 end-0 badge m-2 shadow-sm {% if itinerary.status == 'published' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                    {{ itinerary.get_status_display }}
+                                </span>
+                            </div>
+
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title text-truncate fw-bold">{{ itinerary.title }}</h5>
+                                
+                                <p class="card-text small text-muted mb-2">
+                                    <i class="far fa-calendar-alt me-1 text-primary"></i>
+                                    {% if itinerary.start_date %}
+                                        {{ itinerary.start_date|date:"d M" }} - {{ itinerary.end_date|date:"d M, Y" }}
+                                    {% else %}
+                                        <span>Fechas por definir</span>
+                                    {% endif %}
+                                </p>
+
+                                <!-- Indicador de privacidad -->
+                                {% if itinerary.privacy == 'public' %}
+                                    <span class="badge bg-info-subtle text-info-emphasis rounded-pill" title="Público">
+                                        <i class="fas fa-globe-americas"></i>
+                                    </span>
+                                {% elif itinerary.privacy == 'friends' %}
+                                    <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill" title="Solo Amigos">
+                                        <i class="fas fa-user-friends"></i>
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill" title="Privado">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                {% endif %}
+                                
+                                <!-- Descripción truncada -->
+                                <p class="card-text small mb-3 text-secondary">
+                                    {{ itinerary.description|default:"Sin descripción"|truncatewords:20 }}
+                                </p>
+
+                                <div class="mt-auto">
+                                    {% if itinerary.status == 'draft' %}
+                                        <a href="{% url 'itineraries:add_stops' itinerary.id %}" class="btn btn-outline-primary btn-sm w-100 fw-bold">
+                                            <i class="fas fa-edit me-1"></i> Continuar Editando
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'itineraries:view_itinerary' itinerary.id %}" class="btn btn-outline-success btn-sm w-100 fw-bold">
+                                            <i class="fas fa-eye me-1"></i> Ver Itinerario
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center pb-3">
+                                <small class="text-muted" style="font-size: 0.75rem;">
+                                    Creado: {{ itinerary.created_at|date:"d/m/Y" }}
+                                </small>
+
+                                <!-- Menú de opciones de privacidad -->
+                                <div class="dropdown">
+                                    <button class="btn btn-link text-secondary p-0" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                                        
+                                        <li><h6 class="dropdown-header">Privacidad</h6></li>
+                                        
+                                        <li>
+                                            <button class="dropdown-item {% if itinerary.privacy == 'public' %}active{% endif %}" 
+                                                    onclick="cambiarPrivacidad('{{ itinerary.id }}', 'public')">
+                                                <i class="fas fa-globe-americas fa-fw me-2"></i> Público
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item {% if itinerary.privacy == 'friends' %}active{% endif %}" 
+                                                    onclick="cambiarPrivacidad('{{ itinerary.id }}', 'friends')">
+                                                <i class="fas fa-user-friends fa-fw me-2"></i> Solo Amigos
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item {% if itinerary.privacy == 'private' %}active{% endif %}" 
+                                                    onclick="cambiarPrivacidad('{{ itinerary.id }}', 'private')">
+                                                <i class="fas fa-lock fa-fw me-2"></i> Solo Yo
+                                            </button>
+                                        </li>
+
+                                        <li><hr class="dropdown-divider"></li>
+                                        
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'itineraries:edit_itinerary' itinerary.id %}">
+                                                <i class="fas fa-pen fa-fw me-2"></i> Editar Detalles
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item text-danger" 
+                                                    onclick="abrirModalBorrar('{{ itinerary.id }}', '{{ itinerary.title|escapejs }}')">
+                                                <i class="fas fa-trash-alt fa-fw me-2"></i> Eliminar
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                <!-- <button class="btn btn-link text-danger p-0 text-decoration-none" 
+                                        onclick="abrirModalBorrar('{{ itinerary.id }}', '{{ itinerary.title|escapejs }}')"
+                                        title="Eliminar itinerario">
+                                    <i class="fas fa-trash-alt"></i> <span class="small fw-bold">Eliminar</span>
+                                </button> -->
+                            </div>
+
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5 bg-light rounded-3 mt-3">
+                <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No tienes itinerarios en esta categoría.</h5>
+                {% if current_filter != 'all' %}
+                    <a href="?status=all" class="btn btn-link">Ver todos mis itinerarios</a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        </div>
+            {% endblock %}
+            
+            <!-- BARRA LATERAL DERECHA -->
+            <aside class="col-lg-3 d-none d-lg-block">
+                {% include 'itineraries/snippets/sidebar_right.html' %}
+            </aside>
+            
+        </div> 
+        {% include 'itineraries/snippets/delete_modal.html' %}
+    </main>
+
+    {% include 'snippets/footer.html' %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/headerFooter.js' %}" defer></script>
+    {% block extra_js %}
+    <script src="{% static 'js/user_itineraries.js' %}" defer></script>
+    {% endblock %}
+    
+  <!--   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        [...document.querySelectorAll('.toast')].map(toastEl => new bootstrap.Toast(toastEl, { delay: 3000 }).show());
+        function getCookie(name) {let cookieValue = null;if (document.cookie && document.cookie !== '') {const cookies = document.cookie.split(';');for (let i = 0; i < cookies.length; i++) {const cookie = cookies[i].trim();if (cookie.substring(0, name.length + 1) === (name + '=')) {cookieValue = decodeURIComponent(cookie.substring(name.length + 1));break;}}}return cookieValue;}
+        const csrftoken = getCookie('csrftoken');
+        
+        document.querySelectorAll('.like-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');const countSpan = this.querySelector('.like-count');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {countSpan.textContent = data.count;if (data.liked) {icon.classList.replace('bi-heart', 'bi-heart-fill');icon.classList.add('text-danger');} else {icon.classList.replace('bi-heart-fill', 'bi-heart');icon.classList.remove('text-danger');}}});});});
+        document.querySelectorAll('.save-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {if (data.saved) {icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');icon.classList.add('text-primary');} else {icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');icon.classList.remove('text-primary');}}});});});
+        document.querySelectorAll('.save-itinerary-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(res => res.json()).then(data => {if (data.status === 'success') {if (data.saved) {icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');icon.classList.add('text-primary');} else {icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');icon.classList.remove('text-primary');}}});});});
+
+        document.querySelectorAll('.star-btn').forEach(star => {
+            star.addEventListener('click', function() {
+                const widget = this.closest('.star-rating-widget');
+                const itineraryId = widget.dataset.itineraryId;
+                const value = this.dataset.value;
+                const stars = widget.querySelectorAll('.star-btn');
+                const avgDisplay = widget.querySelector('.avg-display');
+                fetch(`/api/posts/itinerary/rate/${itineraryId}/`, {method: 'POST',headers: {'X-CSRFToken': csrftoken, 'Content-Type': 'application/x-www-form-urlencoded'},body: `score=${value}`})
+                .then(res => res.json()).then(data => {if(data.status === 'success') {stars.forEach(s => {if(s.dataset.value <= value) {s.classList.remove('bi-star');s.classList.add('bi-star-fill', 'text-warning');} else {s.classList.remove('bi-star-fill', 'text-warning');s.classList.add('bi-star');}});avgDisplay.textContent = data.new_average + "/5";} else {alert(data.message);}});
+            });
+        });
+
+        const createPostForm = document.getElementById('createPostForm'); if (createPostForm) {createPostForm.addEventListener('submit', function(e) {e.preventDefault();const formData = new FormData(this);fetch("{% url 'posts:create_post' %}", { method: 'POST', headers: { 'X-CSRFToken': csrftoken }, body: formData }).then(response => response.json()).then(data => { if (data.status === 'success') { location.reload(); } else { alert('Error al crear. Revisa los datos.'); }});});}
+        
+        const commentsModal = new bootstrap.Modal(document.getElementById('commentsModal'));
+        const modalImg = document.getElementById('modalPostImage'); const modalNoImg = document.getElementById('modalNoImage'); const modalAvatar = document.getElementById('modalAuthorAvatar'); const modalAuthor = document.getElementById('modalAuthorName'); const modalText = document.getElementById('modalPostText'); const modalList = document.getElementById('modalCommentsList'); const modalObjectIdInput = document.getElementById('modalObjectId'); const modalObjectTypeInput = document.getElementById('modalObjectType'); const commentForm = document.getElementById('commentForm'); const commentInput = document.getElementById('commentInput'); let replyingToCommentId = null; const replyIndicator = document.createElement('div'); replyIndicator.className = 'replying-to-alert d-none'; commentForm.parentNode.insertBefore(replyIndicator, commentForm);
+        window.cancelReply = function() {replyingToCommentId = null;replyIndicator.classList.add('d-none');replyIndicator.innerHTML = '';commentInput.placeholder = "Escribe un comentario...";}
+        
+        document.querySelectorAll('.comment-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const objectId = this.dataset.objectId; const objectType = this.dataset.objectType; 
+                cancelReply(); modalObjectIdInput.value = objectId; modalObjectTypeInput.value = objectType;
+                modalAuthor.textContent = this.dataset.author; modalAvatar.src = this.dataset.authorAvatar; modalText.textContent = this.dataset.text; 
+                if (this.dataset.imageUrl) { modalImg.src = this.dataset.imageUrl; modalImg.classList.remove('d-none'); modalNoImg.classList.add('d-none'); } else { modalImg.classList.add('d-none'); modalNoImg.classList.remove('d-none'); } 
+                modalList.innerHTML = '<p class="text-center text-muted mt-4"><div class="spinner-border text-primary" role="status"></div></p>'; 
+                commentsModal.show(); 
+                let loadUrl = objectType === 'post' ? `/api/posts/comments/load/${objectId}/` : `/api/posts/itinerary/comments/load/${objectId}/`;
+                fetch(loadUrl).then(res => res.json()).then(data => {modalList.innerHTML = '';if (data.comments.length === 0) {modalList.innerHTML = '<p id="no-comments-msg" class="text-center text-muted mt-5">Sé el primero en comentar.</p>';} else {data.comments.forEach(c => addCommentToDOM(c));modalList.scrollTop = modalList.scrollHeight;}});
+            });
+        });
+        
+        commentForm.addEventListener('submit', function(e) {
+            e.preventDefault(); const text = commentInput.value.trim(); if (!text) return;
+            const objectId = modalObjectIdInput.value; const objectType = modalObjectTypeInput.value;
+            const formData = new FormData(); formData.append('text', text); if (replyingToCommentId) { formData.append('parent_id', replyingToCommentId); }
+            let addUrl = objectType === 'post' ? `/api/posts/comments/add/${objectId}/` : `/api/posts/itinerary/comments/add/${objectId}/`;
+            fetch(addUrl, {method: 'POST',headers: { 'X-CSRFToken': csrftoken },body: formData}).then(res => res.json()).then(data => {if (data.status === 'success') {if (replyingToCommentId) {const p = document.getElementById(`replies-${replyingToCommentId}`);if (p) p.insertAdjacentHTML('beforeend', generateCommentHTML(data.new_comment));} else {addCommentToDOM(data.new_comment);modalList.scrollTop = modalList.scrollHeight;const countSpan = document.querySelector(`.comment-btn[data-object-id="${objectId}"][data-object-type="${objectType}"] .comment-count`);if(countSpan) countSpan.textContent = parseInt(countSpan.textContent) + 1;}commentInput.value = '';cancelReply();}});
+        });
+        
+        function generateCommentHTML(c) {
+            const deleteBtn = c.is_owner ? `<small class="delete-action ms-2 text-danger" style="cursor:pointer;" onclick="deleteComment(${c.id}, this)">Eliminar</small>` : '';
+            const likeClass = c.is_liked ? 'text-danger' : '';
+            return `<div class="mb-3 comment-item" id="comment-${c.id}"><div class="d-flex"><img src="${c.avatar}" class="comment-avatar me-2"><div><div class="comment-bubble"><strong class="d-block mb-1" style="font-size: 0.9em;">${c.user}</strong><span style="font-size: 0.95em;">${c.text}</span></div><div class="ms-2 mt-1 comment-actions d-flex align-items-center"><small class="${likeClass} me-3" style="cursor:pointer; font-weight:bold;" onclick="likeComment(${c.id}, this)">${c.is_liked ? 'Te gusta' : 'Me gusta'} <span class="count">${c.likes_count > 0 ? '('+c.likes_count+')' : ''}</span></small><small class="me-3" style="cursor:pointer;" onclick="replyTo(${c.id}, '${c.user}')">Responder</small><small class="text-muted fw-normal">${c.created_at}</small>${deleteBtn}</div></div></div><div class="comment-replies" id="replies-${c.id}" style="margin-left: 40px;">${c.replies ? c.replies.map(r => generateCommentHTML(r)).join('') : ''}</div></div>`;
+        }
+        function addCommentToDOM(c) {const noMsg = document.getElementById('no-comments-msg');if (noMsg) noMsg.remove();const html = generateCommentHTML(c);modalList.insertAdjacentHTML('beforeend', html);}
+        window.replyTo = function(commentId, username) {replyingToCommentId = commentId;replyIndicator.classList.remove('d-none');replyIndicator.innerHTML = `<small class="ms-2">Respondiendo a <strong>${username}</strong> <a href="#" onclick="cancelReply(); return false;" class="text-danger ms-1">Cancelar</a></small>`;commentInput.placeholder = `Escribe una respuesta a ${username}...`;commentInput.focus();}
+        window.likeComment = function(commentId, element) {fetch(`/api/posts/comments/like/${commentId}/`, {method: 'POST',headers: { 'X-CSRFToken': csrftoken }}).then(res => res.json()).then(data => {if (data.status === 'success') {const countText = data.count > 0 ? `(${data.count})` : '';element.innerHTML = `${data.liked ? 'Te gusta' : 'Me gusta'} <span class="count">${countText}</span>`;if (data.liked) element.classList.add('text-danger');else element.classList.remove('text-danger');}});}
+        window.deleteComment = function(commentId, element) {if (!confirm("¿Estás seguro de eliminar este comentario?")) return;fetch(`/api/posts/comments/delete/${commentId}/`, {method: 'POST',headers: { 'X-CSRFToken': csrftoken }}).then(res => res.json()).then(data => {if (data.status === 'success') {const commentDiv = document.getElementById(`comment-${commentId}`);if (commentDiv) commentDiv.remove();}});}
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const openPostId = urlParams.get('open_post');
+        const openItinId = urlParams.get('open_itinerary');
+        let targetSelector = null;
+        if (openPostId) { targetSelector = `.comment-btn[data-object-id="${openPostId}"][data-object-type="post"]`; } 
+        else if (openItinId) { targetSelector = `.comment-btn[data-object-id="${openItinId}"][data-object-type="itinerary"]`; }
+
+        if (targetSelector) {
+            const tryOpenModal = () => {
+                const targetBtn = document.querySelector(targetSelector);
+                if (targetBtn) { targetBtn.scrollIntoView({ behavior: 'auto', block: 'center' }); targetBtn.click(); const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname; window.history.replaceState({path: newUrl}, '', newUrl); return true; } return false;
+            };
+            if (!tryOpenModal()) { setTimeout(() => { if (!tryOpenModal()) { setTimeout(tryOpenModal, 1500); } }, 500); }
+        }
+    });
+    </script> -->
+
+</body>
+</html>

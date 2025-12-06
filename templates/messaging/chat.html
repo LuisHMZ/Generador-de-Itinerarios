@@ -21,7 +21,7 @@
 <body>
 
     <!-- Header General del Sitio -->
-    <div id="site-header"></div>
+    {% include 'snippets/header.html' %}
 
     <!-- Contenedor Principal "Full Height" -->
     <div class="container-fluid chat-wrapper">
@@ -40,12 +40,12 @@
                                 </a>
                             </li>
                             <li class="mb-2">
-                                <a href="#" class="menu-item text-decoration-none d-flex align-items-center text-primary fw-bold bg-light rounded">
+                                <a href="{% url 'messaging:inbox' %}" class="menu-item text-decoration-none d-flex align-items-center text-primary fw-bold bg-light rounded">
                                     <i class="fa-solid fa-envelope fa-fw me-2"></i> Mensajes
                                 </a>
                             </li>
                             <li class="mb-2">
-                                <a href="#" class="menu-item text-decoration-none d-flex align-items-center text-dark">
+                                <a href="{% url 'itineraries:my_itineraries' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
                                     <i class="fa-solid fa-map-location-dot fa-fw me-2"></i> Itinerarios
                                 </a>
                             </li>
@@ -107,7 +107,7 @@
                     <div class="chat-header-bar">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-arrow-left" id="btn-back-mobile"></i>
-                            <a href="#" id="header-profile-link" class="text-decoration-none d-flex align-items-center text-dark">
+                            <a href="{% url 'profile_view' user.username %}" id="header-profile-link" class="text-decoration-none d-flex align-items-center text-dark">
                                 <img src="" id="header-avatar" width="40" height="40" class="rounded-circle object-fit-cover me-2">
                                 <div>
                                     <h6 class="mb-0 fw-bold" id="header-name">Usuario</h6>
@@ -145,7 +145,7 @@
         </div>
     </div>
 
-    <div id="site-footer"></div>
+    {% include 'snippets/footer.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/headerFooter.js' %}" defer></script>

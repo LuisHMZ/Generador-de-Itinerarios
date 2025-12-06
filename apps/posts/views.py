@@ -56,8 +56,14 @@ def feed_view(request):
     ).select_related('user', 'user__profile').prefetch_related('pictures', 'likes', 'saved_by', 'comments').distinct()
     for post in posts: post.feed_type = 'post'
 
-    # Itinerarios
-    raw_itineraries = list(Itinerary.objects.filter(user_id__in=relevant_users).select_related('user', 'user__profile'))
+    # Itinerarios: solo publicados y con privacy 'friends' o 'public'
+    raw_itineraries = list(
+        Itinerary.objects.filter(
+            user_id__in=relevant_users,
+            status='published',
+            privacy__in=['friends', 'public']
+        ).select_related('user', 'user__profile')
+    )
     itineraries = process_itineraries(raw_itineraries, user)
 
     feed_items = sorted(chain(posts, itineraries), key=attrgetter('created_at'), reverse=True)
@@ -93,7 +99,16 @@ def saved_posts_view(request):
     saved_posts = list(Post.objects.filter(saved_by=request.user).select_related('user', 'user__profile').prefetch_related('pictures', 'likes', 'saved_by', 'comments'))
     for p in saved_posts: p.feed_type = 'post'
     saved_rels = SavedItinerary.objects.filter(user=request.user).select_related('itinerary', 'itinerary__user')
-    itineraries = process_itineraries([rel.itinerary for rel in saved_rels], request.user)
+    # Obtener solo los itinerarios guardados que estén publicados y tengan privacy 'friends' o 'public'
+    saved_itin_ids = [rel.itinerary_id for rel in saved_rels]
+    raw_itineraries = list(
+        Itinerary.objects.filter(
+            id__in=saved_itin_ids,
+            status='published',
+            privacy__in=['friends', 'public']
+        ).select_related('user', 'user__profile')
+    )
+    itineraries = process_itineraries(raw_itineraries, request.user)
     feed_items = sorted(chain(saved_posts, itineraries), key=attrgetter('created_at'), reverse=True)
     return render(request, 'feed/home_feed.html', {'feed_items': feed_items, 'is_saved_view': True})
 
@@ -115,7 +130,7 @@ def toggle_like(request, post_id):
         if post.user != user: 
             # --- CORRECCIÓN: Generar LINK para Post ---
             try:
-                base_url = reverse('home')
+                base_url = reverse('/')
                 link = request.build_absolute_uri(f"{base_url}?open_post={post.id}")
             except:
                 link = '#'
@@ -138,7 +153,7 @@ def add_comment(request, post_id):
         if post.user != request.user:
              # --- CORRECCIÓN: Generar LINK para Post ---
              try:
-                base_url = reverse('home')
+                base_url = reverse('/')
                 link = request.build_absolute_uri(f"{base_url}?open_post={post.id}")
              except:
                 link = '#'
@@ -162,7 +177,7 @@ def add_itinerary_comment(request, itinerary_id):
         if itinerary.user != request.user:
              # --- CORRECCIÓN: Generar LINK DIFERENTE para Itinerario ---
              try:
-                base_url = reverse('home')
+                base_url = reverse('')
                 # Usamos '?open_itinerary=' para distinguir
                 link = request.build_absolute_uri(f"{base_url}?open_itinerary={itinerary.id}")
              except:
