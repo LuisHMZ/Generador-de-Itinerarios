@@ -6,17 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ itinerary.title }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <!-- CORRECCIÓN 1: Importar correctamente los Iconos -->
-
+    
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
     <link rel="stylesheet" href="{% static 'css/header-footer.css' %}">
     <link rel="stylesheet" href="{% static 'css/feed.css' %}">
     <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/itineraries/ver-itinerario-final.css' %}">
+    <link rel="stylesheet" href="{% static 'css/itineraries/modal-styles.css' %}">
 
     <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
     
@@ -51,6 +52,10 @@
 <body {% if itinerary %} data-itinerary-id="{{ itinerary.id }}" {% endif %}>
 {% include 'snippets/header.html' %}
     <main class="container my-5 d-flex justify-content-center">
+        <!-- BARRA LATERAL IZQUIERDA -->
+        <aside class="col-lg-2 col-md-3 d-none d-md-block">
+            {% include 'itineraries/snippets/sidebar_left.html' %}
+        </aside>
         <div class="itinerary-card card shadow-sm">
             <div class="card-body p-4">
                 <div class="mb-3">
@@ -74,7 +79,7 @@
                 <div class="itinerary-days">
                 {% if stops_by_day %}
                     {% for day, stops in stops_by_day %}
-                        <div class="day-section mb-4">
+                        <div class="day-section mb-4" data-day="{{ day }}">
                             <h3 class="day-header">
                                 <span>Día {{ day }}</span>
                                 <!--Aun no hay logica para el dia especifico-->
@@ -121,39 +126,39 @@
 
                 <!--Sección del mapa-->
                 <div class="route-section mt-4">
-                    <!-- <div class="d-flex justify-content-between align-items-center mb-2 route-header">
-                            <h3 class="h5 mb-0"><i class="fas fa-route me-2"></i> Rutas</h3>
-                            <div>
-                                <label for="dia-mapa-select" class="visually-hidden">Día</label>
-                                <select id="dia-mapa-select" class="form-select form-select-sm">
-                                    <option value="todos">Todos</option>
-                                    {% for day, stops in stops_by_day %}
-                                    <option value="{{ day }}">Día {{ day }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                    </div> -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 route-header">
+                        <h3 class="h5 mb-0"><i class="fas fa-route me-2"></i> Rutas</h3>
+                        <div>
+                            <label for="dia-mapa-select" class="form-label me-2 mb-0">Filtrar por día:</label>
+                            <select id="dia-mapa-select" class="form-select form-select-sm d-inline-block" style="width: auto;">
+                                <option value="todos">Ver Todos</option>
+                                {% for day, stops in stops_by_day %}
+                                <option value="{{ day }}">Día {{ day }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
                     <div class="mapa-placeholder-final rounded">
                         <div id="map-preview" style="height: 400px; width: 100%;"></div>
                     </div>
                 </div>
-
-                <div class="d-flex justify-content-between mt-4">
-                    <a href="javascript:history.back()" class="btn btn-outline-secondary">Atrás</a>
-                    
-                    {% csrf_token %}
-                    <a href="#"></a>
-                    <button type="submit" id="boton_editar_itinerario" class="btn btn-primary">Guardar</button>
-                    
-                </div>
             </div>
         </div>
     </main>
-    <div class="modal fade modal-detalle-lugar" id="modalDetallesLugar" tabindex="-1" ...>
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+    <!-- Modal para detalles del lugar -->
+    <div class="modal fade" id="modalDetallesLugar" tabindex="-1" aria-labelledby="modalDetallesLugarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalDetallesLugarLabel"><i class="fas fa-info-circle me-2"></i>Detalles del Lugar</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="modal-body" id="modalDetallesBody">
-                    </div>
+                    <!-- Contenido del modal se insertará aquí -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
@@ -161,7 +166,7 @@
             integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
             crossorigin="anonymous"></script>
     <script src="{% static 'js/itineraries/view_itinerary.js' %}"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_API_KEY }}&libraries=places,marker,geometry&callback=initMap" defer></script>
     <script src="{% static 'js/headerFooter.js' %}" defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_API_KEY }}&libraries=places,marker,geometry&callback=initMap" defer></script>
 </body>
 </html>
