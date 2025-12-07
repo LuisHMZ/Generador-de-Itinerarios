@@ -9,6 +9,7 @@ from django.shortcuts import render, get_object_or_404, redirect     # Para rend
 from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required  # Para requerir login en vistas basadas en funciones
+from django.core.exceptions import PermissionDenied # Importante para manejo de permisos
 
 # --- NUEVAS IMPORTACIONES (NECESARIAS PARA QUE FUNCIONE) ---
 from django.http import JsonResponse
@@ -601,6 +602,10 @@ def create_edit_itinerary_view(request, itinerary_id=None):
 @login_required
 def add_stops_view(request, itinerary_id):
     itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
+
+    # Si el itinerario está publicado o si no es del usuario, lanzamos un Permission Denied
+    if (itinerary.user != request.user) or (itinerary.status == 'published'):
+        raise PermissionDenied("No tienes permiso para modificar este itinerario.")
 
     # --- Cálculo del numero de días que el usuario ha planeado ---
     total_dias = 1 # Valor por defecto
