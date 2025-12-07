@@ -220,6 +220,12 @@ class TouristicPlaceSerializer(serializers.ModelSerializer):
     """
     # Para mostrar los nombres de las categorías en lugar de solo sus IDs
     categories = CategorySerializer(many=True, read_only=True) 
+    # Devuelve la URL pública de la imagen si existe (compatible con lo que espera el JS)
+    photo_url = serializers.SerializerMethodField()
+    # Devuelve un array con los nombres de categorías como 'types' para compatibilidad con Google Places API
+    types = serializers.SerializerMethodField()
+    # Alias de external_api_rating para compatibilidad
+    rating = serializers.DecimalField(source='external_api_rating', max_digits=2, decimal_places=1, read_only=True)
 
     class Meta:
         model = TouristicPlace
@@ -236,15 +242,14 @@ class TouristicPlaceSerializer(serializers.ModelSerializer):
             'phone_number', 
             'opening_hours',
             'external_api_rating',
+            'rating',  # Alias para external_api_rating (compatibilidad)
             'categories', # Incluye la lista de categorías
             'photo',  # Incluye el campo de foto
             'photo_url', # URL pública de la foto (útil para el frontend)
+            'types',  # Array de categorías como strings (formato Google Places API)
         ]
         # Hacemos algunos campos de solo lectura si no queremos que se creen/modifiquen vía API directamente
-        read_only_fields = ['id', 'external_api_id', 'external_api_rating', 'categories', 'photo', 'photo_url']
-
-    # Devuelve la URL pública de la imagen si existe (compatible con lo que espera el JS)
-    photo_url = serializers.SerializerMethodField()
+        read_only_fields = ['id', 'external_api_id', 'external_api_rating', 'rating', 'categories', 'photo', 'photo_url', 'types']
 
     def get_photo_url(self, obj):
         try:
@@ -253,6 +258,24 @@ class TouristicPlaceSerializer(serializers.ModelSerializer):
         except Exception:
             pass
         return None
+    
+    def get_types(self, obj):
+        """
+        Devuelve un array de nombres de categorías en formato string,
+        compatible con el formato 'types' de Google Places API.
+        Esto permite que el frontend use determinarCategoriaPrincipal().
+        """
+        try:
+            # Convertir nombres de categorías a lowercase con underscores
+            # para simular el formato de Google Places
+            types = []
+            for cat in obj.categories.all():
+                # Convertir "Museos" -> "museum", "Parques y Plazas" -> "park", etc.
+                cat_name = cat.name.lower().replace(' ', '_')
+                types.append(cat_name)
+            return types if types else ['point_of_interest']  # Fallback
+        except Exception:
+            return ['point_of_interest']
 
 
 class ItineraryStopDetailSerializer(serializers.ModelSerializer):
