@@ -64,7 +64,11 @@
                         <span class="badge tag-cultura">{{ itinerary.category }}</span>
                     </div>
                     <div class="mb-4 itinerary-main-image">
-                        <img src="{{ itinerary.banner_pic.url |default:'/static/img/placeholder.png' }}" alt="Imagen principal del itinerario {{ itinerary.title }}" class="img-fluid rounded">
+                        {% if itinerary.banner_pic %}
+                        <img src="{{ itinerary.banner_pic.url }}" alt="Imagen principal del itinerario {{ itinerary.title }}" class="img-fluid rounded">
+                        {% else %}
+                        <img src="/static/img/placeholder.png" alt="Imagen principal del itinerario {{ itinerary.title }}" class="img-fluid rounded">
+                        {% endif %}
                     </div>
                     <div class="mb-4 itinerary-description">
                         <p>{{ itinerary.description }}</p>
