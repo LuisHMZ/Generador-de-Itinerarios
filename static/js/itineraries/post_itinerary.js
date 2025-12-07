@@ -84,9 +84,24 @@ async function enviarDatosItinerario(form) {
         const data = await response.json();
 
         if (data.success && data.redirect_url) {
-            window.location.href = data.redirect_url;
+            // REEMPLAZO: En lugar de redirigir de golpe, mostramos éxito
+            Swal.fire({
+                title: '¡Excelente!',
+                text: data.message || 'Itinerario guardado correctamente',
+                icon: 'success',
+                timer: 1500, // Se cierra solo en 1.5 segundos
+                showConfirmButton: false
+            }).then(() => {
+                // Redirigir cuando se cierre la alerta
+                window.location.href = data.redirect_url;
+            });
         } else {
-            alert('Error desconocido al guardar.');
+            // REEMPLAZO DE ALERT ERROR
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudo guardar el itinerario.',
+                icon: 'error'
+            });
         }
 
     } catch (error) {
