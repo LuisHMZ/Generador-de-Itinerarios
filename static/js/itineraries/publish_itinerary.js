@@ -160,6 +160,45 @@ async function dibujarRutaActual(lugaresDelDia) {
 }
 
 /**
+ * 4. Función para obtener todos los lugares de todos los días
+ */
+function obtenerTodosLosLugares() {
+    const lugaresDelDia = [];
+    const lugarCards = document.querySelectorAll('.card-lugar-itinerario');
+    lugarCards.forEach(card => {
+        const data = card.dataset;
+        lugaresDelDia.push({
+            nombre: data.nombre || '',
+            lat: data.lat || '',
+            lng: data.lng || ''
+        });
+    });
+    return lugaresDelDia;
+}
+
+/**
+ * 5. Función para obtener los lugares de un día específico
+ */
+function obtenerLugaresPorDia(dia) {
+    const lugaresDelDia = [];
+    const daySection = document.querySelector(`.day-section[data-day="${dia}"]`);
+    
+    if (daySection) {
+        const lugarCards = daySection.querySelectorAll('.card-lugar-itinerario');
+        lugarCards.forEach(card => {
+            const data = card.dataset;
+            lugaresDelDia.push({
+                nombre: data.nombre || '',
+                lat: data.lat || '',
+                lng: data.lng || ''
+            });
+        });
+    }
+    
+    return lugaresDelDia;
+}
+
+/**
  * Añade un event listener al botón de publicar itinerario (ID = 'boton_publicar_itinerario')
  * Cuando se hace clic, envía una solicitud POST a la API para publicar el itinerario
  * Endpoint: /api/itineraries/<itinerary_id>/publish/
@@ -168,71 +207,30 @@ async function dibujarRutaActual(lugaresDelDia) {
  */
 document.addEventListener('DOMContentLoaded', () => {
 	// Buscamos el botón (por si se carga el script antes del DOM)
-	const boton = document.getElementById('boton_publicar_itinerario');
-	if (!boton) return; // No hay botón en esta página
+	var botonPublish = document.getElementById('boton_publicar_itinerario');
+	
+    if(botonPublish){
+        botonPublish.addEventListener('click', async (e) => {
+            e.preventDefault();
 
-	boton.addEventListener('click', async (e) => {
-		e.preventDefault();
+            Swal.fire({
+                title : '¿Estás seguro de que quieres publicar este itinerario?',
+                text: 'Una vez publicado, será visible para otros usuarios según la configuración de privacidad.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754', // Color success de Bootstrap
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, ¡Publicar!',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await publicarItinerario(botonPublish);
+                }
+            });
 
-		// Confirmación opcional antes de publicar
-		if (!confirm('¿Quieres publicar este itinerario? Esta acción hará que sea visible públicamente.')) {
-			return;
-		}
-
-		// Obtener el ID del itinerario desde el body (consistente con otros scripts)
-		const ITINERARY_ID = document.body.dataset.itineraryId || null;
-		console.log(`ITINERARY_ID: ${ITINERARY_ID}`);
-		if (!ITINERARY_ID) {
-			alert('No se pudo identificar el itinerario a publicar.');
-			return;
-		}
-
-		const csrftoken = getCookie('csrftoken');
-
-		// Estado visual: deshabilitar botón y mostrar spinner
-		const previousHTML = boton.innerHTML;
-		boton.disabled = true;
-		boton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Publicando...';
-
-		try {
-			const response = await fetch(`/api/itineraries/${ITINERARY_ID}/publish/`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-CSRFToken': csrftoken
-				},
-				body: JSON.stringify({}) // No hace falta enviar datos, pero dejamos un JSON vacío por claridad
-			});
-
-			boton.disabled = false;
-			boton.innerHTML = previousHTML; // Restaurar texto
-
-			if (response.ok) {
-				// Intenta leer la respuesta para mostrar detalles
-				let data = null;
-				try { data = await response.json(); } catch (e) { /* no JSON */ }
-
-				alert(data && data.detail ? data.detail : 'Itinerario publicado con éxito.');
-
-				// Redirigir a la vista pública/preview del itinerario
-				// Suposición razonable: la ruta pública es /itineraries/<id>/
-				// Por ahora redirigimos al home
-				window.location.href = '/';
-			} else {
-				let errorData;
-				try { errorData = await response.json(); } catch (e) { errorData = { detail: response.statusText }; }
-				console.error('Error al publicar itinerario:', response.status, errorData);
-				alert(`No se pudo publicar: ${errorData.detail || response.statusText}`);
-			}
-
-		} catch (error) {
-			console.error('Error de red al publicar itinerario:', error);
-			boton.disabled = false;
-			boton.innerHTML = previousHTML;
-			alert('Ocurrió un error de red al intentar publicar. Revisa tu conexión e inténtalo de nuevo.');
-		}
-	});
-
+            
+        });
+    }
 	/**
 	 * Manejo del modal de detalles del lugar
 	 * Similar al modal en add_stops.js
@@ -271,15 +269,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 7. Construir el HTML (similar al modal de add_stops)
             const imagenHTML = (img && img !== '/static/img/placeholder.png') 
-                ? `<img src="${img}" class="imagen-principal" alt="${nombre}">` : '';
+                ? `<img src="${img}" class="imagen-principal" alt="${nombre}">` 
+                : '';
 
             const websiteHTML = website 
-                ? `<div class="contacto-item"><i class="fas fa-globe"></i>
-                   <span><a href="${website}" target="_blank">${website}</a></span></div>` : '';
+                ? `<div class="contacto-item">
+                    <i class="fas fa-globe"></i>
+                    <span><a href="${website}" target="_blank">${website}</a></span>
+                </div>` 
+                : '';
             
             const phoneHTML = phone
-                ? `<div class="contacto-item"><i class="fas fa-phone"></i>
-                   <span>${phone}</span></div>` : '';
+                ? `<div class="contacto-item">
+                    <i class="fas fa-phone"></i>
+                    <span>${phone}</span>
+                </div>`
+                : '';
 
             const content = `
                 <div class="detalle-lugar-card">
@@ -315,21 +320,81 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 	// Recoger los datos de lat y long de los lugares del itinerario
-	const lugaresDelDia = [];
-	const lugarCards = document.querySelectorAll('.card-lugar-itinerario');
-	lugarCards.forEach(card => {
-		const data = card.dataset;
-		lugaresDelDia.push({
-			nombre: data.nombre || '',
-			lat: data.lat || '',
-			lng: data.lng || ''
-		});
-	});
+	const lugaresDelDia = obtenerTodosLosLugares();
 
 	// Actualizar marcadores y ruta en el mapa
 	actualizarMarcadores(lugaresDelDia);
 	dibujarRutaActual(lugaresDelDia);
 
+	// --- EVENTO DEL SELECTOR DE DÍAS ---
+	const diaMapa = document.getElementById('dia-mapa-select');
+	if (diaMapa) {
+		diaMapa.addEventListener('change', async (e) => {
+			const selectedDay = e.target.value;
+			let lugaresSeleccionados;
+			
+			if (selectedDay === 'todos') {
+				// Mostrar todos los días
+				lugaresSeleccionados = obtenerTodosLosLugares();
+			} else {
+				// Mostrar un día específico
+				lugaresSeleccionados = obtenerLugaresPorDia(selectedDay);
+			}
+			
+			// Actualizar marcadores y ruta según la selección
+			actualizarMarcadores(lugaresSeleccionados);
+			await dibujarRutaActual(lugaresSeleccionados);
+		});
+	}
+
 });
 
+async function publicarItinerario(boton) {
+    // Obtener el ID del itinerario desde el body (consistente con otros scripts)
+    const ITINERARY_ID = document.body.dataset.itineraryId || null;
+    console.log(`ITINERARY_ID: ${ITINERARY_ID}`);
+    if (!ITINERARY_ID) {
+        alert('No se pudo identificar el itinerario a publicar.');
+        return;
+    }
 
+    const csrftoken = getCookie('csrftoken');
+
+    // Estado visual: deshabilitar botón y mostrar spinner
+    const previousHTML = boton.innerHTML;
+    boton.disabled = true;
+    boton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Publicando...';
+
+    try {
+        const response = await fetch(`/api/itineraries/${ITINERARY_ID}/publish/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({}) // No hace falta enviar datos, pero dejamos un JSON vacío por claridad
+        });
+
+        boton.disabled = false;
+        boton.innerHTML = previousHTML; // Restaurar texto
+
+        if (response.ok) {
+            Swal.fire(
+                '¡Publicado!',
+                'Tu itinerario fue publicado con éxito.',
+                'success'
+            ).then(() => {
+                // Redirigir al Dashboard o Feed
+                window.location.href = '/itineraries/';
+            });
+        } else {
+            Swal.fire('Error', 'No se pudo publicar el itinerario.', 'error');
+        }
+
+    } catch (error) {
+        console.error('Error de red al publicar itinerario:', error);
+        boton.disabled = false;
+        boton.innerHTML = previousHTML;
+        alert('Ocurrió un error de red al intentar publicar. Revisa tu conexión e inténtalo de nuevo.');
+    }
+}
