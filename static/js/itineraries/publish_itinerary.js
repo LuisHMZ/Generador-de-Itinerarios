@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 text: 'Una vez publicado, será visible para otros usuarios según la configuración de privacidad.',
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#198754', // Color success de Bootstrap
+                confirmButtonColor: '#49A3A3', // Color success de Bootstrap
                 cancelButtonColor: '#6c757d',
                 confirmButtonText: 'Sí, ¡Publicar!',
                 cancelButtonText: 'Cancelar'
@@ -354,7 +354,7 @@ async function publicarItinerario(boton) {
     const ITINERARY_ID = document.body.dataset.itineraryId || null;
     console.log(`ITINERARY_ID: ${ITINERARY_ID}`);
     if (!ITINERARY_ID) {
-        alert('No se pudo identificar el itinerario a publicar.');
+        Swal.fire('Error', 'ID de itinerario no encontrado. No se puede publicar.', 'error');
         return;
     }
 
@@ -379,11 +379,13 @@ async function publicarItinerario(boton) {
         boton.innerHTML = previousHTML; // Restaurar texto
 
         if (response.ok) {
-            Swal.fire(
-                '¡Publicado!',
-                'Tu itinerario fue publicado con éxito.',
-                'success'
-            ).then(() => {
+            Swal.fire({
+                title: '¡Itinerario Publicado!',
+                text: 'Tu itinerario ha sido publicado exitosamente.',
+                icon: 'success',
+                confirmButtonColor: '#49A3A3',
+                confirmButtonText: 'Aceptar'
+            }).then(() => {
                 // Redirigir al Dashboard o Feed
                 window.location.href = '/itineraries/';
             });

@@ -17,16 +17,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const status = (form.dataset.itineraryStatus || '').toString().toLowerCase().trim(); // Leemos lo que pusimos en el HTML
 
             // LÓGICA DE INTERCEPCIÓN
-            // Solo mostramos el modal si está PUBLICADO
+            // Se lanza una alerta de confirmación si el estado es "publicado" (SweetAlert2)
             if (status === 'published') {
-                if (confirmModal) {
-                    confirmModal.show();
-                } else {
-                    // Fallback si falla el modal
-                    if(confirm("Al editar, este itinerario pasará a Borrador. ¿Continuar?")){
-                         enviarDatosItinerario(form);
+                Swal.fire({
+                    title: "Al editar, este itinerario pasará a Borrador. ¿Continuar?",
+                    text: "Recuerda que deberás volver a publicarlo una vez termines de editar.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    cancelButtonColor: "#6c757d",
+                    confirmButtonColor: "#49A3A3",
+                    confirmButtonText: "Sí, guardar",
+                    cancelButtonText: "Cancelar",
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        await enviarDatosItinerario(form);
                     }
-                }
+                });
+                
             } else {
                 // Si es borrador o nuevo, guardamos directo
                 await enviarDatosItinerario(form);
@@ -57,13 +64,15 @@ async function enviarDatosItinerario(form) {
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
 
     // 1. URL
-    let url = '/itineraries/create/';
-    if (itineraryId) {
-        url = `/itineraries/${itineraryId}/edit/`;
+    if(!itineraryId) {
+        var url = '/itineraries/create/'; // Crear nuevo
+    } else {
+        var url = `/itineraries/${itineraryId}/edit/`; // Editar existente
     }
 
     // 2. FORMDATA
     const formData = new FormData(form);
+    console.log('url :>> ', url);
 
     // 3. FETCH
     try {
@@ -106,7 +115,11 @@ async function enviarDatosItinerario(form) {
 
     } catch (error) {
         console.error('Error:', error);
-        alert(`Hubo un error: ${error.message}`);
+        Swal.fire({
+            title: 'Error',
+            text: error.message || 'Ocurrió un error inesperado. Verifique que todos los campos estén correctos e intentelo de nuevo.',
+            icon: 'error'
+        })
     } finally {
         // Restaurar botón
         submitBtn.disabled = false;

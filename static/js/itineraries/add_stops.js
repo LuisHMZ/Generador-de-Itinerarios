@@ -874,7 +874,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Validación de duplicados
         if (miItinerarioActual[currentDay].some(l => parseInt(l.id, 10) === nuevoLugar.id)) {
-            alert('Este lugar ya está en tu itinerario para este día.');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Lugar ya añadido',
+                text: `${nuevoLugar.nombre} ya está en tu itinerario para el Día ${currentDay}.`,
+                confirmButtonColor: '#49A3A3',
+                confirmButtonText: 'Aceptar'
+            })
             return; // No añadir
         }
 
@@ -1180,7 +1186,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentStops = miItinerarioActual[currentDay] || [];
             
             if (currentStops.length < 3) {
-                alert("Necesitas al menos 3 paradas para optimizar la ruta.");
+                Swal.fire({
+                    icon: 'warning',
+                    iconColor: '#49A3A3',
+                    title: 'Error al optimizar la ruta',
+                    text: "Necesitas al menos 3 paradas para optimizar la ruta.",
+                    confirmButtonColor: '#49A3A3',
+                });
                 return;
             }
             
@@ -1216,7 +1228,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // 5. Mostrar advertencias (si las hay)
                 if (data.warnings && data.warnings.length > 0) {
-                    alert("Ruta optimizada con advertencias:\n\n" + data.warnings.join('\n'));
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Ruta optimizada con advertencias',
+                        html: data.warnings.join('<br>')
+                    });
                 }
 
                 // 6. ¡ÉXITO! Reemplazar la lista actual con la optimizada
@@ -1246,7 +1262,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error('Error al optimizar ruta:', error);
-                alert(`Error: ${error.message}`);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al optimizar la ruta',
+                    text: error.message || 'Ocurrió un error inesperado.'
+                });
             } finally {
                 // 8. Restaurar el botón
                 btnOptimizar.disabled = false;
@@ -1353,53 +1373,69 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSiguiente.disabled = true;
         btnSiguiente.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
 
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'PATCH', // PATCH es ideal para actualizar solo una parte (las paradas)
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken // **ASEGÚRATE QUE ESTÉ ACTIVO**
-                },
-                body: JSON.stringify({
-                    stops: stopsPayload // Envía solo el array de paradas
-                })
-            });
-
-            // Habilita botón
-            btnSiguiente.disabled = false;
-            btnSiguiente.textContent = 'Siguiente';
-
-            if (response.ok) {
-            // ESTILO TOAST (Notificación pequeña en la esquina)
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true
-            });
-
-            Toast.fire({
-                icon: 'success',
-                title: 'Paradas guardadas con éxito'
-            });
+        // AÑADIDO: Alerta de confirmación usando SweetAlert2
+            Swal.fire({
+                title: '¿Quieres guardar las paradas y continuar?',
+                text: "Podrás editarlas después desde Mis Itinerarios.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, guardar y continuar',
+                confirmButtonColor: '#49A3A3',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    // Procede con la llamada fetch
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'PATCH', // PATCH es ideal para actualizar solo una parte (las paradas)
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrftoken // **ASEGÚRATE QUE ESTÉ ACTIVO**
+                            },
+                            body: JSON.stringify({
+                                stops: stopsPayload // Envía solo el array de paradas
+                            })
+                        });
             
-            // Espera breve para que el toast se vea antes de redirigir
-            const redirectDelayMs = 1000;
-            setTimeout(() => {
-                window.location.href = `/itineraries/${ITINERARY_ID}/preview/`;
-            }, redirectDelayMs);
-        } else {
-            Swal.fire('Error', 'Hubo un problema al guardar las paradas.', 'error');
-        }
+                        // Habilita botón
+                        btnSiguiente.disabled = false;
+                        btnSiguiente.textContent = 'Siguiente';
+            
+                        
+            
+                        if (response.ok) {
 
-        } catch (error) {
-            console.error('Error al guardar el itinerario:', error);
-            alert(`Hubo un error al guardar las paradas: ${error.message}`);
-            // Habilita botón en caso de error
-             btnSiguiente.disabled = false;
-             btnSiguiente.textContent = 'Siguiente';
-        }
+                        Swal.fire({
+                            title: '¡Excelente!',
+                            text: 'Paradas guardadas con éxito.',
+                            icon: 'success',
+                            timer: 1500, // Se cierra solo en 1.5 segundos
+                            timerProgressBar: true,
+                            showConfirmButton: false
+                        })
+                        
+                        // Espera breve para que el toast se vea antes de redirigir
+                        const redirectDelayMs = 1000;
+                        setTimeout(() => {
+                            window.location.href = `/itineraries/${ITINERARY_ID}/preview/`;
+                        }, redirectDelayMs);
+                    } else {
+                        Swal.fire('Error', 'Hubo un problema al guardar las paradas.', 'error');
+                    }
+            
+                    } catch (error) {
+                        console.error('Error al guardar el itinerario:', error);
+                        alert(`Hubo un error al guardar las paradas: ${error.message}`);
+                        // Habilita botón en caso de error
+                         btnSiguiente.disabled = false;
+                         btnSiguiente.textContent = 'Siguiente';
+                    }
+                }else{ //Deshace la animacion de carga del btnSiguiente
+                    btnSiguiente.disabled = false;
+                    btnSiguiente.textContent = 'Siguiente';
+                }
+            })
+
     });
 
     
