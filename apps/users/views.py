@@ -119,7 +119,7 @@ def simple_register_view(request):
 
 def simple_login_view(request):
     if request.user.is_authenticated:
-        return redirect('/') 
+        return redirect('home') 
     
     if request.method == 'POST':
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -137,10 +137,10 @@ def simple_login_view(request):
             messages.success(request, f'Ha iniciado sesión exitosamente como {user.first_name or user.username}.')
             # Responde según si es fetch o no
             if is_ajax:
-                redirect_url = request.session.get('next', reverse('/'))
+                redirect_url = request.session.get('next', reverse('home'))
                 return JsonResponse({'status': 'success', 'message': '¡Inicio de sesión exitoso!', 'redirect_url': redirect_url})
             else:
-                return redirect('/')
+                return redirect('home')
         else:
             if is_ajax:
                 return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
@@ -159,86 +159,86 @@ def simple_logout_view(request):
         return redirect('simple_login')
 
 
-# --- VISTA DEL FEED PRINCIPAL (MIXTO) ---
+# # --- VISTA DEL FEED PRINCIPAL (MIXTO) ---
 
-@login_required
-def home_feed_view(request):
-    """
-    Feed principal: Muestra Posts + Itinerarios mezclados.
-    """
-    # 1. Formulario para crear post
-    create_post_form = CreatePostForm(user=request.user)
+# @login_required
+# def home_feed_view(request):
+#     """
+#     Feed principal: Muestra Posts + Itinerarios mezclados.
+#     """
+#     # 1. Formulario para crear post
+#     create_post_form = CreatePostForm(user=request.user)
 
-    # 2. Filtro de usuarios (Amigos + Yo)
-    try:
-        my_friends = Friend.objects.friends(request.user)
-        users_to_show = [f.id for f in my_friends] + [request.user.id]
-    except Exception:
-        users_to_show = [request.user.id]
-        my_friends = []
+#     # 2. Filtro de usuarios (Amigos + Yo)
+#     try:
+#         my_friends = Friend.objects.friends(request.user)
+#         users_to_show = [f.id for f in my_friends] + [request.user.id]
+#     except Exception:
+#         users_to_show = [request.user.id]
+#         my_friends = []
 
-   # 3. Obtener POSTS
-    try:
-        posts = Post.objects.filter(
-            Q(user__in=users_to_show) | Q(visibility='public') 
-        ).select_related(
-            'user', 'user__profile'
-        ).prefetch_related(
-            'pictures', 'likes', 'saved_by', 'comments'
-        ).distinct()
-    except Exception:
-        posts = []
+#    # 3. Obtener POSTS
+#     try:
+#         posts = Post.objects.filter(
+#             Q(user__in=users_to_show) | Q(visibility='public') 
+#         ).select_related(
+#             'user', 'user__profile'
+#         ).prefetch_related(
+#             'pictures', 'likes', 'saved_by', 'comments'
+#         ).distinct()
+#     except Exception:
+#         posts = []
 
-    # 4. Obtener ITINERARIOS
-    itineraries = Itinerary.objects.filter(
-         user_id__in=users_to_show 
-    ).select_related('user')
+#     # 4. Obtener ITINERARIOS
+#     itineraries = Itinerary.objects.filter(
+#          user_id__in=users_to_show 
+#     ).select_related('user')
 
-    # 5. Etiquetar tipos
-    for post in posts:
-        post.feed_type = 'post'
-    for itinerary in itineraries:
-        itinerary.feed_type = 'itinerary'
+#     # 5. Etiquetar tipos
+#     for post in posts:
+#         post.feed_type = 'post'
+#     for itinerary in itineraries:
+#         itinerary.feed_type = 'itinerary'
 
-    # 6. Fusionar y Ordenar
-    feed_items = sorted(
-        chain(posts, itineraries),
-        key=attrgetter('created_at'),
-        reverse=True
-    )
+#     # 6. Fusionar y Ordenar
+#     feed_items = sorted(
+#         chain(posts, itineraries),
+#         key=attrgetter('created_at'),
+#         reverse=True
+#     )
 
-    # 7. Lógica de Amigos / Online
-    users_list = User.objects.exclude(id=request.user.id)
-    time_threshold = timezone.now() - timedelta(minutes=15)
-    online_friends = []
-    for friend in my_friends:
-        if friend.last_login and friend.last_login > time_threshold:
-            online_friends.append(friend)
+#     # 7. Lógica de Amigos / Online
+#     users_list = User.objects.exclude(id=request.user.id)
+#     time_threshold = timezone.now() - timedelta(minutes=15)
+#     online_friends = []
+#     for friend in my_friends:
+#         if friend.last_login and friend.last_login > time_threshold:
+#             online_friends.append(friend)
 
-    users_with_status = []
-    for user in users_list:
-        status_data = {'user': user, 'status': None, 'request_id': None}
-        if user in my_friends:
-            status_data['status'] = 'FRIENDS'
-        else:
-            sent = FriendshipRequest.objects.filter(from_user=request.user, to_user=user, rejected__isnull=True).first()
-            if sent:
-                status_data['status'] = 'PENDING_SENT'
-                status_data['request_id'] = sent.id
-            else:
-                recv = FriendshipRequest.objects.filter(from_user=user, to_user=request.user, rejected__isnull=True).first()
-                if recv:
-                    status_data['status'] = 'PENDING_RECEIVED'
-                    status_data['request_id'] = recv.id
-        users_with_status.append(status_data)
+#     users_with_status = []
+#     for user in users_list:
+#         status_data = {'user': user, 'status': None, 'request_id': None}
+#         if user in my_friends:
+#             status_data['status'] = 'FRIENDS'
+#         else:
+#             sent = FriendshipRequest.objects.filter(from_user=request.user, to_user=user, rejected__isnull=True).first()
+#             if sent:
+#                 status_data['status'] = 'PENDING_SENT'
+#                 status_data['request_id'] = sent.id
+#             else:
+#                 recv = FriendshipRequest.objects.filter(from_user=user, to_user=request.user, rejected__isnull=True).first()
+#                 if recv:
+#                     status_data['status'] = 'PENDING_RECEIVED'
+#                     status_data['request_id'] = recv.id
+#         users_with_status.append(status_data)
 
-    context = {
-        'feed_items': feed_items,      
-        'users_with_status': users_with_status,
-        'online_friends': online_friends,
-        'create_post_form': create_post_form,
-    }
-    return render(request, 'feed/home_feed.html', context)
+#     context = {
+#         'feed_items': feed_items,      
+#         'users_with_status': users_with_status,
+#         'online_friends': online_friends,
+#         'create_post_form': create_post_form,
+#     }
+#     return render(request, 'feed/home_feed.html', context)
 
 
 # --- VISTAS DE AMISTAD ---
@@ -249,7 +249,7 @@ def send_friend_request(request, to_user_id):
     sender = request.user
     if sender == recipient:
         messages.error(request, "No puedes enviarte solicitud a ti mismo.")
-        return redirect('/') 
+        return redirect('home') 
     
     try:
         if Friend.objects.are_friends(sender, recipient):
@@ -277,7 +277,7 @@ def send_friend_request(request, to_user_id):
         messages.error(request, f"Ya existe una solicitud pendiente.")
     except Exception as e:
         messages.error(request, f"Error: {e}")
-    return redirect('/')
+    return redirect('home')
 
 @login_required
 def friend_requests_view(request):
@@ -335,7 +335,7 @@ def cancel_friend_request(request, request_id):
         messages.success(request, "Solicitud cancelada.")
     except Exception as e:
         messages.error(request, f"Error al cancelar: {e}")
-    return redirect('/')
+    return redirect('home')
 
 
 # --- VISTA DE PERFIL ---
