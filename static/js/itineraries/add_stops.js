@@ -478,20 +478,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Cargar recomendaciones cercanas usando el endpoint server-side (usa radius por defecto del proyecto)
     async function cargarRecomendacionesCercanas() {
+        // console.log('[DEBUG] Cargando recomendaciones cercanas...');
         try {
-            // Determinar la ubicación de referencia: primer lugar del día actual si existe
+            // Determinar la ubicación de referencia: ÚLTIMO lugar del día actual si existe
             const lugaresDelDia = miItinerarioActual[currentDay] || [];
+            // console.log(`[DEBUG] Lugares del día ${currentDay}:`, lugaresDelDia.length);
+            
             let refLat = null, refLng = null;
-            if (lugaresDelDia.length > 0 && lugaresDelDia[0].lat && lugaresDelDia[0].lng) {
-                refLat = lugaresDelDia[0].lat;
-                refLng = lugaresDelDia[0].lng;
-            } else {
-                // Fallback: centro de CDMX
+            if (lugaresDelDia.length > 0) {
+                // Usar el último lugar agregado (no el primero)
+                const ultimoLugar = lugaresDelDia[lugaresDelDia.length - 1];
+                if (ultimoLugar.lat && ultimoLugar.lng) {
+                    refLat = ultimoLugar.lat;
+                    refLng = ultimoLugar.lng;
+                    // console.log(`[DEBUG] Usando último lugar como referencia: ${ultimoLugar.nombre} (${refLat}, ${refLng})`);
+                }
+            }
+            
+            // Si no hay lugares en el día actual, usar centro de CDMX
+            if (!refLat || !refLng) {
                 refLat = 19.4326;
                 refLng = -99.1332;
+                // console.log('[DEBUG] Usando centro de CDMX como referencia');
             }
 
-            // Intentar leer un radio establecido en el DOM (data-recommendation-radius-km) o usar 15 km
+            // Radio de búsqueda fijo: 15 km
             let radiusKm = 15.0;
             try {
                 const r = document.body.dataset.recommendationRadiusKm;
@@ -501,40 +512,110 @@ document.addEventListener('DOMContentLoaded', () => {
             // Obtener los IDs de los lugares ya en el día actual para evitar duplicados
             const existingIds = new Set(lugaresDelDia.map(p => p.id));
 
-            const resp = await fetch(`/api/places/nearby/?lat=${encodeURIComponent(refLat)}&lng=${encodeURIComponent(refLng)}&radius_km=${encodeURIComponent(radiusKm)}`);
-            if (!resp.ok) throw new Error(`Error al cargar recomendaciones: ${resp.statusText}`);
+            // Obtener la categoría del itinerario desde el dataset del body
+            const itineraryCategory = document.body.dataset.itineraryCategory || '';
+            // console.log(`[DEBUG] Categoría del itinerario: "${itineraryCategory}"`);
+
+            const url = `/api/places/nearby/?lat=${encodeURIComponent(refLat)}&lng=${encodeURIComponent(refLng)}&radius_km=${encodeURIComponent(radiusKm)}`;
+            // console.log('[DEBUG] Llamando a API:', url);
+            
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                const errorText = await resp.text();
+                console.error('[ERROR] Respuesta de API no OK:', resp.status, errorText);
+                throw new Error(`Error al cargar recomendaciones: ${resp.statusText}`);
+            }
+            
             const places = await resp.json();
+            // console.log('[DEBUG] Lugares recibidos de la API:', places.length);
 
             // Filtrar lugares que ya están en el día actual para evitar duplicados
-            const newPlaces = places.filter(p => !existingIds.has(p.id));
+            let newPlaces = places.filter(p => !existingIds.has(p.id));
+            // console.log('[DEBUG] Lugares después de filtrar duplicados:', newPlaces.length);
+
+            // Filtrar por categoría del itinerario si está definida
+            if (itineraryCategory && itineraryCategory.trim() !== '') {
+                const beforeFilter = newPlaces.length;
+                newPlaces = newPlaces.filter(p => {
+                    const categoria = determinarCategoriaPrincipal(p.types || []);
+                    const categoriaNormalized = categoria.toLowerCase();
+                    const itineraryCategoryNormalized = itineraryCategory.toLowerCase();
+                    
+                    // console.log(`[DEBUG] Comparando lugar - Categoría: "${categoria}", Types:`, p.types);
+                    
+                    // Comparación flexible:
+                    // 1. Coincidencia directa de la categoría traducida
+                    if (categoriaNormalized === itineraryCategoryNormalized) {
+                        // console.log(`[DEBUG] ✓ Coincidencia directa: ${categoria} === ${itineraryCategory}`);
+                        return true;
+                    }
+                    
+                    // 2. Coincidencia parcial (una incluye a la otra)
+                    if (categoriaNormalized.includes(itineraryCategoryNormalized) || 
+                        itineraryCategoryNormalized.includes(categoriaNormalized)) {
+                        // console.log(`[DEBUG] ✓ Coincidencia parcial: ${categoria} ~ ${itineraryCategory}`);
+                        return true;
+                    }
+                    
+                    // 3. Verificar si alguno de los types originales mapea a la categoría del itinerario
+                    if (p.types && Array.isArray(p.types)) {
+                        for (let type of p.types) {
+                            const mappedCategory = MAPEO_CATEGORIAS[type];
+                            if (mappedCategory && mappedCategory.toLowerCase() === itineraryCategoryNormalized) {
+                                // console.log(`[DEBUG] ✓ Coincidencia por type: ${type} → ${mappedCategory} === ${itineraryCategory}`);
+                                return true;
+                            }
+                        }
+                    }
+                    
+                    // 4. FALLBACK: Si tiene "point_of_interest" como type, incluirlo como último recurso
+                    if (p.types && Array.isArray(p.types) && p.types.includes('point_of_interest')) {
+                        // console.log(`[DEBUG] ✓ Fallback - point_of_interest: ${categoria} (sin coincidencia exacta)`);
+                        return true;
+                    }
+                    
+                    // console.log(`[DEBUG] ✗ No coincide: ${categoria} con ${itineraryCategory}`);
+                    return false;
+                });
+                // console.log(`[DEBUG] Lugares después de filtrar por categoría "${itineraryCategory}": ${newPlaces.length} (de ${beforeFilter})`);
+            }
 
             // Renderizar en el contenedor de recomendaciones (hasta 6)
             recomendacionesContainer.innerHTML = '';
             if (!newPlaces || newPlaces.length === 0) {
-                recomendacionesContainer.innerHTML = '<p class="text-muted">No se encontraron recomendaciones cercanas.</p>';
+                // console.log('[DEBUG] No hay recomendaciones para mostrar');
+                recomendacionesContainer.innerHTML = '<p class="text-muted">No se encontraron recomendaciones cercanas que coincidan con la categoría del itinerario.</p>';
                 return;
             }
+            
+            // console.log(`[DEBUG] Renderizando ${Math.min(6, newPlaces.length)} recomendaciones`);
 
             const max = Math.min(6, newPlaces.length);
             for (let i = 0; i < max; i++) {
                 const p = newPlaces[i];
+                // console.log('[DEBUG] Procesando lugar para renderizar:', p);
                 const categoria = determinarCategoriaPrincipal(p.types || []);
-                renderLugarCard(recomendacionesContainer, {
+                
+                // Mapear los nombres de campos del API a lo que espera renderLugarCard
+                const lugarParaRender = {
                     id: p.id,
-                    nombre: p.name,
+                    nombre: p.name,           // API devuelve 'name'
                     categoria: categoria,
-                    imagen: p.photo_url || '/static/img/placeholder.png',
+                    imagen: p.photo_url || '/static/img/placeholder.png',  // API devuelve 'photo_url'
                     lat: p.lat || null,
-                    lng: p.long || null,
+                    lng: p.long || null,      // API devuelve 'long', no 'lng'
                     address: p.address || '',
-
-                    // --- DATOS NUEVOS PARA EL MODAL "INFO" ---
                     description: p.description || 'Descripción no disponible.',
                     website: p.website || '',
                     phone: p.phone_number || '',
-                    rating: p.rating || 'N/A'
-                });
+                    rating: p.rating || p.external_api_rating || 'N/A'
+                };
+                
+                // console.log('[DEBUG] Datos mapeados para renderizar:', lugarParaRender);
+                renderLugarCard(recomendacionesContainer, lugarParaRender);
             }
+            
+            // console.log('[DEBUG] Recomendaciones renderizadas exitosamente');
 
         } catch (error) {
             console.error('Error cargando recomendaciones cercanas:', error);
@@ -1288,17 +1369,29 @@ document.addEventListener('DOMContentLoaded', () => {
             btnSiguiente.disabled = false;
             btnSiguiente.textContent = 'Siguiente';
 
-            if (!response.ok) {
-                 const errorData = await response.json();
-                 throw new Error(JSON.stringify(errorData));
-            }
-            const data = await response.json();
-            console.log('Itinerario guardado:', data);
-            alert('Paradas del itinerario guardadas con éxito!');
+            if (response.ok) {
+            // ESTILO TOAST (Notificación pequeña en la esquina)
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
+
+            Toast.fire({
+                icon: 'success',
+                title: 'Paradas guardadas con éxito'
+            });
             
-            // **DEFINE LA URL DE REDIRECCIÓN FINAL**
-            // Por ejemplo, a una página que muestre el itinerario completo
-            window.location.href = `/itineraries/${ITINERARY_ID}/preview/`; // Cambia '/view/' por tu URL real
+            // Espera breve para que el toast se vea antes de redirigir
+            const redirectDelayMs = 1000;
+            setTimeout(() => {
+                window.location.href = `/itineraries/${ITINERARY_ID}/preview/`;
+            }, redirectDelayMs);
+        } else {
+            Swal.fire('Error', 'Hubo un problema al guardar las paradas.', 'error');
+        }
 
         } catch (error) {
             console.error('Error al guardar el itinerario:', error);
