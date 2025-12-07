@@ -161,7 +161,7 @@
                                             <i class="fas fa-edit me-1"></i> Continuar Editando
                                         </a>
                                     {% else %}
-                                        <a href="{% url 'itineraries:view_itinerary' itinerary.id %}" class="btn btn-outline-success btn-sm w-100 fw-bold">
+                                        <a href="{% url 'itineraries:preview_itinerary' itinerary.id %}" class="btn btn-outline-success btn-sm w-100 fw-bold">
                                             <i class="fas fa-eye me-1"></i> Ver Itinerario
                                         </a>
                                     {% endif %}
