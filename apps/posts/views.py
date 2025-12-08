@@ -56,13 +56,20 @@ def feed_view(request):
     ).select_related('user', 'user__profile').prefetch_related('pictures', 'likes', 'saved_by', 'comments').distinct()
     for post in posts: post.feed_type = 'post'
 
-    # Itinerarios: solo publicados y con privacy 'friends' o 'public'
+    # Itinerarios: 
+    # - Del usuario y sus amigos: mostrar 'friends' y 'public'
+    # - De otros usuarios: mostrar solo 'public'
     raw_itineraries = list(
         Itinerary.objects.filter(
-            user_id__in=relevant_users,
-            status='published',
-            privacy__in=['friends', 'public']
-        ).select_related('user', 'user__profile')
+            Q(
+                user_id__in=relevant_users,
+                status='published',
+                privacy__in=['friends', 'public']
+            ) | Q(
+                status='published',
+                privacy='public'
+            )
+        ).select_related('user', 'user__profile').distinct()
     )
     itineraries = process_itineraries(raw_itineraries, user)
 
@@ -97,7 +104,8 @@ def feed_view(request):
 @login_required
 def saved_posts_view(request):
     saved_posts = list(Post.objects.filter(saved_by=request.user).select_related('user', 'user__profile').prefetch_related('pictures', 'likes', 'saved_by', 'comments'))
-    for p in saved_posts: p.feed_type = 'post'
+    for p in saved_posts: 
+        p.feed_type = 'post'
     saved_rels = SavedItinerary.objects.filter(user=request.user).select_related('itinerary', 'itinerary__user')
     # Obtener solo los itinerarios guardados que estén publicados y tengan privacy 'friends' o 'public'
     saved_itin_ids = [rel.itinerary_id for rel in saved_rels]
@@ -110,7 +118,41 @@ def saved_posts_view(request):
     )
     itineraries = process_itineraries(raw_itineraries, request.user)
     feed_items = sorted(chain(saved_posts, itineraries), key=attrgetter('created_at'), reverse=True)
-    return render(request, 'feed/home_feed.html', {'feed_items': feed_items, 'is_saved_view': True})
+
+
+    # Amigos y Online
+    friends = Friend.objects.friends(request.user)
+    friend_ids = [f.id for f in friends]
+    relevant_users = friend_ids + [request.user.id]
+    online_friends = friends 
+
+    # Sugerencias y Status
+    candidates = User.objects.exclude(id__in=relevant_users).order_by('?')[:5]
+    users_with_status = []
+    
+    sent_map = {uid: rid for uid, rid in FriendshipRequest.objects.filter(from_user=request.user).values_list('to_user_id', 'id')}
+    received_map = {uid: rid for uid, rid in FriendshipRequest.objects.filter(to_user=request.user).values_list('from_user_id', 'id')}
+
+    for candidate in candidates:
+        status = 'NONE'
+        req_id = None
+        if candidate.id in sent_map:
+            status = 'PENDING_SENT'
+            req_id = sent_map[candidate.id]
+        elif candidate.id in received_map:
+            status = 'PENDING_RECEIVED'
+            req_id = received_map[candidate.id]
+            
+        users_with_status.append({'user': candidate, 'status': status, 'request_id': req_id})
+
+
+    context = {
+        'feed_items': feed_items,
+        'is_saved_view': True,
+        'users_with_status': users_with_status,
+        'online_friends': online_friends
+    }
+    return render(request, 'feed/home_feed.html', context)
 
 # ==========================================
 # ACCIONES AJAX (CON NOTIFICACIONES CORREGIDAS)

@@ -9,6 +9,7 @@ from django.shortcuts import render, get_object_or_404, redirect     # Para rend
 from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test  # Para requerir login en vistas basadas en funciones
+from django.core.exceptions import PermissionDenied # Importante para manejo de permisos
 
 # --- NUEVAS IMPORTACIONES (NECESARIAS PARA QUE FUNCIONE) ---
 from django.http import JsonResponse
@@ -64,15 +65,15 @@ CATEGORIAS_PRINCIPALES = [
     'Bares y Cantinas', 'Panaderías'
 ]
 
-# --- VISTA DEL FEED SOCIAL (home_view) ---
-@login_required
-# Vista para la página principal (condicional)
-def home_view(request):
-    """
-    Esta vista maneja la página principal ('/home/')
-    y ahora sirve el NUEVO diseño del feed (feed/feed.html)
-    con datos REALES de la base de datos (Posts y Amigos).
-    """
+# # --- VISTA DEL FEED SOCIAL (home_view) ---
+# @login_required
+# # Vista para la página principal (condicional)
+# def home_view(request):
+#     """
+#     Esta vista maneja la página principal ('/home/')
+#     y ahora sirve el NUEVO diseño del feed (feed/feed.html)
+#     con datos REALES de la base de datos (Posts y Amigos).
+#     """
     # No se necesita lógica especial, solo mostrar el HTML.
     # El objeto 'request.user' está disponible automáticamente en la plantilla.
     return render(request, 'itineraries/provisional_home.html')
@@ -154,74 +155,74 @@ def admin_place_delete(request, place_id):
     return redirect('admin_places_list')
 
 ###################################################################################
-    if request.user.is_authenticated:
+#     if request.user.is_authenticated:
         
-        user = request.user
+#         user = request.user
         
-        # --- 1. LÓGICA DE POSTS ---
-        try:
-            friend_ids_list = [f.id for f in Friend.objects.friends(user)]
-            posts = Post.objects.filter(
-                author_id__in=friend_ids_list + [user.id]
-            ).order_by('-created_at')
-        except Exception as e:
-            print(f"Error obteniendo posts: {e}")
-            posts = []
+#         # --- 1. LÓGICA DE POSTS ---
+#         try:
+#             friend_ids_list = [f.id for f in Friend.objects.friends(user)]
+#             posts = Post.objects.filter(
+#                 author_id__in=friend_ids_list + [user.id]
+#             ).order_by('-created_at')
+#         except Exception as e:
+#             print(f"Error obteniendo posts: {e}")
+#             posts = []
 
-        # --- 2. LÓGICA DE AMIGOS (Sugerencias y Estado) ---
-        try:
-            friends_ids = [f.id for f in Friend.objects.friends(user)]
-            sent_requests = FriendshipRequest.objects.filter(from_user=user, rejected__isnull=True)
-            sent_ids = sent_requests.values_list('to_user_id', flat=True)
-            received_requests = FriendshipRequest.objects.filter(to_user=user, rejected__isnull=True)
-            received_ids = received_requests.values_list('from_user_id', flat=True)
+#         # --- 2. LÓGICA DE AMIGOS (Sugerencias y Estado) ---
+#         try:
+#             friends_ids = [f.id for f in Friend.objects.friends(user)]
+#             sent_requests = FriendshipRequest.objects.filter(from_user=user, rejected__isnull=True)
+#             sent_ids = sent_requests.values_list('to_user_id', flat=True)
+#             received_requests = FriendshipRequest.objects.filter(to_user=user, rejected__isnull=True)
+#             received_ids = received_requests.values_list('from_user_id', flat=True)
 
-            all_other_users = User.objects.exclude(id=user.id)
+#             all_other_users = User.objects.exclude(id=user.id)
             
-            users_with_status = []
-            for other_user in all_other_users:
-                status = 'NONE'
-                request_id = None
+#             users_with_status = []
+#             for other_user in all_other_users:
+#                 status = 'NONE'
+#                 request_id = None
                 
-                if other_user.id in friends_ids:
-                    status = 'FRIENDS'
-                elif other_user.id in sent_ids:
-                    status = 'PENDING_SENT'
-                    req = sent_requests.filter(to_user=other_user).first()
-                    if req: request_id = req.id
-                elif other_user.id in received_ids:
-                    status = 'PENDING_RECEIVED'
-                    req = received_requests.filter(from_user=other_user).first()
-                    if req: request_id = req.id
+#                 if other_user.id in friends_ids:
+#                     status = 'FRIENDS'
+#                 elif other_user.id in sent_ids:
+#                     status = 'PENDING_SENT'
+#                     req = sent_requests.filter(to_user=other_user).first()
+#                     if req: request_id = req.id
+#                 elif other_user.id in received_ids:
+#                     status = 'PENDING_RECEIVED'
+#                     req = received_requests.filter(from_user=other_user).first()
+#                     if req: request_id = req.id
 
-                users_with_status.append({
-                    'user': other_user,
-                    'status': status,
-                    'request_id': request_id, 
-                })
-        except Exception as e:
-            print(f"Error obteniendo sugerencias de amigos: {e}")
-            users_with_status = []
+#                 users_with_status.append({
+#                     'user': other_user,
+#                     'status': status,
+#                     'request_id': request_id, 
+#                 })
+#         except Exception as e:
+#             print(f"Error obteniendo sugerencias de amigos: {e}")
+#             users_with_status = []
 
-        # --- 3. LÓGICA DE NOTIFICACIONES ---
-        try:
-            # Buscamos las notificaciones NO LEÍDAS para este usuario
-            notifications = Notification.objects.filter(user=user, is_read=False).order_by('-created_at')
-        except Exception as e:
-            print(f"Error obteniendo notificaciones: {e}")
-            notifications = []
+#         # --- 3. LÓGICA DE NOTIFICACIONES ---
+#         try:
+#             # Buscamos las notificaciones NO LEÍDAS para este usuario
+#             notifications = Notification.objects.filter(user=user, is_read=False).order_by('-created_at')
+#         except Exception as e:
+#             print(f"Error obteniendo notificaciones: {e}")
+#             notifications = []
 
-        # 4. Enviar los datos a la NUEVA plantilla
-        context = {
-            'posts': posts, 
-            'users_with_status': users_with_status,
-            'notifications': notifications
-        }
+#         # 4. Enviar los datos a la NUEVA plantilla
+#         context = {
+#             'posts': posts, 
+#             'users_with_status': users_with_status,
+#             'notifications': notifications
+#         }
         
-        return render(request, 'feed/home_feed.html', context)
+#         return render(request, 'feed/home_feed.html', context)
     
-    else:
-        return redirect('account_login')
+#     else:
+#         return redirect('account_login')
 
 
 # --- OTRAS VISTAS (API, ITINERARIOS, ETC.) ---
@@ -407,9 +408,9 @@ def search_places_api_view(request):
 @permission_classes([permissions.IsAuthenticated])
 def nearby_places_api_view(request):
     """
-    Endpoint para obtener lugares cercanos (server-side) usando Places Nearby Search (Web Service).
-    Parámetros GET esperados: lat (required), lng (required), radius_km (opcional, default tomado de settings o 15)
-    Retorna una lista de lugares con campos simplificados: place_id, name, types, rating, address/vicinity, geometry, photo_url (si existe).
+    Endpoint para obtener lugares cercanos (server-side).
+    PRIMERO busca en BD local, luego complementa con Google Places API si es necesario.
+    Parámetros GET esperados: lat (required), lng (required), radius_km (opcional, default 15)
     """
     lat = request.query_params.get('lat')
     lng = request.query_params.get('lng')
@@ -422,143 +423,181 @@ def nearby_places_api_view(request):
     if not lat or not lng:
         return Response({'error': "Parámetros 'lat' y 'lng' son requeridos."}, status=status.HTTP_400_BAD_REQUEST)
 
-    api_key = os.environ.get('GOOGLE_API_KEY') or getattr(settings, 'GOOGLE_API_KEY', None)
-    if not api_key:
-        return Response({'error': 'Google API key no configurada en el servidor.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    # (No rate-limiting: petición simple al servicio de Places)
-
-    # Vamos a apegarnos a la documentación 100% y usar solo Tabla A
-    # Esta es una lista mucho más curada para recomendaciones
-    DEFAULT_NEARBY_TYPES = [
-        'art_gallery',
-        'museum',
-        'park',
-        'restaurant',
-        'cafe',
-        'shopping_mall',
-        'historical_place',
-        'plaza',
-    ]
-
     try:
-        # (Asegúrate de tener DEFAULT_NEARBY_TYPES y ALLOWED_GOOGLE_TYPES definidos)
-        tipos_a_incluir = DEFAULT_NEARBY_TYPES 
-        place_type = request.query_params.get('type')
-        if place_type:
-            if place_type in ALLOWED_GOOGLE_TYPES:
-                 tipos_a_incluir = [place_type]
-            else:
-                return Response({'error': f"Tipo '{place_type}' no soportado."}, status=status.HTTP_400_BAD_REQUEST)
+        lat_float = float(lat)
+        lng_float = float(lng)
+    except ValueError:
+        return Response({'error': "Parámetros 'lat' y 'lng' deben ser números válidos."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 1. Definir el Field Mask (pedimos todo lo necesario para guardar)
-        fields_mask = (
-            "places.id,"
-            "places.name,"
-            "places.displayName,"
-            "places.types,"
-            "places.rating,"
-            "places.formattedAddress,"
-            "places.location,"
-            "places.websiteUri,"
-            "places.internationalPhoneNumber,"
-            "places.editorialSummary,"
-            "places.photos"
-        )
+    # --- 1. BUSCAR PRIMERO EN LA BASE DE DATOS LOCAL ---
+    local_results = []
+    place_ids_found = set()
+    
+    try:
+        # Obtener todos los lugares turísticos de la BD que tengan coordenadas
+        all_places = TouristicPlace.objects.filter(
+            lat__isnull=False, 
+            long__isnull=False
+        ).select_related()
+        
+        # Filtrar por distancia usando la función haversine
+        nearby_places = []
+        for place in all_places:
+            try:
+                distance = haversine(lat_float, lng_float, float(place.lat), float(place.long))
+                if distance <= radius_km:
+                    nearby_places.append(place)
+                    place_ids_found.add(place.id)
+            except (TypeError, ValueError):
+                continue
+        
+        # Serializar los resultados locales
+        if nearby_places:
+            local_results = TouristicPlaceSerializer(nearby_places[:10], many=True).data
+            print(f"--- [DEBUG-Nearby] Encontrados {len(local_results)} lugares en BD local dentro de {radius_km} km")
+        else:
+            print(f"--- [DEBUG-Nearby] No se encontraron lugares en BD local dentro de {radius_km} km")
+            
+    except Exception as e:
+        print(f"!!! [ERROR] Buscando en BD local (nearby): {e}")
 
-        # 2. Construir el Body (¡con el 'circle' correcto!)
-        search_body = {
-            "languageCode": "es",
-            "includedTypes": tipos_a_incluir,
-            "maxResultCount": 10, 
-            "locationRestriction": {
-                "circle": {
-                    "center": {
-                        "latitude": float(lat),
-                        "longitude": float(lng)
-                    },
-                    "radius": int(radius_km * 1000)
+    # --- 2. SI HAY MENOS DE 5 RESULTADOS, COMPLEMENTAR CON GOOGLE API ---
+    if len(local_results) < 5:
+        print(f"--- [DEBUG-Nearby] Solo {len(local_results)} resultados locales. Buscando en Google API...")
+        
+        api_key = os.environ.get('GOOGLE_API_KEY') or getattr(settings, 'GOOGLE_API_KEY', None)
+        if not api_key:
+            print("!!! [WARNING] Google API key no configurada. Retornando solo resultados locales.")
+            return Response(local_results)
+
+        # Lista de tipos para recomendaciones
+        DEFAULT_NEARBY_TYPES = [
+            'art_gallery',
+            'museum',
+            'park',
+            'restaurant',
+            'cafe',
+            'shopping_mall',
+            'historical_place',
+            'plaza',
+        ]
+
+        try:
+            tipos_a_incluir = DEFAULT_NEARBY_TYPES 
+            place_type = request.query_params.get('type')
+            if place_type:
+                if place_type in ALLOWED_GOOGLE_TYPES:
+                     tipos_a_incluir = [place_type]
+                else:
+                    return Response({'error': f"Tipo '{place_type}' no soportado."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Definir el Field Mask (pedimos todo lo necesario para guardar)
+            fields_mask = (
+                "places.id,"
+                "places.name,"
+                "places.displayName,"
+                "places.types,"
+                "places.rating,"
+                "places.formattedAddress,"
+                "places.location,"
+                "places.websiteUri,"
+                "places.internationalPhoneNumber,"
+                "places.editorialSummary,"
+                "places.photos"
+            )
+
+            # Construir el Body para searchNearby
+            search_body = {
+                "languageCode": "es",
+                "includedTypes": tipos_a_incluir,
+                "maxResultCount": 10, 
+                "locationRestriction": {
+                    "circle": {
+                        "center": {
+                            "latitude": lat_float,
+                            "longitude": lng_float
+                        },
+                        "radius": int(radius_km * 1000)
+                    }
                 }
             }
-        }
-        
-        # 3. Headers
-        search_headers = {
-            'Content-Type': 'application/json',
-            'X-Goog-Api-Key': api_key,
-            'X-Goog-FieldMask': fields_mask
-        }
-
-        # 4. Llamar a searchNearby
-        search_url = 'https://places.googleapis.com/v1/places:searchNearby'
-        resp = requests.post(search_url, json=search_body, headers=search_headers, timeout=8)
-        resp.raise_for_status()
-        data = resp.json()
-        results = data.get('places', [])
-
-        # --- INICIO DE LA NUEVA LÓGICA DE GUARDADO ---
-        
-        # Necesitamos estas importaciones (asegúrate de que estén al inicio de views.py)
-        # from .models import TouristicPlace
-        # from .serializers import TouristicPlaceSerializer
-        # from django.core.files.base import ContentFile
-
-        processed_objects = [] # Lista para guardar los OBJETOS de nuestra BD
-
-        for place_data in results:
-            # Usamos el 'name' (resource name v1) como ID externo único
-            google_v1_id = place_data.get('name')
-            if not google_v1_id:
-                continue
-
-            # 5. Mapear datos (igual que en search_places_api_view)
-            defaults = {
-                'name': place_data.get('displayName', {}).get('text', ''),
-                'address': place_data.get('formattedAddress', ''),
-                'description': place_data.get('editorialSummary', {}).get('text', ''),
-                'lat': place_data.get('location', {}).get('latitude'),
-                'long': place_data.get('location', {}).get('longitude'),
-                'website': place_data.get('websiteUri', ''),
-                'phone_number': place_data.get('internationalPhoneNumber', ''),
-                'external_api_rating': place_data.get('rating'),
+            
+            # Headers
+            search_headers = {
+                'Content-Type': 'application/json',
+                'X-Goog-Api-Key': api_key,
+                'X-Goog-FieldMask': fields_mask
             }
-            
-            # 6. Guardar o Actualizar en nuestra BD
-            place_obj, created = TouristicPlace.objects.update_or_create(
-                external_api_id=google_v1_id,
-                defaults=defaults
-            )
-            
-            # 7. Lógica de descarga de fotos (igual que en search_places_api_view)
-            if not place_obj.photo and 'photos' in place_data and len(place_data['photos']) > 0:
-                photo_resource_name = place_data['photos'][0].get('name')
-                if photo_resource_name:
-                    print(f"--- [DEBUG-Nearby] Foto encontrada. Descargando desde: {photo_resource_name}")
-                    photo_url = f"https://places.googleapis.com/v1/{photo_resource_name}/media?key={api_key}&maxWidthPx=800"
-                    try:
-                        photo_response = requests.get(photo_url, timeout=10)
-                        photo_response.raise_for_status()
-                        file_name = f"{google_v1_id.split('/')[-1]}.jpg" 
-                        place_obj.photo.save(file_name, ContentFile(photo_response.content), save=True)
-                        print(f"--- [DEBUG-Nearby] ¡ÉXITO! Foto guardada en {place_obj.photo.url}")
-                    except requests.exceptions.RequestException as e_photo:
-                        print(f"!!! [ERROR-Nearby] FOTO: No se pudo descargar: {e_photo}")
 
-            processed_objects.append(place_obj)
-        
-        # 8. Serializar los OBJETOS de nuestra BD
-        # Esto nos da { "id": 58, "name": "...", "photo_url": "/media/...", ... }
-        serializer = TouristicPlaceSerializer(processed_objects, many=True)
-        return Response(serializer.data)
-        
-        # --- FIN DE LA NUEVA LÓGICA ---
+            # Llamar a searchNearby
+            search_url = 'https://places.googleapis.com/v1/places:searchNearby'
+            resp = requests.post(search_url, json=search_body, headers=search_headers, timeout=8)
+            resp.raise_for_status()
+            data = resp.json()
+            results = data.get('places', [])
+            
+            print(f"--- [DEBUG-Nearby] Google API devolvió {len(results)} lugares")
 
-    except requests.exceptions.RequestException as e:
-        print(f"Error calling Places Nearby: {e}")
-        return Response({'error': 'Error al llamar al servicio externo de Places.'}, status=status.HTTP_502_BAD_GATEWAY)
-    except Exception as e:
-        print(f"Unexpected error in nearby_places_api_view: {e}")
-        return Response({'error': 'Error interno del servidor.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Procesar y guardar lugares de Google API
+            google_results = []
+            for place_data in results:
+                google_v1_id = place_data.get('name')
+                if not google_v1_id:
+                    continue
+
+                # Mapear datos
+                defaults = {
+                    'name': place_data.get('displayName', {}).get('text', ''),
+                    'address': place_data.get('formattedAddress', ''),
+                    'description': place_data.get('editorialSummary', {}).get('text', ''),
+                    'lat': place_data.get('location', {}).get('latitude'),
+                    'long': place_data.get('location', {}).get('longitude'),
+                    'website': place_data.get('websiteUri', ''),
+                    'phone_number': place_data.get('internationalPhoneNumber', ''),
+                    'external_api_rating': place_data.get('rating'),
+                }
+                
+                # Guardar o Actualizar en BD
+                place_obj, created = TouristicPlace.objects.update_or_create(
+                    external_api_id=google_v1_id,
+                    defaults=defaults
+                )
+                
+                # Solo agregar si no estaba en los resultados locales
+                if place_obj.id not in place_ids_found:
+                    # Descargar foto si no tiene
+                    if not place_obj.photo and 'photos' in place_data and len(place_data['photos']) > 0:
+                        photo_resource_name = place_data['photos'][0].get('name')
+                        if photo_resource_name:
+                            photo_url = f"https://places.googleapis.com/v1/{photo_resource_name}/media?key={api_key}&maxWidthPx=800"
+                            try:
+                                photo_response = requests.get(photo_url, timeout=10)
+                                photo_response.raise_for_status()
+                                file_name = f"{google_v1_id.split('/')[-1]}.jpg" 
+                                place_obj.photo.save(file_name, ContentFile(photo_response.content), save=True)
+                                print(f"--- [DEBUG-Nearby] Foto guardada: {place_obj.photo.url}")
+                            except requests.exceptions.RequestException as e_photo:
+                                print(f"!!! [ERROR-Nearby] No se pudo descargar foto: {e_photo}")
+                    
+                    google_results.append(place_obj)
+                    place_ids_found.add(place_obj.id)
+            
+            # Serializar resultados de Google
+            if google_results:
+                google_serialized = TouristicPlaceSerializer(google_results, many=True).data
+                print(f"--- [DEBUG-Nearby] Agregados {len(google_serialized)} lugares nuevos de Google API")
+                local_results.extend(google_serialized)
+
+        except requests.exceptions.RequestException as e:
+            print(f"!!! [ERROR] Llamando a Google Places Nearby API: {e}")
+            # Continuar con solo los resultados locales
+        except Exception as e:
+            print(f"!!! [ERROR] Procesando resultados de Google API: {e}")
+            # Continuar con solo los resultados locales
+
+    # --- 3. RETORNAR RESULTADOS COMBINADOS (BD Local + Google API) ---
+    print(f"--- [DEBUG-Nearby] Retornando {len(local_results)} lugares en total")
+    return Response(local_results)
 
 
 # Vistas para la creación de itinerarios (HTML)
@@ -652,41 +691,25 @@ def create_edit_itinerary_view(request, itinerary_id=None):
 def add_stops_view(request, itinerary_id):
     itinerary = get_object_or_404(Itinerary, id=itinerary_id, user=request.user)
 
+    # Si el itinerario está publicado o si no es del usuario, lanzamos un Permission Denied
+    if (itinerary.user != request.user) or (itinerary.status == 'published'):
+        raise PermissionDenied("No tienes permiso para modificar este itinerario.")
+
     # --- Cálculo del numero de días que el usuario ha planeado ---
     total_dias = 1 # Valor por defecto
     if itinerary.start_date and itinerary.end_date and itinerary.start_date <= itinerary.end_date:
         total_dias = (itinerary.end_date - itinerary.start_date).days + 1
 
-    # --- Lógica para Recomendaciones ---
-    recommended_places = []
-    popular_places = [] 
-
-    try:
-        profile = request.user.profile
-        preferred_categories = profile.preferred_categories.all()
-
-        if preferred_categories.exists():
-            recommended_places = TouristicPlace.objects.filter(
-                categories__in=preferred_categories
-            ).distinct().prefetch_related('categories')[:6]
-        else:
-            recommended_places = TouristicPlace.objects.order_by('?')[:6]
-
-        popular_places = TouristicPlace.objects.exclude(
-            id__in=[p.id for p in recommended_places]
-        ).order_by('?')[:6]
-
-    except Exception as e:
-        print(f"Error al obtener recomendaciones: {e}")
-
     google_api_key = os.environ.get('GOOGLE_API_KEY') or ""
+
+    # Obtener la categoría del itinerario para filtrar recomendaciones
+    itinerary_category = itinerary.category if itinerary.category else ""
 
     context = {
         'itinerary': itinerary,
         'total_dias': total_dias,
-        'recommended_places': recommended_places,
-        'popular_places': popular_places,
         'google_api_key': google_api_key,
+        'itinerary_category': itinerary_category,
     }
 
     return render(request, 'itineraries/add_stops.html', context)
@@ -1253,6 +1276,12 @@ def my_itineraries_view(request):
     # Ordenar por fecha de creación descendente
     itineraries = Itinerary.objects.filter(user=request.user).order_by('-created_at')
 
+    # Envia tambien los amigos del usuario para posibles usos en la plantilla
+    friends = Friend.objects.friends(request.user)
+    friend_ids = [f.id for f in friends]
+    relevant_users = friend_ids + [request.user.id]
+    online_friends = friends 
+
     # Lógica de filtrado
     status_filter = request.GET.get('status')
 
@@ -1262,8 +1291,29 @@ def my_itineraries_view(request):
         itineraries = itineraries.filter(status='draft')
     # Si el filtro es 'all' o no está presente, mostramos todos
 
+    # Sugerencias y Status
+    candidates = User.objects.exclude(id__in=relevant_users).order_by('?')[:5]
+    users_with_status = []
+    
+    sent_map = {uid: rid for uid, rid in FriendshipRequest.objects.filter(from_user=request.user).values_list('to_user_id', 'id')}
+    received_map = {uid: rid for uid, rid in FriendshipRequest.objects.filter(to_user=request.user).values_list('from_user_id', 'id')}
+
+    for candidate in candidates:
+        status = 'NONE'
+        req_id = None
+        if candidate.id in sent_map:
+            status = 'PENDING_SENT'
+            req_id = sent_map[candidate.id]
+        elif candidate.id in received_map:
+            status = 'PENDING_RECEIVED'
+            req_id = received_map[candidate.id]
+            
+        users_with_status.append({'user': candidate, 'status': status, 'request_id': req_id})
+
     context = {
         'itineraries': itineraries,
+        'online_friends': online_friends,
+        'users_with_status': users_with_status,
         'status_filter': status_filter or 'all', # Para mantener el estado del filtro en la plantilla
     }
 

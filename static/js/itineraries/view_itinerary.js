@@ -160,6 +160,45 @@ async function dibujarRutaActual(lugaresDelDia) {
 }
 
 /**
+ * 4. Función para obtener todos los lugares de todos los días
+ */
+function obtenerTodosLosLugares() {
+    const lugaresDelDia = [];
+    const lugarCards = document.querySelectorAll('.card-lugar-itinerario');
+    lugarCards.forEach(card => {
+        const data = card.dataset;
+        lugaresDelDia.push({
+            nombre: data.nombre || '',
+            lat: data.lat || '',
+            lng: data.lng || ''
+        });
+    });
+    return lugaresDelDia;
+}
+
+/**
+ * 5. Función para obtener los lugares de un día específico
+ */
+function obtenerLugaresPorDia(dia) {
+    const lugaresDelDia = [];
+    const daySection = document.querySelector(`.day-section[data-day="${dia}"]`);
+    
+    if (daySection) {
+        const lugarCards = daySection.querySelectorAll('.card-lugar-itinerario');
+        lugarCards.forEach(card => {
+            const data = card.dataset;
+            lugaresDelDia.push({
+                nombre: data.nombre || '',
+                lat: data.lat || '',
+                lng: data.lng || ''
+            });
+        });
+    }
+    
+    return lugaresDelDia;
+}
+
+/**
  * Añade un event listener al botón de publicar itinerario (ID = 'boton_publicar_itinerario')
  * Cuando se hace clic, envía una solicitud POST a la API para publicar el itinerario
  * Endpoint: /api/itineraries/<itinerary_id>/publish/
@@ -206,15 +245,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 7. Construir el HTML (similar al modal de add_stops)
             const imagenHTML = (img && img !== '/static/img/placeholder.png') 
-                ? `<img src="${img}" class="imagen-principal" alt="${nombre}">` : '';
+                ? `<img src="${img}" class="imagen-principal" alt="${nombre}">` 
+                : '';
 
             const websiteHTML = website 
-                ? `<div class="contacto-item"><i class="fas fa-globe"></i>
-                   <span><a href="${website}" target="_blank">${website}</a></span></div>` : '';
+                ? `<div class="contacto-item">
+                    <i class="fas fa-globe"></i>
+                    <span><a href="${website}" target="_blank">${website}</a></span>
+                </div>` 
+                : '';
             
             const phoneHTML = phone
-                ? `<div class="contacto-item"><i class="fas fa-phone"></i>
-                   <span>${phone}</span></div>` : '';
+                ? `<div class="contacto-item">
+                    <i class="fas fa-phone"></i>
+                    <span>${phone}</span>
+                </div>`
+                : '';
 
             const content = `
                 <div class="detalle-lugar-card">
@@ -250,20 +296,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 	// Recoger los datos de lat y long de los lugares del itinerario
-	const lugaresDelDia = [];
-	const lugarCards = document.querySelectorAll('.card-lugar-itinerario');
-	lugarCards.forEach(card => {
-		const data = card.dataset;
-		lugaresDelDia.push({
-			nombre: data.nombre || '',
-			lat: data.lat || '',
-			lng: data.lng || ''
-		});
-	});
+	const lugaresDelDia = obtenerTodosLosLugares();
 
 	// Actualizar marcadores y ruta en el mapa
 	actualizarMarcadores(lugaresDelDia);
 	dibujarRutaActual(lugaresDelDia);
+
+	// --- EVENTO DEL SELECTOR DE DÍAS ---
+	const diaMapa = document.getElementById('dia-mapa-select');
+	if (diaMapa) {
+		diaMapa.addEventListener('change', async (e) => {
+			const selectedDay = e.target.value;
+			let lugaresSeleccionados;
+			
+			if (selectedDay === 'todos') {
+				// Mostrar todos los días
+				lugaresSeleccionados = obtenerTodosLosLugares();
+			} else {
+				// Mostrar un día específico
+				lugaresSeleccionados = obtenerLugaresPorDia(selectedDay);
+			}
+			
+			// Actualizar marcadores y ruta según la selección
+			actualizarMarcadores(lugaresSeleccionados);
+			await dibujarRutaActual(lugaresSeleccionados);
+		});
+	}
 
 });
 

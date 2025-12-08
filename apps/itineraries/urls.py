@@ -16,7 +16,7 @@ urlpatterns = [
     path('itineraries/<int:itinerary_id>/view/', views.view_itinerary_view, name='view_itinerary'),
 
     path('rate/<int:itinerary_id>/', views.rate_itinerary, name='rate_itinerary'),
-    path('', views.home_view, name='home'),
+    #path('', views.home_view, name='home'),
 
     # --- NUEVAS RUTAS PARA ACCIONES SOCIALES ---
     path('like/<int:itinerary_id>/', views.toggle_itinerary_like, name='toggle_like'),

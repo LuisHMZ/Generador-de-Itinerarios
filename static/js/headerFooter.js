@@ -65,13 +65,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const bellButton = document.getElementById('bell-button');
 
     if (modalElement && bellButton) {
-        const notificationModal = new bootstrap.Modal(modalElement);
+        const notificationModal = new bootstrap.Modal(modalElement, {
+            backdrop: false,
+            keyboard: true,
+        });
 
         bellButton.addEventListener('click', (e) => {
             e.preventDefault();
             if (countElement) countElement.style.display = 'none';
             loadNotifications(true);
             notificationModal.show();
+        });
+
+        // Cerrar modal al hacer clic fuera de él
+        document.addEventListener('click', (e) => {
+            if (modalElement.classList.contains('show') && 
+                !modalElement.querySelector('.modal-content').contains(e.target) &&
+                !bellButton.contains(e.target)) {
+                notificationModal.hide();
+            }
         });
     }
 
