@@ -257,3 +257,9 @@ RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# --- Configuración de búsqueda de lugares turísticos ---
+# Radio de búsqueda en kilómetros para recomendaciones y búsquedas cercanas
+# Este valor limita las búsquedas a un área local para evitar que los usuarios
+# salgan del estado donde planean su itinerario
+RECOMMENDATION_RADIUS_KM = 25.0  # 25 km de radio (aprox. 20-30km)

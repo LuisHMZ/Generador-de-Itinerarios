@@ -65,6 +65,40 @@ CATEGORIAS_PRINCIPALES = [
     'Bares y Cantinas', 'Panaderías'
 ]
 
+# Mapeo de tipos de Google Places a categorías en español
+# Basado en categorias.csv y alineado con ALLOWED_GOOGLE_TYPES
+GOOGLE_TYPE_TO_CATEGORY = {
+    'museum': 'Museos',
+    'art_gallery': 'Galerías de Arte',
+    'landmark': 'Puntos de Interés',
+    'point_of_interest': 'Puntos de Interés',
+    'tourist_attraction': 'Atracciones Turísticas',
+    'historical_place': 'Sitios Históricos',
+    'historical_landmark': 'Sitios Históricos',
+    'cultural_landmark': 'Sitios Históricos',
+    'church': 'Iglesias y Templos',
+    'hindu_temple': 'Iglesias y Templos',
+    'mosque': 'Iglesias y Templos',
+    'synagogue': 'Iglesias y Templos',
+    'place_of_worship': 'Iglesias y Templos',
+    'performing_arts_theater': 'Teatros',
+    'amusement_park': 'Parques de Diversiones',
+    'zoo': 'Zoológicos',
+    'aquarium': 'Acuarios',
+    'stadium': 'Estadios',
+    'movie_theater': 'Cines',
+    'night_club': 'Vida Nocturna',
+    'bar': 'Vida Nocturna',
+    'casino': 'Vida Nocturna',
+    'park': 'Parques y Plazas',
+    'natural_feature': 'Maravillas Naturales',
+    'campground': 'Zonas de Acampar',
+    'restaurant': 'Restaurantes',
+    'cafe': 'Cafeterías',
+    'bakery': 'Panaderías',
+    'shopping_mall': 'Atracciones Turísticas',  # Centros comerciales como atracción
+}
+
 # # --- VISTA DEL FEED SOCIAL (home_view) ---
 # @login_required
 # # Vista para la página principal (condicional)
@@ -237,12 +271,42 @@ def search_places_api_view(request):
     if not query:
         return Response({"error": "Parámetro 'query' es requerido."}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Obtener ubicación del usuario (si está disponible)
+    user_lat = request.query_params.get('lat')
+    user_lng = request.query_params.get('lng')
+    search_radius_km = 25  # Radio de búsqueda de 25km
+
     local_results = []
     place_ids_found_locally = set()
 
     # --- 1. Buscar en la Base de Datos Local ---
     try:
-        local_places = TouristicPlace.objects.filter(name__icontains=query)[:10]
+        local_places_query = TouristicPlace.objects.filter(name__icontains=query)
+        
+        # Si el usuario proporcionó ubicación, filtrar por distancia
+        if user_lat and user_lng:
+            try:
+                user_lat_float = float(user_lat)
+                user_lng_float = float(user_lng)
+                
+                # Filtrar lugares cercanos usando haversine
+                nearby_local_places = []
+                for place in local_places_query:
+                    if place.lat and place.long:
+                        try:
+                            distance = haversine(user_lat_float, user_lng_float, float(place.lat), float(place.long))
+                            if distance <= search_radius_km:
+                                nearby_local_places.append(place)
+                        except (TypeError, ValueError):
+                            continue
+                
+                local_places = nearby_local_places[:10]
+            except ValueError:
+                # Si las coordenadas no son válidas, usar búsqueda sin filtro de distancia
+                local_places = local_places_query[:10]
+        else:
+            local_places = local_places_query[:10]
+        
         local_results = TouristicPlaceSerializer(local_places, many=True).data
         place_ids_found_locally = {place['id'] for place in local_results}
     except Exception as e:
@@ -259,23 +323,25 @@ def search_places_api_view(request):
             search_body = {
                 'textQuery': query,
                 'languageCode': 'es',
-                'maxResultCount': 10,
-                # --- FILTRO DE UBICACIÓN CORREGIDO (Rectángulo) ---
-                'locationRestriction': {
-                    'rectangle': {
-                        # Esquina Suroeste (low)
-                        'low': {
-                            'latitude': 18.3,    # Sur de Morelos
-                            'longitude': -100.4   # Oeste de Edomex
-                        },
-                        # Esquina Noreste (high)
-                        'high': {
-                            'latitude': 21.3,    # Norte de Hidalgo
-                            'longitude': -96.7    # Este de Puebla
+                'maxResultCount': 10
+            }
+            
+            # Agregar restricción de ubicación si el usuario proporcionó coordenadas
+            if user_lat and user_lng:
+                try:
+                    user_lat_float = float(user_lat)
+                    user_lng_float = float(user_lng)
+                    search_body['locationBias'] = {
+                        'circle': {
+                            'center': {
+                                'latitude': user_lat_float,
+                                'longitude': user_lng_float
+                            },
+                            'radius': search_radius_km * 1000  # Convertir km a metros
                         }
                     }
-                }
-            }
+                except ValueError:
+                    print("!!! [WARNING] Coordenadas de usuario no válidas, buscando sin restricción geográfica")
             
             # Pedimos el 'id' (v1) y 'displayName'
             search_headers = {
@@ -365,6 +431,26 @@ def search_places_api_view(request):
                                 defaults=defaults
                             )
                             
+                            # --- ASIGNAR CATEGORÍAS ---
+                            if created or not place_obj.categories.exists():
+                                # Mapear los tipos de Google a categorías del sistema
+                                categories_to_add = set()
+                                for google_type in place_types:
+                                    if google_type in GOOGLE_TYPE_TO_CATEGORY:
+                                        category_name = GOOGLE_TYPE_TO_CATEGORY[google_type]
+                                        categories_to_add.add(category_name)
+                                
+                                # Crear o recuperar las categorías y asignarlas
+                                for category_name in categories_to_add:
+                                    category_obj, _ = Category.objects.get_or_create(
+                                        name=category_name,
+                                        defaults={'description': f'Categoría: {category_name}'}
+                                    )
+                                    place_obj.categories.add(category_obj)
+                                
+                                if categories_to_add:
+                                    print(f"--- [DEBUG] Categorías asignadas a '{place_obj.name}': {categories_to_add}")
+                            
                             # --- LÓGICA DE FOTOS ---
                             if not place_obj.photo and 'photos' in place_detail and len(place_detail['photos']) > 0:
                                 photo_resource_name = place_detail['photos'][0].get('name')
@@ -417,8 +503,8 @@ def nearby_places_api_view(request):
     try:
         radius_km = float(request.query_params.get('radius_km', ''))
     except Exception:
-        # Valor por defecto: si existe en settings usa RECOMMENDATION_RADIUS_KM, sino 15.0 km
-        radius_km = float(getattr(settings, 'RECOMMENDATION_RADIUS_KM', 15.0))
+        # Valor por defecto: si existe en settings usa RECOMMENDATION_RADIUS_KM, sino 25.0 km
+        radius_km = float(getattr(settings, 'RECOMMENDATION_RADIUS_KM', 25.0))
 
     if not lat or not lng:
         return Response({'error': "Parámetros 'lat' y 'lng' son requeridos."}, status=status.HTTP_400_BAD_REQUEST)
@@ -562,6 +648,28 @@ def nearby_places_api_view(request):
                     external_api_id=google_v1_id,
                     defaults=defaults
                 )
+                
+                # --- ASIGNAR CATEGORÍAS ---
+                if created or not place_obj.categories.exists():
+                    # Obtener los tipos del lugar
+                    place_types = place_data.get('types', [])
+                    # Mapear los tipos de Google a categorías del sistema
+                    categories_to_add = set()
+                    for google_type in place_types:
+                        if google_type in GOOGLE_TYPE_TO_CATEGORY:
+                            category_name = GOOGLE_TYPE_TO_CATEGORY[google_type]
+                            categories_to_add.add(category_name)
+                    
+                    # Crear o recuperar las categorías y asignarlas
+                    for category_name in categories_to_add:
+                        category_obj, _ = Category.objects.get_or_create(
+                            name=category_name,
+                            defaults={'description': f'Categoría: {category_name}'}
+                        )
+                        place_obj.categories.add(category_obj)
+                    
+                    if categories_to_add:
+                        print(f"--- [DEBUG-Nearby] Categorías asignadas a '{place_obj.name}': {categories_to_add}")
                 
                 # Solo agregar si no estaba en los resultados locales
                 if place_obj.id not in place_ids_found:
