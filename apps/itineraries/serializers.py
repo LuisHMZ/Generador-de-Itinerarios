@@ -254,9 +254,19 @@ class TouristicPlaceSerializer(serializers.ModelSerializer):
     def get_photo_url(self, obj):
         try:
             if obj.photo and hasattr(obj.photo, 'url'):
-                return obj.photo.url
-        except Exception:
-            pass
+                # Construir URL completa si es necesario
+                url = obj.photo.url
+                # Si la URL no comienza con http, añadir el dominio/contexto
+                if url and not url.startswith('http'):
+                    from django.conf import settings
+                    # Asegurar que la URL tenga el prefijo correcto
+                    if hasattr(settings, 'MEDIA_URL'):
+                        # Si la URL ya tiene MEDIA_URL, no duplicar
+                        if not url.startswith(settings.MEDIA_URL):
+                            url = settings.MEDIA_URL + url
+                return url
+        except Exception as e:
+            print(f"!!! [ERROR] get_photo_url para {obj.name}: {e}")
         return None
     
     def get_types(self, obj):

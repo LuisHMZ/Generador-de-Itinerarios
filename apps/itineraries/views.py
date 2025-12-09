@@ -540,7 +540,16 @@ def nearby_places_api_view(request):
         # Serializar los resultados locales
         if nearby_places:
             local_results = TouristicPlaceSerializer(nearby_places[:10], many=True).data
+            # Debug: verificar cuántos tienen foto
+            places_with_photo = sum(1 for p in nearby_places[:10] if p.photo)
             print(f"--- [DEBUG-Nearby] Encontrados {len(local_results)} lugares en BD local dentro de {radius_km} km")
+            print(f"--- [DEBUG-Nearby] {places_with_photo} lugares tienen foto asignada")
+            # Debug: mostrar URLs de foto
+            for place_data in local_results:
+                if place_data.get('photo_url'):
+                    print(f"--- [DEBUG-Nearby] {place_data['name']}: photo_url = {place_data['photo_url']}")
+                else:
+                    print(f"--- [DEBUG-Nearby] {place_data['name']}: SIN FOTO (photo_url es None)")
         else:
             print(f"--- [DEBUG-Nearby] No se encontraron lugares en BD local dentro de {radius_km} km")
             
@@ -1464,5 +1473,5 @@ def update_privacy_view(request, itinerary_id):
         return JsonResponse({'error': 'Opción inválida'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
+
 
