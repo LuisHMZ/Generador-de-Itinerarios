@@ -830,8 +830,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         searchTimeout = setTimeout(async () => {
             try {
-                // LLAMA A TU ENDPOINT DE BÚSQUEDA
-                const response = await fetch(`/api/places/search/?query=${encodeURIComponent(query)}`);
+                // Obtener ubicación del centro del mapa o usar ubicación por defecto
+                let searchUrl = `/api/places/search/?query=${encodeURIComponent(query)}`;
+                
+                // Si el mapa está inicializado, agregar coordenadas del centro
+                if (map) {
+                    const center = map.getCenter();
+                    searchUrl += `&lat=${center.lat()}&lng=${center.lng()}`;
+                }
+                
+                // LLAMA A TU ENDPOINT DE BÚSQUEDA CON COORDENADAS
+                const response = await fetch(searchUrl);
                 if (!response.ok) throw new Error(`Error en búsqueda: ${response.statusText}`);
                 const results = await response.json();
                 mostrarResultadosBusqueda(results); // Llama a la función para mostrar
