@@ -74,9 +74,9 @@ CATEGORIAS_PRINCIPALES = [
 #     y ahora sirve el NUEVO diseño del feed (feed/feed.html)
 #     con datos REALES de la base de datos (Posts y Amigos).
 #     """
-    # No se necesita lógica especial, solo mostrar el HTML.
-    # El objeto 'request.user' está disponible automáticamente en la plantilla.
-    return render(request, 'itineraries/provisional_home.html')
+#     # No se necesita lógica especial, solo mostrar el HTML.
+#     # El objeto 'request.user' está disponible automáticamente en la plantilla.
+#     return render(request, 'itineraries/provisional_home.html')
 
 
 # --- GESTIÓN DE LUGARES (ADMIN) ---
