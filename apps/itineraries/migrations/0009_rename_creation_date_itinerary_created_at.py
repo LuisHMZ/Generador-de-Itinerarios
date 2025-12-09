@@ -10,6 +10,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RemoveField(
+            model_name='itinerary',
+            name='location',
+        ),
         migrations.RenameField(
             model_name='itinerary',
             old_name='creation_date',
