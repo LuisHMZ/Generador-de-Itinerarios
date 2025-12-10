@@ -8,7 +8,17 @@
     <link rel="stylesheet" href="{% static 'css/admin-permisos.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <style>
-        .badge-status { padding: 0.5em 1em; border-radius: 20px; font-size: 0.85em; font-weight: 500; }
+        .badge-status { 
+            padding: 0.5em 1em;
+            border-radius: 20px; 
+            font-size: 0.85em; 
+            font-weight: 500; 
+            display: inline-flex;       /* Alinea icono y texto perfectamente */
+            align-items: center;        /* Centra verticalmente */
+            white-space: nowrap;        /* Evita que el texto se parta en dos líneas */
+            gap: 5px;                   /* Espacio entre el icono y el texto */
+            max-width: 100%;
+        }
         .bg-active { background-color: #d1e7dd; color: #0f5132; }
         .bg-suspended { background-color: #f8d7da; color: #842029; }
         
@@ -24,6 +34,8 @@
         .btn-suspender:hover { background: #fff3cd; color: #ffc107; }
         .btn-reactivar:hover { background: #d1e7dd; color: #198754; }
         .btn-eliminar:hover { background: #f8d7da; color: #dc3545; }
+        .btn-hacer-admin:hover { background: #cff4fc; color: #0dcaf0; }
+        .btn-quitar-admin:hover { background: #ffe69c; color: #ffc107; }
     </style>
 {% endblock %}
 
@@ -71,9 +83,13 @@
                         </button>
                         <div class="collapse" id="menuSistema">
                             <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
-                                <li><a href="admin-reportes.html" class="d-block py-1 text-decoration-none text-secondary small">Reportes</a></li>
                                 <li>
-                                    <a href="{% url 'admin_places_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                    <a href="{% url 'admin_reports_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                        Reportes
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'itineraries:admin_places_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
                                         Administrar locaciones
                                     </a>
                                 </li>
@@ -179,7 +195,7 @@
                                         <span class="badge-status bg-suspended"><i class="fas fa-ban me-1"></i> Suspendido</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-end pe-4">
+                                <td class="text-end pe-4 text-nowrap">
                                     <button class="btn-action btn-ver-perfil me-1" 
                                             type="button"
                                             data-accion="ver"
@@ -222,6 +238,36 @@
                                             onclick="gestionarModal(this)">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
+                                    {% if not user_item.is_superuser %} {# 1. Protección: Los Superusuarios no se tocan #}
+        
+                                        {% if user_item.is_staff %}
+                                            {# CASO: YA ES ADMIN -> Mostrar "Quitar" (Salvo que sea yo mismo) #}
+                                            {% if user_item != request.user %} {# 2. Protección: No puedo quitarme el admin a mí mismo #}
+                                                <button class="btn-action btn-quitar-admin ms-1" 
+                                                        type="button"
+                                                        data-accion="quitar_admin"
+                                                        data-username="{{ user_item.username|escapejs }}"
+                                                        data-url="{% url 'admin_remove_user_admin' user_item.id %}"
+                                                        title="Revocar permisos de Administrador"
+                                                        onclick="gestionarModal(this)">
+                                                    <i class="fas fa-user-times"></i>
+                                                </button>
+                                            {% endif %}
+                                        
+                                        {% else %}
+                                            {# CASO: NO ES ADMIN -> Mostrar "Hacer Admin" #}
+                                            <button class="btn-action btn-hacer-admin ms-1" 
+                                                    type="button"
+                                                    data-accion="hacer_admin"
+                                                    data-username="{{ user_item.username|escapejs }}"
+                                                    data-url="{% url 'admin_make_user_admin' user_item.id %}"
+                                                    title="Convertir en Administrador"
+                                                    onclick="gestionarModal(this)">
+                                                <i class="fas fa-user-shield"></i>
+                                            </button>
+                                        {% endif %}
+
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
@@ -387,6 +433,29 @@
                 modalMensaje.innerHTML = `Estás a punto de eliminar a <strong>${username}</strong>.<br>Esta acción no se puede deshacer.`;
                 btnConfirmar.textContent = "Sí, Eliminar";
                 btnConfirmar.classList.add("btn-danger");
+                btnConfirmar.type = "submit";
+                formAccion.action = url;
+                break;
+
+            case 'hacer_admin':
+                modalIcono.innerHTML = '<i class="fas fa-user-shield fa-4x text-info"></i>';
+                modalTitulo.textContent = "¿Hacer Administrador?";
+                modalMensaje.innerHTML = `Estás a punto de otorgar permisos de administrador a <strong>${username}</strong>.<br>Tendrá acceso al panel de control.`;
+                
+                btnConfirmar.textContent = "Sí, Hacer Admin";
+                // Limpiamos clases anteriores y ponemos las de info
+                btnConfirmar.className = "btn rounded-pill px-4 btn-info text-white";
+                
+                btnConfirmar.type = "submit";
+                formAccion.action = url;
+                break;
+            case 'quitar_admin':
+                modalIcono.innerHTML = '<i class="fas fa-user-times fa-4x text-warning"></i>';
+                modalTitulo.textContent = "¿Revocar Permisos?";
+                modalMensaje.innerHTML = `Estás a punto de quitar los permisos de administrador a <strong>${username}</strong>.<br>Ya no podrá acceder al panel de control.`;
+                btnConfirmar.textContent = "Sí, Revocar";
+                btnConfirmar.className = "btn rounded-pill px-4 btn-warning text-dark";
+                
                 btnConfirmar.type = "submit";
                 formAccion.action = url;
                 break;

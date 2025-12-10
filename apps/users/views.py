@@ -617,3 +617,33 @@ def admin_login_logs(request):
     logs = paginator.get_page(page_number)
 
     return render(request, 'users/admin-login-logs.html', {'logs': logs})
+
+@login_required
+@staff_member_required(login_url='simple_login')
+@require_POST
+def make_user_admin(request, user_id):
+    usuario = get_object_or_404(User, id=user_id)
+    usuario.is_staff = True # Le damos permisos de Staff
+    usuario.save()
+    messages.success(request, f"El usuario {usuario.username} ahora es Administrador.")
+    return redirect('admin_users')
+
+@login_required
+@staff_member_required(login_url='simple_login')
+@require_POST
+def remove_user_admin(request, user_id):
+    usuario = get_object_or_404(User, id=user_id)
+    
+    # Validaciones de seguridad backend (Redundancia por seguridad)
+    if usuario.is_superuser:
+        messages.error(request, "No puedes quitarle el admin a un Superusuario.")
+        return redirect('admin_users')
+        
+    if usuario == request.user:
+        messages.error(request, "No puedes quitarte el admin a ti mismo.")
+        return redirect('admin_users')
+
+    usuario.is_staff = False # Quitamos el permiso
+    usuario.save()
+    messages.success(request, f"Se han revocado los permisos de administrador a {usuario.username}.")
+    return redirect('admin_users')
