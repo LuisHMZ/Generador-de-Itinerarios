@@ -537,11 +537,11 @@ def nearby_places_api_view(request):
             except (TypeError, ValueError):
                 continue
         
-        # Serializar los resultados locales
+        # Serializar los resultados locales (hasta 18 para paginación)
         if nearby_places:
-            local_results = TouristicPlaceSerializer(nearby_places[:10], many=True).data
+            local_results = TouristicPlaceSerializer(nearby_places[:18], many=True).data
             # Debug: verificar cuántos tienen foto
-            places_with_photo = sum(1 for p in nearby_places[:10] if p.photo)
+            places_with_photo = sum(1 for p in nearby_places[:18] if p.photo)
             print(f"--- [DEBUG-Nearby] Encontrados {len(local_results)} lugares en BD local dentro de {radius_km} km")
             print(f"--- [DEBUG-Nearby] {places_with_photo} lugares tienen foto asignada")
             # Debug: mostrar URLs de foto
@@ -605,7 +605,7 @@ def nearby_places_api_view(request):
             search_body = {
                 "languageCode": "es",
                 "includedTypes": tipos_a_incluir,
-                "maxResultCount": 10, 
+                "maxResultCount": 20,  # Aumentado para paginación (3 páginas de 6) 
                 "locationRestriction": {
                     "circle": {
                         "center": {

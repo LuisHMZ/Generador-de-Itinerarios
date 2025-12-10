@@ -114,6 +114,14 @@ let miItinerarioActual = {};    // { dia: [lugares], dia2: [lugares] }
 let currentDay = 1; // Día actual seleccionado
 
 /**
+ * Variables para paginación de recomendaciones
+ */
+let recomendacionesCompletas = []; // Array completo de recomendaciones
+let paginaActualRecomendaciones = 0; // Índice de página actual (0-based)
+const LUGARES_POR_PAGINA = 6; // 6 lugares por página
+const MAX_PAGINAS = 3; // Máximo 3 páginas
+
+/**
  * Código del mapa
  */
 
@@ -588,38 +596,110 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
-            // console.log(`[DEBUG] Renderizando ${Math.min(6, newPlaces.length)} recomendaciones`);
-
-            const max = Math.min(6, newPlaces.length);
-            for (let i = 0; i < max; i++) {
-                const p = newPlaces[i];
-                // console.log('[DEBUG] Procesando lugar para renderizar:', p);
+            // Guardar todas las recomendaciones para paginación
+            recomendacionesCompletas = newPlaces.map(p => {
                 const categoria = determinarCategoriaPrincipal(p.types || []);
-                
-                // Mapear los nombres de campos del API a lo que espera renderLugarCard
-                const lugarParaRender = {
+                return {
                     id: p.id,
-                    nombre: p.name,           // API devuelve 'name'
+                    nombre: p.name,
                     categoria: categoria,
-                    imagen: p.photo_url || '/static/img/placeholder.png',  // API devuelve 'photo_url'
+                    imagen: p.photo_url || '/static/img/placeholder.png',
                     lat: p.lat || null,
-                    lng: p.long || null,      // API devuelve 'long', no 'lng'
+                    lng: p.long || null,
                     address: p.address || '',
                     description: p.description || 'Descripción no disponible.',
                     website: p.website || '',
                     phone: p.phone_number || '',
                     rating: p.rating || p.external_api_rating || 'N/A'
                 };
-                
-                // console.log('[DEBUG] Datos mapeados para renderizar:', lugarParaRender);
-                renderLugarCard(recomendacionesContainer, lugarParaRender);
-            }
+            });
             
-            // console.log('[DEBUG] Recomendaciones renderizadas exitosamente');
+            // Resetear a la primera página
+            paginaActualRecomendaciones = 0;
+            
+            // Renderizar la primera página
+            renderizarPaginaRecomendaciones();
+            
+            // Actualizar estado de botones de paginación
+            actualizarBotonesRecomendaciones();
 
         } catch (error) {
             console.error('Error cargando recomendaciones cercanas:', error);
             recomendacionesContainer.innerHTML = '<p class="text-danger">No se pudieron cargar recomendaciones.</p>';
+        }
+    }
+
+    /**
+     * Renderiza la página actual de recomendaciones
+     */
+    function renderizarPaginaRecomendaciones() {
+        if (!recomendacionesContainer) return;
+        
+        recomendacionesContainer.innerHTML = '';
+        
+        if (!recomendacionesCompletas || recomendacionesCompletas.length === 0) {
+            recomendacionesContainer.innerHTML = '<p class="text-muted">No hay recomendaciones disponibles.</p>';
+            return;
+        }
+        
+        const inicio = paginaActualRecomendaciones * LUGARES_POR_PAGINA;
+        const fin = Math.min(inicio + LUGARES_POR_PAGINA, recomendacionesCompletas.length);
+        
+        for (let i = inicio; i < fin; i++) {
+            renderLugarCard(recomendacionesContainer, recomendacionesCompletas[i]);
+        }
+    }
+
+    /**
+     * Actualiza el estado de los botones de navegación de recomendaciones
+     */
+    function actualizarBotonesRecomendaciones() {
+        const btnPrev = document.querySelector('#recomendaciones-aleatorias-container').parentElement.querySelector('.btn-chevron-left');
+        const btnNext = document.querySelector('#recomendaciones-aleatorias-container').parentElement.querySelector('.btn-chevron-right');
+        
+        if (!btnPrev || !btnNext) return;
+        
+        const totalPaginas = Math.ceil(recomendacionesCompletas.length / LUGARES_POR_PAGINA);
+        
+        // Deshabilitar botón anterior si estamos en la primera página
+        if (paginaActualRecomendaciones === 0) {
+            btnPrev.disabled = true;
+            btnPrev.classList.add('disabled');
+        } else {
+            btnPrev.disabled = false;
+            btnPrev.classList.remove('disabled');
+        }
+        
+        // Deshabilitar botón siguiente si estamos en la última página
+        if (paginaActualRecomendaciones >= totalPaginas - 1 || paginaActualRecomendaciones >= MAX_PAGINAS - 1) {
+            btnNext.disabled = true;
+            btnNext.classList.add('disabled');
+        } else {
+            btnNext.disabled = false;
+            btnNext.classList.remove('disabled');
+        }
+    }
+
+    /**
+     * Navegar a la página anterior de recomendaciones
+     */
+    function paginaAnteriorRecomendaciones() {
+        if (paginaActualRecomendaciones > 0) {
+            paginaActualRecomendaciones--;
+            renderizarPaginaRecomendaciones();
+            actualizarBotonesRecomendaciones();
+        }
+    }
+
+    /**
+     * Navegar a la página siguiente de recomendaciones
+     */
+    function paginaSiguienteRecomendaciones() {
+        const totalPaginas = Math.ceil(recomendacionesCompletas.length / LUGARES_POR_PAGINA);
+        if (paginaActualRecomendaciones < totalPaginas - 1 && paginaActualRecomendaciones < MAX_PAGINAS - 1) {
+            paginaActualRecomendaciones++;
+            renderizarPaginaRecomendaciones();
+            actualizarBotonesRecomendaciones();
         }
     }
 
@@ -1448,6 +1528,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     
+
+    // --- Event Listeners para paginación de recomendaciones ---
+    const recomendacionesSection = document.querySelector('#recomendaciones-aleatorias-container')?.parentElement;
+    if (recomendacionesSection) {
+        const btnPrevRecomendaciones = recomendacionesSection.querySelector('.btn-sm.btn-light.me-2');
+        const btnNextRecomendaciones = recomendacionesSection.querySelectorAll('.btn-sm.btn-light')[1];
+        
+        if (btnPrevRecomendaciones) {
+            btnPrevRecomendaciones.classList.add('btn-chevron-left');
+            btnPrevRecomendaciones.addEventListener('click', paginaAnteriorRecomendaciones);
+        }
+        
+        if (btnNextRecomendaciones) {
+            btnNextRecomendaciones.classList.add('btn-chevron-right');
+            btnNextRecomendaciones.addEventListener('click', paginaSiguienteRecomendaciones);
+        }
+    }
 
     // --- Inicializar la página ---
     // Cargamos el itinerario y luego las recomendaciones cercanas
