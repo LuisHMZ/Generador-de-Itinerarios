@@ -143,7 +143,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'es-mx'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Mexico_City'
 
 USE_I18N = True
 
@@ -185,11 +185,11 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 #ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = '/login/'
 #LOGIN_URL = 'simple_login'
 #LOGIN_REDIRECT_URL = '/'
-LOGIN_URL = 'account_login'
+LOGIN_URL = 'simple_login'
 # ---------------------------------
 
 # URL a la que ir después de un login exitoso
-LOGIN_REDIRECT_URL = '/' # A la home
+#LOGIN_REDIRECT_URL = '/' # A la home
 
 # URL a la que ir después de un logout exitoso
 # (Lo apuntamos a nuestra vista 'simple_login' personalizada)
@@ -245,6 +245,7 @@ RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_SITE_KEY')
 
 # Lee la Clave Secreta (privada) desde el .env
 RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
+GOOGLE_API_KEY=os.getenv('GOOGLE_API_KEY')
 
 # Opcional: Cambia el tema a oscuro si prefieres
 # RECAPTCHA_DEFAULT_THEME = 'dark'
@@ -253,7 +254,7 @@ RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
 # Comentamos estas líneas porque dejaremos que allauth use su
 # redirección por defecto (que es /home/)
 # ACCOUNT_LOGIN_REDIRECT_URL = '/feed/'
-# LOGIN_REDIRECT_URL = '/feed/'
+LOGIN_REDIRECT_URL = '/feed/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

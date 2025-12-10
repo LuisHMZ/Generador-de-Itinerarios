@@ -1,0 +1,162 @@
+{% extends "Adminbase.html" %}
+{% load static %}
+
+{% block title %}Reporte #{{ report.id }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 1100px;">
+    
+    <a href="{% url 'admin_reports_list' %}" class="btn btn-outline-secondary rounded-pill mb-4 px-4">
+        <i class="fas fa-arrow-left me-2"></i> Volver a Reportes
+    </a>
+
+    <div class="row">
+        <div class="col-lg-8">
+            
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="fw-bold text-dark mb-0">
+                            <i class="fas fa-file-alt text-primary me-2"></i> Reporte #{{ report.id }}
+                        </h4>
+                        {% if report.status == 'PENDING' %}
+                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Pendiente</span>
+                        {% elif report.status == 'REVIEWED' %}
+                            <span class="badge bg-success px-3 py-2 rounded-pill">Revisado</span>
+                        {% else %}
+                            <span class="badge bg-secondary px-3 py-2 rounded-pill">Desestimado</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <small class="text-muted fw-bold d-block">FECHA</small>
+                            <span>{{ report.created_at|date:"d F Y, H:i" }}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted fw-bold d-block">REPORTERO</small>
+                            {% if report.reporter %}
+                                <a href="{% url 'admin_user_detail' report.reporter.id %}" class="text-decoration-none">
+                                    @{{ report.reporter.username }}
+                                </a>
+                            {% else %}
+                                <span class="fst-italic text-secondary">Anónimo</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted fw-bold d-block">MOTIVO DEL REPORTE</small>
+                            <div class="p-3 bg-light rounded border mt-1">
+                                {{ report.reason }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-header bg-light border-bottom pt-3 px-4">
+                    <h5 class="fw-bold text-secondary mb-0">Contenido Reportado</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if not report.content_object %}
+                        <div class="alert alert-danger mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i> El objeto reportado ha sido eliminado del sistema.
+                        </div>
+                    {% else %}
+                        
+                        {% if content_type_name == 'user' %}
+                            <div class="d-flex align-items-center">
+                                <div class="bg-secondary rounded-circle d-flex justify-content-center align-items-center text-white me-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                    {{ report.content_object.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <h5 class="mb-0">{{ report.content_object.get_full_name|default:report.content_object.username }}</h5>
+                                    <small class="text-muted">@{{ report.content_object.username }}</small>
+                                    <br>
+                                    <a href="{% url 'admin_user_detail' report.content_object.id %}" class="btn btn-sm btn-outline-primary mt-2">Ver Perfil Completo</a>
+                                </div>
+                            </div>
+
+                        {% elif content_type_name == 'itinerary' %}
+                            <div class="border rounded overflow-hidden">
+                                {% if report.content_object.banner_pic %}
+                                    <img src="{{ report.content_object.banner_pic.url }}" class="w-100" style="height: 150px; object-fit: cover;">
+                                {% endif %}
+                                <div class="p-3">
+                                    <h5 class="fw-bold">{{ report.content_object.title }}</h5>
+                                    <p class="text-muted small mb-2">{{ report.content_object.description|truncatechars:200 }}</p>
+                                    {# <a href="{% url 'itineraries:view_itinerary' report.content_object.id %}" target="_blank" class="btn btn-sm btn-primary">Ver Itinerario</a> #}
+                                </div>
+                            </div>
+
+                        {% else %}
+                            <p><strong>Contenido:</strong></p>
+                            <blockquote class="blockquote bg-light p-3 border-start border-4 border-primary">
+                                {{ report.content_object }}
+                            </blockquote>
+                        {% endif %}
+
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Resolución</h5>
+                    <form method="POST" class="d-grid gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="change_status">
+                        
+                        <button type="submit" name="status" value="REVIEWED" class="btn btn-outline-success fw-bold {% if report.status == 'REVIEWED' %}active{% endif %}">
+                            <i class="fas fa-check me-2"></i> Marcar como Revisado
+                        </button>
+                        
+                        <button type="submit" name="status" value="DISMISSED" class="btn btn-outline-secondary fw-bold {% if report.status == 'DISMISSED' %}active{% endif %}">
+                            <i class="fas fa-times me-2"></i> Desestimar
+                        </button>
+                        
+                        <button type="submit" name="status" value="PENDING" class="btn btn-outline-warning text-dark fw-bold {% if report.status == 'PENDING' %}active{% endif %}">
+                            <i class="fas fa-clock me-2"></i> Devolver a Pendiente
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if target_user %}
+            <div class="card shadow-sm border-0 rounded-4 bg-info-subtle">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold text-primary mb-2"><i class="fas fa-bell me-2"></i>Notificar Usuario</h5>
+                    <p class="small text-muted mb-3">
+                        Envía una alerta interna a <strong>@{{ target_user.username }}</strong> sobre este reporte.
+                    </p>
+                    
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="notify_user">
+                        
+                        <div class="mb-3">
+                            <textarea name="notification_message" class="form-control" rows="3" placeholder="Ej: Tu itinerario infringe nuestras normas..." required></textarea>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary rounded-pill">
+                                <i class="fas fa-paper-plane me-2"></i> Enviar Notificación
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+                <div class="alert alert-warning small">
+                    No se puede notificar: el contenido no tiene un usuario asociado o fue eliminado.
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -9,7 +9,17 @@
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <style>
         /* Estilos específicos para las etiquetas de estado */
-        .badge-status { padding: 0.5em 1em; border-radius: 20px; font-size: 0.85em; font-weight: 500; }
+        .badge-status { 
+            padding: 0.5em 1em;
+            border-radius: 20px; 
+            font-size: 0.85em; 
+            font-weight: 500; 
+            display: inline-flex;       /* Alinea icono y texto perfectamente */
+            align-items: center;        /* Centra verticalmente */
+            white-space: nowrap;        /* Evita que el texto se parta en dos líneas */
+            gap: 5px;                   /* Espacio entre el icono y el texto */
+            max-width: 100%;
+        }
         .bg-success-subtle { background-color: #d1e7dd; color: #0f5132; }
         .bg-danger-subtle { background-color: #f8d7da; color: #842029; }
         .badge-status { padding: 0.5em 1em; border-radius: 20px; font-size: 0.85em; font-weight: 500; }
@@ -72,9 +82,13 @@
                         </button>
                         <div class="collapse" id="menuSistema">
                             <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
-                                <li><a href="admin-reportes.html" class="d-block py-1 text-decoration-none text-secondary small">Reportes</a></li>
                                 <li>
-                                    <a href="{% url 'admin_places_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                    <a href="{% url 'admin_reports_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                        Reportes
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'itineraries:admin_places_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
                                         Administrar locaciones
                                     </a>
                                 </li>                               
@@ -154,7 +168,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="text-muted small">
+                                <td class="text-muted small text-nowrap">
                                     {{ log.timestamp|date:"d M Y, H:i" }}
                                 </td>
                                 <td>

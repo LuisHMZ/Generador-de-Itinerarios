@@ -24,6 +24,7 @@ class TouristicPlace(models.Model):
     opening_hours = models.TextField(blank=True)
     photo = models.ImageField(upload_to='place_photos/', null=True, blank=True, help_text="Imagen representativa del lugar turístico.")
     categories = models.ManyToManyField(Category, related_name="places")
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name

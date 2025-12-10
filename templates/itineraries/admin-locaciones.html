@@ -16,7 +16,37 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        /* Estilos para los botones de acción circulares (igual que en users) */
+        /* Botón Naranja Personalizado */
+        .btn-orange {
+            background-color: #f39c12; /* Color naranja MexTur */
+            color: white;
+            border: none;
+            transition: all 0.3s;
+        }
+        .btn-orange:hover {
+            background-color: #e67e22; /* Tono más oscuro al pasar mouse */
+            color: white;
+            transform: translateY(-2px);
+        }
+        .badge-status { 
+            padding: 0.5em 1em;
+            border-radius: 20px; 
+            font-size: 0.85em; 
+            font-weight: 500; 
+            display: inline-flex;       /* Alinea icono y texto perfectamente */
+            align-items: center;        /* Centra verticalmente */
+            white-space: nowrap;        /* Evita que el texto se parta en dos líneas */
+            gap: 5px;                   /* Espacio entre el icono y el texto */
+            max-width: 100%;
+        }
+        .bg-active { background-color: #d1e7dd; color: #0f5132; }
+        .bg-suspended { background-color: #f8d7da; color: #842029; }
+
+        /* Badges de Estado */
+        .badge-visible { background-color: #d1e7dd; color: #0f5132; }
+        .badge-oculto { background-color: #e2e3e5; color: #6c757d; }
+
+        /* Botones de Acción Circulares */
         .btn-action {
             width: 32px; height: 32px;
             border-radius: 50%; border: none;
@@ -24,7 +54,10 @@
             transition: all 0.2s; background: #f8f9fa; color: #6c757d;
         }
         .btn-action:hover { transform: translateY(-2px); }
-        .btn-editar:hover { background: #e7f1ff; color: #0d6efd; }
+        .btn-ver:hover { background: #e7f1ff; color: #0d6efd; }
+        .btn-editar:hover { background: #fff3cd; color: #ffc107; }
+        .btn-toggle:hover { background: #d1e7dd; color: #198754; } /* Verde para activar */
+        .btn-toggle.active:hover { background: #e2e3e5; color: #636363; } /* Gris para ocultar */
         .btn-eliminar:hover { background: #f8d7da; color: #dc3545; }
     </style>
 {% endblock %}
@@ -73,9 +106,13 @@
                         </button>
                         <div class="collapse show" id="menuSistema">
                             <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
-                                <li><a href="admin-reportes.html" class="d-block py-1 text-decoration-none text-secondary small">Reportes</a></li>
                                 <li>
-                                    <a href="{% url 'admin_places_list' %}" class="d-block py-1 text-decoration-none fw-bold text-primary small">
+                                    <a href="{% url 'admin_reports_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                        Reportes
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'itineraries:admin_places_list' %}" class="d-block py-1 text-decoration-none fw-bold text-primary small">
                                         Administrar locaciones
                                     </a>
                                 </li>
@@ -106,12 +143,24 @@
             </aside>
 
             <section class="col-lg-9 p-4 bg-white d-flex flex-column">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="fw-bold mb-0" style="color: #1F3C5A;">Administrar locaciones</h2>
-                    <a href="{% url 'admin_place_create' %}" class="btn btn-primary rounded-pill px-4 shadow-sm">
-                        <i class="fas fa-plus me-2"></i> Nuevo Lugar
-                    </a>
+                <div class="mb-4  pb-3">
+                    <h2 class="fw-bold mb-3" style="color: #1F3C5A;">Administrar Locaciones</h2>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'itineraries:admin_place_create' %}" class="btn btn-orange rounded-pill px-4 shadow-sm fw-bold">
+                            <i class="fas fa-plus me-2"></i> Nuevo Lugar
+                        </a>
+                        <form method="get" class="d-flex m-0">
+                            <div class="search-box position-relative" style="min-width: 300px;">
+                                <input type="text" name="q" class="form-control rounded-pill bg-light border-0 ps-4" 
+                                    placeholder="Buscar por nombre, dirección..." value="{{ search_query|default:'' }}">
+                                <button type="submit" class="btn position-absolute text-muted" style="right: 5px; top: 2px;">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
+                
 
                 {% if messages %}
                     {% for message in messages %}
@@ -122,23 +171,16 @@
                     {% endfor %}
                 {% endif %}
 
-                <form method="get" class="d-flex justify-content-end mb-4">
-                    <div class="search-box position-relative" style="min-width: 300px;">
-                        <input type="text" name="q" class="form-control rounded-pill bg-light border-0 ps-4" 
-                               placeholder="Buscar por nombre, dirección..." value="{{ search_query|default:'' }}">
-                        <button type="submit" class="btn position-absolute text-muted" style="right: 5px; top: 2px;">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </form>
+                
 
                 <div class="table-responsive mb-auto"> 
                     <table class="table table-hover align-middle border">
                         <thead class="table-dark" style="background-color: #1F3C5A;">
                             <tr>
                                 <th scope="col" class="ps-4">Lugar</th>
-                                <th scope="col">Dirección</th>
-                                <th scope="col">Rating</th>
+                                <th scope="col">Categorías</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col">Calificación</th>
                                 <th scope="col" class="text-end pe-4">Acciones</th>
                             </tr>
                         </thead>
@@ -153,16 +195,30 @@
                                         </div>
                                         <div>
                                             <div class="fw-bold text-dark">{{ place.name }}</div>
-                                            <small class="text-muted d-block text-truncate" style="max-width: 200px;">
-                                                {% for cat in place.categories.all|slice:":2" %}
-                                                    {{ cat.name }}{% if not forloop.last %}, {% endif %}
-                                                {% endfor %}
+                                            <small class="text-muted d-block text-truncate-2" style="max-width: 200px;">
+                                                {{ place.address }}
                                             </small>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="text-muted small" style="max-width: 250px;">
-                                    <div class="text-truncate-2">{{ place.address }}</div>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for cat in place.categories.all|slice:":2" %}
+                                            <span class="badge bg-light text-secondary border fw-normal">{{ cat.name }}</span>
+                                        {% empty %}
+                                            <span class="text-muted small">Sin categorías</span>
+                                        {% endfor %}
+                                        {% if place.categories.count > 2 %}
+                                            <span class="badge bg-light text-secondary border fw-normal">+{{ place.categories.count|add:"-2" }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if place.is_active %}
+                                        <span class="badge-status bg-active rounded-pill px-3"><i class="fas fa-eye me-1"></i> Visible</span>
+                                    {% else %}
+                                        <span class="badge-status bg-suspended rounded-pill px-3"><i class="fas fa-eye-slash me-1"></i> Oculto</span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if place.external_api_rating %}
@@ -173,18 +229,32 @@
                                         <span class="badge bg-light text-secondary border">N/A</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-end pe-4">
-                                    <a href="{% url 'admin_place_edit' place.id %}" class="btn-action btn-editar me-1 text-decoration-none" title="Editar">
+                                <td class="text-end pe-4 text-nowrap">
+                                    <a href="{% url 'itineraries:admin_place_detail' place.id %}" class="btn-action btn-ver me-1 text-decoration-none" title="Ver Detalle Completo">
+                                        <i class="fas fa-search"></i>
+                                    </a>
+                                    <form action="{% url 'itineraries:admin_place_toggle_visibility' place.id %}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-toggle me-1 {% if place.is_active %}active{% endif %}" 
+                                                title="{% if place.is_active %}Ocultar{% else %}Hacer Visible{% endif %}">
+                                            {% if place.is_active %}
+                                                <i class="fas fa-eye-slash"></i>
+                                            {% else %}
+                                                <i class="fas fa-eye text-success"></i>
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                    <a href="{% url 'itineraries:admin_place_edit' place.id %}?next={% url 'itineraries:admin_places_list' %}" class="btn-action btn-editar me-1 text-decoration-none" title="Editar">
                                         <i class="fas fa-pencil-alt"></i>
                                     </a>
                                     <!-- <button type="button" class="btn-action btn-eliminar" 
-                                            onclick="confirmarEliminar('{{ place.name|escapejs }}', '{% url 'admin_place_delete' place.id %}')" 
+                                            onclick="confirmarEliminar('{{ place.name|escapejs }}', '{% url 'itineraries:admin_place_delete' place.id %}')" 
                                             title="Eliminar">
                                         <i class="fas fa-trash-alt"></i>
                                     </button> -->
                                     <button type="button" class="btn-action btn-eliminar" 
                                             data-nombre="{{ place.name|escapejs }}"
-                                            data-url="{% url 'admin_place_delete' place.id %}"
+                                            data-url="{% url 'itineraries:admin_place_delete' place.id %}"
                                             onclick="confirmarEliminar(this)"> <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </td>
@@ -201,31 +271,12 @@
                     </table>
                 </div>
 
-                <nav aria-label="Navegación" class="mt-4 d-flex justify-content-end">
-                    {% if places.has_other_pages %}
-                    <ul class="pagination">
-                        <li class="page-item {% if not places.has_previous %}disabled{% endif %}">
-                            <a class="page-link rounded-circle me-1" href="{% if places.has_previous %}?page={{ places.previous_page_number }}&q={{ search_query }}{% else %}#{% endif %}">
-                                <i class="fas fa-chevron-left"></i>
-                            </a>
-                        </li>
-                        
-                        {% for i in places.paginator.page_range %}
-                            {% if places.number == i %}
-                                <li class="page-item active"><span class="page-link rounded-circle me-1">{{ i }}</span></li>
-                            {% else %}
-                                <li class="page-item"><a class="page-link rounded-circle me-1" href="?page={{ i }}&q={{ search_query }}">{{ i }}</a></li>
-                            {% endif %}
-                        {% endfor %}
-
-                        <li class="page-item {% if not places.has_next %}disabled{% endif %}">
-                            <a class="page-link rounded-circle" href="{% if places.has_next %}?page={{ places.next_page_number }}&q={{ search_query }}{% else %}#{% endif %}">
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                        </li>
-                    </ul>
-                    {% endif %}
-                </nav>
+                {% include "includes/pagination.html" with page_obj=places %}
+                <div class="mt-5 pt-3 border-top">
+                    <a href="panel_administrador.html" class="btn btn-outline-secondary px-4 rounded-pill">
+                        <i class="fas fa-arrow-left me-2"></i> Regresar al Panel Principal
+                    </a>
+                </div>
             </section>
         </div>
     </main>
@@ -252,6 +303,22 @@
         </div>
     </div>
 
+    <div class="modal fade" id="modalVerLugar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="verLugarTitulo"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-2 pb-4">
+                    <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt me-1"></i> <span id="verLugarDir"></span></p>
+                    <hr>
+                    <p id="verLugarDesc" class="text-secondary"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -265,6 +332,13 @@
         document.getElementById('nombreLugarEliminar').textContent = nombre;
         document.getElementById('formEliminarLugar').action = url;
         new bootstrap.Modal(document.getElementById('modalEliminarLugar')).show();
+    }
+
+    function verDetalleLugar(boton) {
+        document.getElementById('verLugarTitulo').textContent = boton.getAttribute('data-nombre');
+        document.getElementById('verLugarDesc').textContent = boton.getAttribute('data-desc');
+        document.getElementById('verLugarDir').textContent = boton.getAttribute('data-addr');
+        new bootstrap.Modal(document.getElementById('modalVerLugar')).show();
     }
     // Script para la hamburguesa y sidebar (si no está en base)
     // ...

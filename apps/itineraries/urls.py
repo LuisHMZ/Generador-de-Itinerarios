@@ -28,5 +28,7 @@ urlpatterns = [
     path('panel/locaciones/crear/', views.admin_place_create, name='admin_place_create'),
     path('panel/locaciones/editar/<int:place_id>/', views.admin_place_edit, name='admin_place_edit'),
     path('panel/locaciones/eliminar/<int:place_id>/', views.admin_place_delete, name='admin_place_delete'),
+    path('panel/locaciones/toggle/<int:place_id>/', views.admin_place_toggle_visibility, name='admin_place_toggle_visibility'),
+    path('panel/locaciones/ver/<int:place_id>/', views.admin_place_detail, name='admin_place_detail'),
     # -------------------------------------------
 ]

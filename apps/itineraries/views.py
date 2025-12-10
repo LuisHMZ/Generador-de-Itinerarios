@@ -115,7 +115,7 @@ def admin_place_create(request):
         if form.is_valid():
             lugar = form.save()
             messages.success(request, f'Lugar "{lugar.name}" creado exitosamente.')
-            return redirect('admin_places_list')
+            return redirect('itineraries:admin_places_list')
     else:
         form = TouristicPlaceForm()
     
@@ -129,18 +129,26 @@ def admin_place_create(request):
 def admin_place_edit(request, place_id):
     place = get_object_or_404(TouristicPlace, id=place_id)
     
+    # 1. CAPTURAR: Obtenemos la url 'next' si viene en la URL o en el POST
+    next_url = request.GET.get('next') or request.POST.get('next')
+
     if request.method == 'POST':
-        form = TouristicPlaceForm(request.POST, instance=place)
+        form = TouristicPlaceForm(request.POST, request.FILES, instance=place)
         if form.is_valid():
             form.save()
             messages.success(request, f'Lugar "{place.name}" actualizado correctamente.')
-            return redirect('admin_places_list')
+            
+            # 2. REDIRIGIR: Si existe next_url, vamos ahí. Si no, a la lista.
+            if next_url:
+                return redirect(next_url)
+            return redirect('itineraries:admin_places_list') # Asegúrate del namespace correcto
     else:
         form = TouristicPlaceForm(instance=place)
     
     return render(request, 'itineraries/admin-locaciones-form.html', {
         'form': form, 
-        'titulo': f'Editar {place.name}'
+        'titulo': f'Editar {place.name}',
+        'next_url': next_url # 3. PASAR A PLANTILLA: Vital para el botón cancelar
     })
 
 @login_required
@@ -151,8 +159,42 @@ def admin_place_delete(request, place_id):
     nombre = place.name
     place.delete()
     messages.success(request, f'El lugar "{nombre}" ha sido eliminado.')
-    return redirect('admin_places_list')
+    next_url = request.GET.get('next') or request.POST.get('next')
+    if next_url:
+        return redirect(next_url)
+    return redirect('itineraries:admin_places_list')
 
+@login_required
+@user_passes_test(es_admin)
+@require_POST
+def admin_place_toggle_visibility(request, place_id):
+    place = get_object_or_404(TouristicPlace, id=place_id)
+    place.is_active = not place.is_active # Invierte el estado
+    place.save()
+    estado = "visible" if place.is_active else "oculto"
+    messages.success(request, f'El lugar "{place.name}" ahora está {estado}.')
+    next_url = request.GET.get('next') or request.POST.get('next')
+    if next_url:
+        return redirect(next_url)
+    return redirect('itineraries:admin_places_list')
+
+""" @login_required
+@user_passes_test(es_admin)
+def admin_place_detail(request, place_id):
+    place = get_object_or_404(TouristicPlace, id=place_id)
+    return render(request, 'itineraries/admin-locaciones-detalle.html', {
+        'place': place
+    }) """
+
+# Asegúrate de tener: import os
+@login_required
+@user_passes_test(es_admin)
+def admin_place_detail(request, place_id):
+    place = get_object_or_404(TouristicPlace, id=place_id)
+    return render(request, 'itineraries/admin-locaciones-detalle.html', {
+        'place': place,
+        'google_api_key': os.environ.get('GOOGLE_API_KEY', '') # <--- ESTO ES NUEVO
+    })
 ###################################################################################
     if request.user.is_authenticated:
         
@@ -1306,5 +1348,5 @@ def update_privacy_view(request, itinerary_id):
         return JsonResponse({'error': 'Opción inválida'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
+
 
