@@ -120,3 +120,14 @@ Aquí se muestran la distribuciones de las carpetas
 
 ## Consideración: El panel de administración.
 Este panel no reemplaza al que desarrollaremos para MexTur, está más enfocado en administrar la base de datos: usuarios registrados, usuarios autenticades, sesiones, datos, etc. Pueden usarlo localmente para generar datos de prueba sin problema.
+
+### 6. Scripts de configuración
+El siguiente script carga las categorías elegidas por el equipo para los lugares turisticos.
+    ```bash
+    python manage.py seed_categories.py
+    ```
+
+El siguiente script descarga las imágenes de los lugares turisticos en la BD que pudieran no haber sido descargadas anteriormente:
+    ```bash
+    python manage.py download_missing_photos [--force] [--limit <int:limit>]
+    ```

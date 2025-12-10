@@ -263,3 +263,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Este valor limita las búsquedas a un área local para evitar que los usuarios
 # salgan del estado donde planean su itinerario
 RECOMMENDATION_RADIUS_KM = 25.0  # 25 km de radio (aprox. 20-30km)
+
+
+# --- GOOGLE API KEY ---
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
