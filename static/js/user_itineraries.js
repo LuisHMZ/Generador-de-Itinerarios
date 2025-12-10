@@ -26,31 +26,59 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * --- 2. LÓGICA DEL MODAL DE BORRADO (SNIPPET) ---
+ * --- 2. LÓGICA DE ELIMINACIÓN CON SWEETALERT2 ---
  * Esta función debe ser GLOBAL (window.) porque se llama desde el HTML
  * usando onclick="abrirModalBorrar(...)"
  */
 window.abrirModalBorrar = function(id, title) {
-    // Estos IDs deben coincidir con tu snippet 'delete_modal.html'
-    const nameSpan = document.getElementById('deleteItineraryName');
-    const form = document.getElementById('deleteForm');
-    const modalEl = document.getElementById('deleteModal');
-
-    if (nameSpan && form && modalEl) {
-        // 1. Poner el nombre en el texto
-        nameSpan.textContent = title;
-        
-        // 2. Actualizar la acción del formulario
-        // Asegúrate que esta URL coincida con tu urls.py
-        form.action = `/itineraries/delete/${id}/`;
-        
-        // 3. Mostrar el modal usando Bootstrap
-        const deleteModal = new bootstrap.Modal(modalEl);
-        deleteModal.show();
-    } else {
-        console.error("Error: No se encontraron los elementos del snippet delete_modal.html");
-    }
+    Swal.fire({
+        title: '¿Estás seguro?',
+        html: `¿Deseas eliminar el itinerario <strong>${title}</strong>?<br><small class="text-danger">Esta acción no se puede deshacer.</small>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Crear un formulario dinámico y enviarlo
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/itineraries/delete/${id}/`;
+            
+            // Agregar el token CSRF
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = getCookie('csrftoken');
+            form.appendChild(csrfInput);
+            
+            // Agregar al DOM y enviar
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 };
+
+/**
+ * --- 3. FUNCIÓN AUXILIAR PARA OBTENER COOKIES ---
+ */
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 
 window.cambiarPrivacidad = async function(id, nuevaPrivacidad) {
     try {
@@ -58,7 +86,7 @@ window.cambiarPrivacidad = async function(id, nuevaPrivacidad) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken') // Tu función getCookie existente
+                'X-CSRFToken': getCookie('csrftoken')
             },
             body: JSON.stringify({ privacy: nuevaPrivacidad })
         });
