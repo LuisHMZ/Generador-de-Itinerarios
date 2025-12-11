@@ -1,3 +1,4 @@
+#post/views.py
 from django.utils.timesince import timesince
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -286,8 +287,28 @@ def load_itinerary_comments(request, itinerary_id):
     return JsonResponse({'status': 'success', 'comments': data})
 
 def format_comment_data(c, current_user):
+    # Obtener avatar (igual que antes)
     avatar = c.user.profile.profile_picture.url if c.user.profile.profile_picture else '/static/img/default-avatar.png'
-    return {'id': c.id, 'user': c.user.username, 'avatar': avatar, 'text': c.text, 'created_at': timesince(c.created_at), 'likes_count': c.likes.count(), 'is_liked': current_user in c.likes.all(), 'is_owner': current_user == c.user, 'replies': []}
+    
+    # --- CORRECCIÓN AQUÍ ---
+    # Usamos 'replies' porque así lo definiste en tu models.py
+    replies_qs = c.replies.all().order_by('created_at')
+    
+    # Llamada recursiva: formateamos también las respuestas hijas
+    replies_data = [format_comment_data(r, current_user) for r in replies_qs]
+    # -----------------------
+
+    return {
+        'id': c.id,
+        'user': c.user.username,
+        'avatar': avatar,
+        'text': c.text,
+        'created_at': timesince(c.created_at),
+        'likes_count': c.likes.count(),
+        'is_liked': current_user in c.likes.all(),
+        'is_owner': current_user == c.user,
+        'replies': replies_data  # Antes esto era [], ahora enviamos las respuestas reales
+    }
 
 @login_required
 @require_POST
