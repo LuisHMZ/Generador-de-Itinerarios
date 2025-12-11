@@ -1,4 +1,5 @@
-from django.http import JsonResponse
+#apps/alertas/views.py
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from .models import Notification
 from django.utils.timesince import timesince
@@ -62,3 +63,29 @@ def get_unread_notification_count(request):
         return JsonResponse({'status': 'success', 'unread_count': count})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+
+#--------------------------Nuevo-----------------------------------
+
+
+# -----------------------------------------------------------------
+# VISTA 4: "EL BADGE HTMX" (AGREGAR AL FINAL)
+# -----------------------------------------------------------------
+@login_required
+def badge_notification_html(request):
+    """
+    Vista exclusiva para HTMX.
+    Devuelve HTML (<span>5</span>) o vacío si no hay alertas.
+    """
+    # Cuenta las no leídas
+    count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+
+    # Si es 0, devolvemos vacío para que HTMX oculte el badge
+    if count == 0:
+        return HttpResponse("")
+    
+    # Si hay notificaciones, devolvemos el HTML exacto del badge
+    html_badge = f'<span class="notification-count" id="notification-badge-count">{count}</span>'
+    
+    return HttpResponse(html_badge)

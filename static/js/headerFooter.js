@@ -1,4 +1,4 @@
-//static/js/headerFooter.js
+// static/js/headerFooter.js
 
 function getCookie(name) {
     let cookieValue = null;
@@ -16,7 +16,6 @@ function getCookie(name) {
 }
 const csrftoken = getCookie('csrftoken');
 
-
 document.addEventListener('DOMContentLoaded', function () {
     
     // --- 1. LECTURA DE URLs DE DJANGO (Variables dinámicas) ---
@@ -28,8 +27,8 @@ document.addEventListener('DOMContentLoaded', function () {
     
     const staticUrlBase = '/static/img/'; 
     const apiNotificationsUrl = '/api/alertas/';
-    const apiUnreadCountUrl = '/api/alertas/unread-count/';
     const apiMarkReadUrl = '/api/alertas/mark-read/';
+    // (Nota: apiUnreadCountUrl eliminada porque HTMX se encarga ahora)
     // --- FIN LECTURA DE URLs ---
 
     const headerHtml = `
@@ -45,10 +44,19 @@ document.addEventListener('DOMContentLoaded', function () {
                         <i class="bi bi-person-fill"></i>
                     </a>
                     <div class="notification-wrapper">
-                        <button class="btn btn-notification" id="bell-button" type="button" title="Notificaciones">
-                            <i class="bi bi-bell-fill"></i>
-                            <span class="notification-count" id="notification-badge-count" style="display: none;">0</span>
-                        </button>
+                        
+
+<button class="btn btn-notification" id="bell-button" type="button" title="Notificaciones">
+    <i class="bi bi-bell-fill"></i>
+    
+    <span id="notification-badge-wrapper"
+      hx-get="/api/alertas/badge/"   
+      hx-trigger="load, every 2s" 
+      hx-swap="innerHTML">
+</span>
+</span>
+
+</button>
                     </div>
                     <div class="dropdown">
                         <button class="btn btn-menu" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" title="Menú">
@@ -96,7 +104,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const headerContainer = document.getElementById('site-header');
     const footerContainer = document.getElementById('site-footer');
 
-    if (headerContainer) headerContainer.innerHTML = headerHtml;
+    if (headerContainer) {
+        headerContainer.innerHTML = headerHtml;
+
+        if (typeof htmx !== 'undefined') {
+            console.log("✅ HTMX detectado. Procesando nuevo contenido..."); // <--- AGREGA ESTO
+            htmx.process(headerContainer);
+        } else {
+            console.error("❌ ERROR: HTMX no está definido. ¿Falta el <script> en el HTML?"); // <--- AGREGA ESTO
+        }
+    }
     if (footerContainer) footerContainer.innerHTML = footerHtml;
 
     // --- (Tu JS de títulos original) ---
@@ -141,25 +158,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // ------------------------------------
-    // --- LÓGICA DE NOTIFICACIONES (LIMPIA) ---
+    // --- LÓGICA DE NOTIFICACIONES (MODAL) ---
     // ------------------------------------
     
     const notificationsList = document.getElementById('notifications-list');
-    const countElement = document.getElementById('notification-badge-count');
     const modalElement = document.getElementById('notificationsModal'); 
     const bellButton = document.getElementById('bell-button');
 
+    // Inicializamos el modal si existe
     if (modalElement && bellButton) {
         const notificationModal = new bootstrap.Modal(modalElement); 
         
         bellButton.addEventListener('click', (e) => {
             e.preventDefault();
 
-            if (countElement) {
-                countElement.style.display = 'none'; 
-            }
+            // Opcional: Ocultar visualmente el badge al instante al abrir
+            const badge = document.getElementById('notification-badge-count');
+            if (badge) badge.style.display = 'none';
             
-            // 1. Carga el historial
+            // 1. Carga el historial y marca como leídas en backend
             loadNotifications(true); 
             
             // 2. Muestra el modal
@@ -236,34 +253,5 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-
-    /**
-     * Revisa el CONTADOR de notificaciones (solo NO LEÍDAS).
-     */
-    function checkNotificationCount() {
-        if (!countElement) return;
-
-        fetch(apiUnreadCountUrl) // Llama a la API de solo conteo
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    const unreadCount = data.unread_count;
-                    if (unreadCount > 0) {
-                        countElement.textContent = unreadCount;
-                        countElement.style.display = 'flex';
-                    } else {
-                        countElement.style.display = 'none';
-                    }
-                } else {
-                    countElement.style.display = 'none';
-                }
-            })
-            .catch(error => {
-                console.warn("Error chequeando contador de notificaciones:", error);
-                countElement.style.display = 'none';
-            });
-    }
-
-    // Chequear el contador de la campanita al cargar la página
-    checkNotificationCount();
+    // Nota: Ya no llamamos a checkNotificationCount() porque HTMX lo hace automáticamente.
 });
