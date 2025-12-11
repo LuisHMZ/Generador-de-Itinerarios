@@ -16,6 +16,10 @@
 
     <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" crossorigin="anonymous"></script>
+    <style>
+        .avatar{width:56px; height:56px; border-radius:50%; background:#e2e8f0; overflow:hidden; display:grid; place-items:center; font-weight:800; color:#475569}
+        .avatar img {width: 100%; height: 100%; object-fit: cover;}
+    </style>
 </head>
 
 <body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
@@ -42,14 +46,14 @@
             
             <div class="col-lg-3 col-md-4">
                 <div class="profile-card bg-white rounded-4 shadow-sm p-4 text-center">
-                    <div class="profile-avatar mb-3">
+                    <div class="profile-avatar mb-3 avatar">
                         {% if profile_user.profile.profile_picture %}
                             <img src="{{ profile_user.profile.profile_picture.url }}" alt="Avatar de {{ profile_user.username }}">
                         {% else %}
-                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto">
+                            {{ profile_user.username|slice:":1"|upper }}
                         {% endif %}
                     </div>
-                    <h4 class="profile-username mb-1">{{ profile_user.username }}</h4>
+                    <h4 class="profile-username mb-1">{{ profile_user.get_full_name|default:profile_user.username }}</h4>
                     <p class="profile-handle text-muted">@{{ profile_user.username }}</p>
                     <p class="profile-location text-muted"><i class="bi bi-geo-alt-fill me-1"></i>Ciudad de México</p>
 
@@ -66,6 +70,11 @@
                             <span class="d-block fw-bold">0</span>
                             <small class="text-muted">Likes</small>
                         </div>
+                        <button class="dropdown-item text-danger btn-trigger-report" 
+                                data-type="user" 
+                                data-id="{{ profile_user.id }}">
+                            Reportar Usuario
+                        </button>
                     </div>
 
                     <div class="profile-actions">
@@ -196,6 +205,34 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="modalReportar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold text-danger">
+                        <i class="fas fa-flag me-2"></i>Reportar Contenido
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">
+                        Ayúdanos a mantener la comunidad segura. ¿Por qué quieres reportar esto?
+                    </p>
+                    <form id="formReportar">
+                        <input type="hidden" id="reportModelType">
+                        <input type="hidden" id="reportObjectId">
+                        
+                        <div class="mb-3">
+                            <textarea class="form-control bg-light" id="reportReason" rows="3" placeholder="Describe el problema (spam, ofensivo, etc.)" required></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger rounded-pill">Enviar Reporte</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/headerFooter.js' %}" defer></script>
@@ -210,6 +247,69 @@
                 toast.show();
                 return toast;
             });
+            // 1. Lógica para abrir el modal desde cualquier botón
+            const modalReportarEl = document.getElementById('modalReportar');
+            if (modalReportarEl) {
+                const modalReportar = new bootstrap.Modal(modalReportarEl);
+                
+                // Escuchar clics en cualquier elemento que tenga la clase .btn-trigger-report
+                document.body.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.btn-trigger-report');
+                    if (btn) {
+                        // Leer datos del botón
+                        const tipo = btn.dataset.type; // 'user', 'itinerary', etc.
+                        const id = btn.dataset.id;
+                        
+                        // Llenar el modal
+                        document.getElementById('reportModelType').value = tipo;
+                        document.getElementById('reportObjectId').value = id;
+                        document.getElementById('reportReason').value = ''; // Limpiar texto anterior
+                        
+                        modalReportar.show();
+                    }
+                });
+
+                // 2. Lógica para enviar el reporte
+                document.getElementById('formReportar').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const tipo = document.getElementById('reportModelType').value;
+                    const id = document.getElementById('reportObjectId').value;
+                    const motivo = document.getElementById('reportReason').value;
+                    const btnSubmit = e.target.querySelector('button[type="submit"]');
+
+                    btnSubmit.disabled = true; // Evitar doble clic
+
+                    try {
+                        const response = await fetch('/api/reports/api/crear/', { // Ajustar URL según corresponda
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken') // Tu función getCookie existente
+                            },
+                            body: JSON.stringify({
+                                model_type: tipo,
+                                object_id: id,
+                                reason: motivo
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            alert('Gracias. Hemos recibido tu reporte.');
+                            modalReportar.hide();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        alert('Ocurrió un error al enviar el reporte.');
+                    } finally {
+                        btnSubmit.disabled = false;
+                    }
+                });
+            }
         });
     </script>
 </body>

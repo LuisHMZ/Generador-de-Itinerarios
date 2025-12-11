@@ -1,0 +1,281 @@
+{% extends "Adminbase.html" %}
+{% load static %}
+
+{% block title %}Gestión de Reportes - MexTur Admin{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/panel_admin.css' %}">
+    <link rel="stylesheet" href="{% static 'css/admin-permisos.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        .report-reason {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* Colores para los estados */
+        .bg-pending { background-color: #fff3cd; color: #856404; }
+        .bg-reviewed { background-color: #d1e7dd; color: #0f5132; }
+        .bg-dismissed { background-color: #e2e3e5; color: #6c757d; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main class="container my-5 flex-grow-1">
+    <div class="row g-0 admin-container shadow-sm rounded-4 overflow-hidden">
+        
+        <aside class="col-lg-3 admin-sidebar p-4 border-end bg-light">
+                <div class="text-center mb-4 profile-section">
+                    {% if request.user.profile.profile_picture %}
+                        <img src="{{ request.user.profile.profile_picture.url }}" class="admin-avatar mb-3 rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                    {% else %}
+                        <img src="https://via.placeholder.com/100" alt="Admin" class="admin-avatar mb-3 rounded-circle">
+                    {% endif %}
+                    <h5 class="fw-bold mb-0">{{ request.user.first_name|default:request.user.username }}</h5>
+                    <small class="text-muted">{{ request.user.email }}</small>
+                </div>
+
+                <nav class="nav flex-column admin-nav">
+                    
+                    <div class="nav-item-group mb-2">
+                        <button class="nav-link btn-collapse w-100 d-flex justify-content-between align-items-center" 
+                                type="button" data-bs-toggle="collapse" data-bs-target="#menuUsuarios" aria-expanded="true">
+                            <span><i class="fas fa-users-cog fa-fw me-2"></i> Gestionar usuarios</span>
+                            <i class="fas fa-chevron-down small transition-icon"></i>
+                        </button>
+                        <div class="collapse show" id="menuUsuarios">
+                            <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
+                                <li>
+                                    <a href="{% url 'admin_login_logs' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                        Inicios de sesión
+                                    </a>
+                                </li>
+                                <li><a href="admin-permisos.html" class="d-block py-1 text-decoration-none fw-bold text-primary small">Permisos de usuario</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="nav-item-group mb-2">
+                        <button class="nav-link btn-collapse w-100 d-flex justify-content-between align-items-center collapsed" 
+                                type="button" data-bs-toggle="collapse" data-bs-target="#menuSistema">
+                            <span><i class="fas fa-cogs fa-fw me-2"></i> Gestionar sistema</span>
+                            <i class="fas fa-chevron-down small transition-icon"></i>
+                        </button>
+                        <div class="collapse" id="menuSistema">
+                            <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
+                                <li>
+                                    <a href="{% url 'admin_reports_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                        Reportes
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'itineraries:admin_places_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                        Administrar locaciones
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="nav-item-group mb-4">
+                        <button class="nav-link btn-collapse w-100 d-flex justify-content-between align-items-center collapsed" 
+                                type="button" data-bs-toggle="collapse" data-bs-target="#menuContenido">
+                            <span><i class="fas fa-folder-open fa-fw me-2"></i> Gestionar contenido</span>
+                            <i class="fas fa-chevron-down small transition-icon"></i>
+                        </button>
+                        <div class="collapse" id="menuContenido">
+                            <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
+                                <li><a href="admin-publicaciones.html" class="d-block py-1 text-decoration-none text-secondary small">Publicaciones</a></li>
+                                <li><a href="admin-itinerarios.html" class="d-block py-1 text-decoration-none text-secondary small">Itinerarios</a></li>
+                                <li><a href="admin-notificaciones.html" class="d-block py-1 text-decoration-none text-secondary small">Envío de notificaciones</a></li>
+                                <li><a href="admin-resenas.html" class="d-block py-1 text-decoration-none text-secondary small">Reseñas</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <a href="#" class="nav-link text-danger fw-semibold mt-auto" data-bs-toggle="modal" data-bs-target="#modalCerrarSesion">
+                        <i class="fas fa-sign-out-alt fa-fw me-2"></i> Cerrar sesión
+                    </a>
+                </nav>
+            </aside>
+
+        <section class="col-lg-9 p-4 bg-white d-flex flex-column">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                <h2 class="fw-bold mb-0" style="color: #1F3C5A;">Reportes del Sistema</h2>
+                
+                <div class="d-flex gap-2">
+                    <a href="{% url 'admin_reports_list' %}" 
+                    class="btn btn-sm rounded-pill px-3 fw-bold {% if not current_status %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                    Todos
+                    </a>
+
+                    <a href="?status=PENDING" 
+                    class="btn btn-sm rounded-pill px-3 fw-bold {% if current_status == 'PENDING' %}btn-warning {% else %}btn-outline-warning {% endif %}">
+                    <i class="fas fa-clock me-1"></i> Pendientes
+                    </a>
+
+                    <a href="?status=REVIEWED" 
+                    class="btn btn-sm rounded-pill px-3 fw-bold {% if current_status == 'REVIEWED' %}btn-success{% else %}btn-outline-success{% endif %}">
+                    <i class="fas fa-check-double me-1"></i> Revisados
+                    </a>
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="table-responsive mb-auto">
+                <table class="table table-hover align-middle border">
+                    <thead class="table-dark" style="background-color: #1F3C5A;">
+                        <tr>
+                            <th class="ps-4">Tipo</th>
+                            <th>Infractor</th>
+                            <th>Motivo</th>
+                            <th>Denunciante</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th class="text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr>
+                            <td class="ps-4">
+                                {% if report.content_type.model == 'user' %}
+                                    <span class="badge bg-info text-dark"><i class="fas fa-user"></i> Usuario</span>
+                                {% elif report.content_type.model == 'itinerary' %}
+                                    <span class="badge bg-primary"><i class="fas fa-map-signs"></i> Itinerario</span>
+                                {% elif report.content_type.model == 'post' %}
+                                    <span class="badge bg-secondary"><i class="fas fa-image"></i> Post</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark border">{{ report.content_type.model|capfirst }}</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td class="fw-bold text-dark">
+                                {{ report.content_object|default:"Objeto eliminado"|truncatechars:20 }}
+                            </td>
+                            
+                            <td class="small text-muted" title="{{ report.reason }}">
+                                <div class="report-reason">{{ report.reason }}</div>
+                            </td>
+
+                            <td class="small">
+                                {% if report.reporter %}
+                                    <a href="{% url 'admin_user_detail' report.reporter.id %}" class="text-decoration-none text-secondary">
+                                        @{{ report.reporter.username }}
+                                    </a>
+                                {% else %}
+                                    <span class="fst-italic text-muted">Anónimo</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="small text-muted">{{ report.created_at|date:"d/m/y" }}</td>
+
+                            <td>
+                                {% if report.status == 'PENDING' %}
+                                    <span class="badge bg-pending">Pendiente</span>
+                                {% elif report.status == 'REVIEWED' %}
+                                    <span class="badge bg-reviewed">Revisado</span>
+                                {% else %}
+                                    <span class="badge bg-dismissed">Desestimado</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end pe-4 text-nowrap">
+                                <a href="{% url 'admin_report_detail' report.id %}" class="btn btn-sm btn-light border rounded-circle me-1" title="Abrir Expediente">
+                                    <i class="fas fa-external-link-alt text-primary"></i>
+                                </a>
+
+                                {% if report.status == 'PENDING' %}
+                                    <form action="{% url 'admin_report_change_status' report.id %}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="REVIEWED">
+                                        <button type="submit" class="btn btn-sm btn-light border rounded-circle text-success" title="Marcar como Revisado">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </form>
+                                    <form action="{% url 'admin_report_change_status' report.id %}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="DISMISSED">
+                                        <button type="submit" class="btn btn-sm btn-light border rounded-circle text-secondary" title="Desestimar">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center py-5">No hay reportes</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% include "includes/pagination.html" with page_obj=reports %}
+            
+        </section>
+    </div>
+</main>
+
+<div class="modal fade" id="modalDetalleReporte" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Detalle del Reporte #<span id="modalRepId"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted">OBJETO REPORTADO</label>
+                    <div class="p-2 bg-light rounded border">
+                        <span class="badge bg-secondary me-2" id="modalRepTipo"></span>
+                        <strong id="modalRepObjeto" class="text-dark"></strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted">MOTIVO DEL REPORTE</label>
+                    <div class="p-3 bg-light rounded border text-muted" id="modalRepReason"></div>
+                </div>
+                <div class="text-end small text-muted">
+                    Reportado por: <strong id="modalRepReporter"></strong>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function verDetalleReporte(boton) {
+        // 1. Leer los datos de los atributos data- del botón
+        const id = boton.getAttribute('data-id');
+        const tipo = boton.getAttribute('data-tipo');
+        const objeto = boton.getAttribute('data-objeto');
+        const motivo = boton.getAttribute('data-motivo');
+        const reportero = boton.getAttribute('data-reportero');
+
+        // 2. Llenar el modal
+        document.getElementById('modalRepId').textContent = id;
+        document.getElementById('modalRepTipo').textContent = tipo.toUpperCase();
+        document.getElementById('modalRepObjeto').textContent = objeto;
+        document.getElementById('modalRepReason').textContent = motivo;
+        document.getElementById('modalRepReporter').textContent = reportero;
+
+        // 3. Mostrar el modal
+        new bootstrap.Modal(document.getElementById('modalDetalleReporte')).show();
+    }
+</script>
+{% endblock %}

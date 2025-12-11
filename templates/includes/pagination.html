@@ -1,0 +1,34 @@
+{% if page_obj.has_other_pages %}
+<nav aria-label="Navegación" class="mt-4 d-flex justify-content-end">
+    <ul class="pagination">
+        
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            <a class="page-link rounded-circle me-1" href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}{% else %}#{% endif %}">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+
+        {% for i in page_obj.paginator.page_range %}
+            {% if page_obj.number == i %}
+                <li class="page-item active">
+                    <span class="page-link rounded-circle me-1">{{ i }}</span>
+                </li>
+            {% else %}
+                {% if i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link rounded-circle me-1" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            {{ i }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            <a class="page-link rounded-circle" href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}{% else %}#{% endif %}">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}

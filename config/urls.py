@@ -70,6 +70,8 @@ urlpatterns = [
     path('account-suspended/', user_views.account_suspended_view, name='account_suspended'),
     path('panel/usuario/<int:user_id>/perfil/', user_views.admin_user_detail_view, name='admin_user_detail'),
     path('panel/logs/', user_views.admin_login_logs, name='admin_login_logs'),
+    path('panel/usuarios/hacer-admin/<int:user_id>/', user_views.make_user_admin, name='admin_make_user_admin'),
+    path('panel/usuarios/quitar-admin/<int:user_id>/', user_views.remove_user_admin, name='admin_remove_user_admin'),
     # Pagina principal
     # path('', include('apps.itineraries.urls_home')),  # Asumiendo que la app itineraries maneja la home
 ]
