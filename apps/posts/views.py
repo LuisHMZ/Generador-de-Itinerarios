@@ -1,6 +1,6 @@
-#post/views.py
+#apps/post/views.py
 from django.utils.timesince import timesince
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse 
@@ -15,6 +15,11 @@ from .models import Post, Comment, PostPicture, SavedItinerary, ItineraryRating
 from friendship.models import Friend, FriendshipRequest
 from apps.alertas.models import Notification 
 from apps.itineraries.models import Itinerary
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .forms import CreatePostForm
 
 User = get_user_model()
 
@@ -107,20 +112,26 @@ def saved_posts_view(request):
 def toggle_like(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     user = request.user
+    
     if user in post.likes.all():
         post.likes.remove(user)
         liked = False
     else:
         post.likes.add(user)
         liked = True
+        
+        # Solo notificamos si el usuario no se dio like a sí mismo
         if post.user != user: 
-            # --- CORRECCIÓN: Generar LINK para Post ---
-            try:
-                base_url = reverse('home')
-                link = request.build_absolute_uri(f"{base_url}?open_post={post.id}")
-            except:
-                link = '#'
-            Notification.objects.create(recipient=post.user, actor=user, message=f"A {user.username} le gustó tu publicación.", link=link)
+            # Generamos el link relativo limpio: /home/?open_post=123
+            link = f"{reverse('home')}?open_post={post.id}"
+            
+            Notification.objects.create(
+                recipient=post.user,
+                actor=user,
+                message=f"A {user.username} le gustó tu publicación.",
+                link=link
+            )
+
     return JsonResponse({'status': 'success', 'liked': liked, 'count': post.likes.count()})
 
 @login_required
@@ -128,6 +139,7 @@ def toggle_like(request, post_id):
 def add_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     form = CommentForm(request.POST)
+    
     if form.is_valid():
         comment = form.save(commit=False)
         comment.user = request.user
@@ -137,13 +149,16 @@ def add_comment(request, post_id):
         comment.save()
         
         if post.user != request.user:
-             # --- CORRECCIÓN: Generar LINK para Post ---
-             try:
-                base_url = reverse('home')
-                link = request.build_absolute_uri(f"{base_url}?open_post={post.id}")
-             except:
-                link = '#'
-             Notification.objects.create(recipient=post.user, actor=request.user, message=f"{request.user.username} comentó tu post.", link=link)
+            # Link para abrir el post específico
+            link = f"{reverse('home')}?open_post={post.id}"
+            
+            Notification.objects.create(
+                recipient=post.user, 
+                actor=request.user, 
+                message=f"{request.user.username} comentó tu post.", 
+                link=link
+            )
+            
         return JsonResponse({'status': 'success', 'new_comment': format_comment_data(comment, request.user)})
     return JsonResponse({'status': 'error'}, status=400)
 
@@ -152,6 +167,7 @@ def add_comment(request, post_id):
 def add_itinerary_comment(request, itinerary_id):
     itinerary = get_object_or_404(Itinerary, id=itinerary_id)
     form = CommentForm(request.POST)
+    
     if form.is_valid():
         comment = form.save(commit=False)
         comment.user = request.user
@@ -161,14 +177,16 @@ def add_itinerary_comment(request, itinerary_id):
         comment.save()
         
         if itinerary.user != request.user:
-             # --- CORRECCIÓN: Generar LINK DIFERENTE para Itinerario ---
-             try:
-                base_url = reverse('home')
-                # Usamos '?open_itinerary=' para distinguir
-                link = request.build_absolute_uri(f"{base_url}?open_itinerary={itinerary.id}")
-             except:
-                link = '#'
-             Notification.objects.create(recipient=itinerary.user, actor=request.user, message=f"{request.user.username} comentó tu itinerario.", link=link)
+            # Link específico para itinerarios
+            link = f"{reverse('home')}?open_itinerary={itinerary.id}"
+            
+            Notification.objects.create(
+                recipient=itinerary.user, 
+                actor=request.user, 
+                message=f"{request.user.username} comentó tu itinerario.", 
+                link=link
+            )
+            
         return JsonResponse({'status': 'success', 'new_comment': format_comment_data(comment, request.user)})
     return JsonResponse({'status': 'error'}, status=400)
 
@@ -257,8 +275,32 @@ def format_comment_data(c, current_user):
 @require_POST
 def like_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
-    if request.user in comment.likes.all(): comment.likes.remove(request.user); liked = False
-    else: comment.likes.add(request.user); liked = True
+    user = request.user
+    
+    if user in comment.likes.all():
+        comment.likes.remove(user)
+        liked = False
+    else:
+        comment.likes.add(user)
+        liked = True
+        
+        # Notificar al dueño del comentario (si no es uno mismo)
+        if comment.user != user:
+            target_link = '#'
+            
+            # Determinamos si el comentario está en un Post o en un Itinerario
+            if comment.post:
+                target_link = f"{reverse('home')}?open_post={comment.post.id}"
+            elif comment.itinerary:
+                target_link = f"{reverse('home')}?open_itinerary={comment.itinerary.id}"
+            
+            Notification.objects.create(
+                recipient=comment.user,
+                actor=user,
+                message=f"A {user.username} le gustó tu comentario.",
+                link=target_link
+            )
+            
     return JsonResponse({'status': 'success', 'liked': liked, 'count': comment.likes.count()})
 
 @login_required
@@ -268,3 +310,76 @@ def delete_comment(request, comment_id):
     if request.user == comment.user or (comment.post and request.user == comment.post.user) or (comment.itinerary and request.user == comment.itinerary.user):
         comment.delete(); return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error'}, status=403)
+
+
+@login_required
+def create_post_page_view(request):
+    """
+    Vista para renderizar la pantalla completa de creación de posts (post.html).
+    """
+    if request.method == 'POST':
+        # Nota: Asegúrate de que tu CreatePostForm acepte el argumento 'user'
+        # si así lo definiste. Si no, quita 'user=request.user'.
+        form = CreatePostForm(request.POST, request.FILES, user=request.user)
+        
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.user = request.user
+            post.save()
+            form.save_m2m() # Guardar relaciones ManyToMany si las hay
+            messages.success(request, '¡Publicación creada con éxito!')
+            return redirect('profile_view', username=request.user.username)
+        else:
+            messages.error(request, 'Error al crear el post. Revisa el formulario.')
+    else:
+        form = CreatePostForm(user=request.user)
+
+    return render(request, 'users/post.html', {'form': form})
+
+@login_required
+def search_view(request):
+    query = request.GET.get('q', '').strip()
+    
+    users = []
+    posts = []
+    itineraries = []
+
+    if query:
+        # 1. Buscar Personas (por username o nombre)
+        users = User.objects.filter(
+            Q(username__icontains=query) | 
+            Q(first_name__icontains=query) | 
+            Q(last_name__icontains=query)
+        ).exclude(id=request.user.id) # No buscarme a mí mismo
+
+        # 2. Buscar Posts (Solo públicos o de amigos - simplificado a públicos por ahora para búsqueda general)
+        # Nota: Puedes refinar esto con lógica de amigos si quieres ser muy estricto.
+        posts = Post.objects.filter(
+            text__icontains=query, 
+            visibility='public'
+        ).select_related('user', 'user__profile').prefetch_related('pictures', 'likes', 'comments').order_by('-created_at')
+
+        # 3. Buscar Itinerarios
+        itineraries = Itinerary.objects.filter(
+            Q(title__icontains=query) | 
+            Q(description__icontains=query)
+        ).select_related('user').order_by('-start_date')
+
+        # Procesar posts e itinerarios para el feed (like status, etc)
+        # Reutilizamos la lógica que ya tienes para saber si diste like
+        for post in posts:
+            post.feed_type = 'post'
+        
+        # Si tienes la función process_itineraries importada, úsala aquí:
+        # itineraries = process_itineraries(itineraries, request.user) 
+        # Si no, al menos marca el feed_type:
+        for itin in itineraries:
+            itin.feed_type = 'itinerary'
+
+    return render(request, 'feed/search.html', {
+        'query': query,
+        'users': users,
+        'posts': posts,
+        'itineraries': itineraries,
+        'is_saved_view': False # Para reutilizar estilos si hace falta
+    })

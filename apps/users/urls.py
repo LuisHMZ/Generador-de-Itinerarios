@@ -28,4 +28,6 @@ urlpatterns = [
     path('solicitudes/', views.friend_requests_view, name='friend_requests_view'),
 
     path('perfil/<str:username>/', views.profile_view, name='profile_view'),
+
+    path('crear/post/', views.create_post_page_view, name='create_post_page'),
 ]

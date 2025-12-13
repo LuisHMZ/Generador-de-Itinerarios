@@ -64,3 +64,4 @@ class PasswordHistory(models.Model):
 
 # NOTA: El modelo SocialAccount será manejado por la librería django-allauth,
 # por lo que no necesitas definirlo manualmente.
+

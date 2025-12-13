@@ -1,5 +1,5 @@
 from django import forms
-from .models import Post, Comment
+from .models import Post, Comment, PostPicture
 from apps.itineraries.models import Itinerary 
 
 class CommentForm(forms.ModelForm):
@@ -16,46 +16,34 @@ class CommentForm(forms.ModelForm):
         }
 
 class CreatePostForm(forms.ModelForm):
-    # Campo extra para la imagen (se guarda en PostPicture)
-    image = forms.ImageField(
-        required=False, 
-        label="Foto",
-        widget=forms.FileInput(attrs={'class': 'form-control'})
-    )
+    # Campo manual para la imagen
+    image = forms.ImageField(required=False, label="Imagen")
 
     class Meta:
         model = Post
-        # AGREGAMOS 'visibility' AQUI ▼
-        fields = ['title', 'text', 'visibility', 'itinerary'] 
+        fields = ['title', 'text', 'visibility'] 
         
-        widgets = {
-            'title': forms.TextInput(attrs={
-                'class': 'form-control mb-2', 
-                'placeholder': 'Título (Opcional)'
-            }),
-            'text': forms.Textarea(attrs={
-                'class': 'form-control mb-2', 
-                'rows': 3, 
-                'placeholder': '¿Qué estás pensando?'
-            }),
-            # WIDGET PARA VISIBILIDAD (NUEVO) ▼
-            'visibility': forms.Select(attrs={
-                'class': 'form-select mb-2'
-            }),
-            'itinerary': forms.Select(attrs={
-                'class': 'form-select mb-2'
-            })
-        }
-        labels = {
-            'itinerary': 'Vincular a un Itinerario',
-            'visibility': 'Quién puede ver esto', # Etiqueta amigable
-            'image': 'Agregar Foto'
-        }
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super(CreatePostForm, self).__init__(*args, **kwargs)
 
-    def __init__(self, user, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Filtramos para mostrar solo TUS itinerarios
-        if user:
-            self.fields['itinerary'].queryset = Itinerary.objects.filter(user=user)
-            self.fields['itinerary'].empty_label = "Sin itinerario (Opcional)"
-            self.fields['itinerary'].required = False
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({'class': 'form-control'})
+
+    def save(self, commit=True):
+        post = super(CreatePostForm, self).save(commit=False)
+        if self.user:
+            post.user = self.user
+        
+        if commit:
+            post.save()
+            
+            # --- LÓGICA DE GUARDADO DE IMAGEN ---
+            image_file = self.cleaned_data.get('image')
+            if image_file:
+                # Usamos PostPicture que es el modelo original de tu proyecto
+                # Asumo que el campo de la imagen se llama 'pic_url' o 'image'. 
+                # Si te da error, verifica en apps/posts/models.py cómo se llama el campo.
+                PostPicture.objects.create(post=post, pic_url=image_file) 
+                
+        return post

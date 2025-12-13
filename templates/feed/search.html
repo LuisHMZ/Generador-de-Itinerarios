@@ -1,0 +1,321 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Buscar: {{ query }} - MexTur</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'css/header-footer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/feed.css' %}">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+    <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
+
+    <style>
+        /* Estilos personalizados para Tabs */
+        .nav-pills .nav-link {
+            color: #6c757d;
+            font-weight: 600;
+            border-radius: 50px;
+            padding: 8px 20px;
+            margin-right: 10px;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #E57B28;
+            color: white;
+        }
+        /* Ajuste de buscador */
+        .search-hero {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+        .search-input-lg {
+            border-radius: 50px;
+            padding: 12px 20px;
+            border: 2px solid #eee;
+            background-color: #f8f9fa;
+        }
+        .search-input-lg:focus {
+            border-color: #E57B28;
+            box-shadow: none;
+            background-color: white;
+        }
+        
+        /* Modales */
+        .modal-facebook .modal-dialog { max-width: 90vw !important; margin: 1.5rem auto; }
+        .modal-facebook .modal-content { width: 100%; height: 85vh; border-radius: 16px; border: none; overflow: hidden; background-color: #fff; }
+        .modal-facebook .modal-body { padding: 0; height: 100%; }
+        .facebook-media-col { background-color: black; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        #modalPostImage { max-height: 100%; max-width: 100%; object-fit: contain; }
+        .facebook-comments-col { height: 100%; display: flex; flex-direction: column; border-left: 1px solid #dee2e6; }
+        .fb-comments-body { flex-grow: 1; overflow-y: auto; padding: 1rem; }
+    </style>
+</head>
+
+<body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100" id="toastContainer"></div>
+    <div id="site-header"></div>
+
+    <main class="container py-4" style="background-color: #f8f9fa; min-height: 80vh;">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                
+                <div class="search-hero">
+                    <form action="{% url 'posts:search' %}" method="get" class="d-flex mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-0 ps-3">
+                                <i class="bi bi-search text-muted fs-5"></i>
+                            </span>
+                            <input type="text" name="q" class="form-control border-0 bg-transparent fs-5" 
+                                   placeholder="Buscar personas, lugares, experiencias..." 
+                                   value="{{ query }}" autocomplete="off" autofocus>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" style="background-color: #E57B28; border:none;">
+                                Buscar
+                            </button>
+                        </div>
+                    </form>
+
+                    <ul class="nav nav-pills" id="searchTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="people-tab" data-bs-toggle="pill" data-bs-target="#pills-people" type="button" role="tab">
+                                <i class="bi bi-people-fill me-1"></i> Personas <span class="badge bg-light text-dark ms-1 rounded-pill">{{ users|length }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="itineraries-tab" data-bs-toggle="pill" data-bs-target="#pills-itineraries" type="button" role="tab">
+                                <i class="bi bi-map-fill me-1"></i> Itinerarios <span class="badge bg-light text-dark ms-1 rounded-pill">{{ itineraries|length }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="posts-tab" data-bs-toggle="pill" data-bs-target="#pills-posts" type="button" role="tab">
+                                <i class="bi bi-grid-fill me-1"></i> Posts <span class="badge bg-light text-dark ms-1 rounded-pill">{{ posts|length }}</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="tab-content" id="pills-tabContent">
+                    
+                    <div class="tab-pane fade show active" id="pills-people" role="tabpanel">
+                        {% if users %}
+                            <div class="bg-white rounded-4 shadow-sm p-3">
+                                {% for u in users %}
+                                    <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
+                                        <a href="{% url 'profile_view' u.username %}" class="d-flex align-items-center text-decoration-none text-dark">
+                                            {% if u.profile.profile_picture %}
+                                                <img src="{{ u.profile.profile_picture.url }}" class="rounded-circle object-fit-cover me-3" width="50" height="50">
+                                            {% else %}
+                                                <img src="{% static 'img/default-avatar.png' %}" class="rounded-circle object-fit-cover me-3" width="50" height="50">
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="fw-bold mb-0">{{ u.username }}</h6>
+                                                <small class="text-muted">{{ u.first_name }} {{ u.last_name }}</small>
+                                            </div>
+                                        </a>
+                                        <a href="{% url 'profile_view' u.username %}" class="btn btn-sm btn-outline-secondary rounded-pill">
+                                            Ver Perfil
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5 text-muted">
+                                <i class="bi bi-person-x fs-1 mb-2"></i>
+                                <p>No encontramos personas con "{{ query }}"</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="tab-pane fade" id="pills-itineraries" role="tabpanel">
+                        {% if itineraries %}
+                            {% for item in itineraries %}
+                                <article class="post-card mb-4" style="border-left: 5px solid #E57B28;"> 
+                                    <header class="post-header d-flex justify-content-between align-items-start" style="padding: 16px;">
+                                        <div class="d-flex align-items-center">
+                                            <a href="{% url 'profile_view' item.user.username %}" class="text-decoration-none d-flex align-items-center text-dark">
+                                                {% if item.user.profile.profile_picture %}
+                                                    <img src="{{ item.user.profile.profile_picture.url }}" class="avatar">
+                                                {% else %}
+                                                    <img src="{% static 'img/default-avatar.png' %}" class="avatar">
+                                                {% endif %}
+                                                <div class="ms-2">
+                                                    <strong>{{ item.user.username }}</strong>
+                                                    <p class="location mb-0"><span class="badge bg-warning text-dark me-1">Itinerario</span> {{ item.location|default:"" }}</p>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </header>
+
+                                    <div class="post-photo position-relative">
+                                        {% if item.banner_pic %}
+                                            <img src="{{ item.banner_pic.url }}" alt="Banner" style="height: 200px; object-fit: cover; width: 100%;">
+                                        {% endif %}
+                                        <div class="position-absolute bottom-0 start-0 w-100 p-2" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); color: white;">
+                                            <h5 class="m-0">{{ item.title }}</h5>
+                                        </div>
+                                    </div>
+                                    <div class="p-3">
+                                        <p class="text-muted small mb-2"><i class="bi bi-calendar-event"></i> {{ item.start_date|date:"d M" }}</p>
+                                        <p class="post-desc">{{ item.description|truncatewords:20 }}</p>
+                                        <a href="#" class="btn btn-sm w-100 btn-mextur-outline mt-2" style="border: 1px solid #E57B28; color: #E57B28;">Ver Detalles</a>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-5 text-muted">
+                                <i class="bi bi-map fs-1 mb-2"></i>
+                                <p>No hay itinerarios relacionados.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="tab-pane fade" id="pills-posts" role="tabpanel">
+                        {% if posts %}
+                            {% for post in posts %}
+                                <article class="post-card mb-4">
+                                    <header class="post-header d-flex justify-content-between align-items-start" style="padding: 16px;">
+                                        <div class="d-flex align-items-center">
+                                            <a href="{% url 'profile_view' post.user.username %}" class="text-decoration-none d-flex align-items-center text-dark">
+                                                {% if post.user.profile.profile_picture %}
+                                                    <img src="{{ post.user.profile.profile_picture.url }}" class="avatar">
+                                                {% else %}
+                                                    <img src="{% static 'img/default-avatar.png' %}" class="avatar">
+                                                {% endif %}
+                                                <div class="ms-2">
+                                                    <strong>{{ post.user.username }}</strong>
+                                                    {% if post.location %}<p class="location mb-0">{{ post.location }}</p>{% endif %}
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </header>
+
+                                    {% if post.pictures.all %}
+                                        <div class="post-photo">
+                                            <img src="{{ post.pictures.all.0.pic_url.url }}" alt="Post image">
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="p-3">
+                                        {% if post.title %}<h5 class="fw-bold">{{ post.title }}</h5>{% endif %}
+                                        <p class="post-desc">{{ post.text|truncatewords:30 }}</p>
+                                    </div>
+
+                                    <footer class="post-actions p-3 pt-0">
+                                        <div class="action-btn comment-btn" 
+                                             style="cursor: pointer;"
+                                             data-object-id="{{ post.id }}"
+                                             data-object-type="post"
+                                             data-author="{{ post.user.username }}"
+                                             data-text="{{ post.text }}">
+                                            <i class="bi bi-chat me-1"></i> <span class="comment-count">{{ post.comments.count }}</span>
+                                        </div>
+                                    </footer>
+                                </article>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-5 text-muted">
+                                <i class="bi bi-grid fs-1 mb-2"></i>
+                                <p>No se encontraron publicaciones.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                </div> </div>
+        </div>
+    </main>
+
+    <div class="modal fade modal-facebook" id="commentsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-body p-0 h-100"><div class="row h-100 g-0"><div class="col-md-8 facebook-media-col" id="modalImageContainer"><img src="" id="modalPostImage"><div id="modalNoImage" class="text-white d-none"><h4>Texto</h4></div></div><div class="col-md-4 facebook-comments-col"><div class="fb-comments-header d-flex justify-content-between p-3 border-bottom"><strong id="modalAuthorName"></strong><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="fb-comments-body flex-grow-1 p-3" id="modalCommentsList"></div><div class="fb-comments-footer p-3 border-top"><form id="commentForm" class="d-flex"><input type="hidden" id="modalObjectId"><input type="hidden" id="modalObjectType"><input type="text" id="commentInput" class="form-control rounded-pill me-2"><button type="submit" class="btn btn-primary rounded-circle"><i class="bi bi-send-fill"></i></button></form></div></div></div></div></div></div>
+    </div>
+    
+    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Notificaciones</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div id="notifications-list"></div></div></div></div>
+    </div>
+
+    <div id="site-footer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/headerFooter.js' %}" defer></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- 1. CONFIGURACIÓN BASE (CSRF, Toasts) ---
+        function getCookie(name) {let cookieValue = null;if (document.cookie && document.cookie !== '') {const cookies = document.cookie.split(';');for (let i = 0; i < cookies.length; i++) {const cookie = cookies[i].trim();if (cookie.substring(0, name.length + 1) === (name + '=')) {cookieValue = decodeURIComponent(cookie.substring(name.length + 1));break;}}}return cookieValue;}
+        const csrftoken = getCookie('csrftoken');
+
+        // --- 2. LÓGICA DE COMENTARIOS (Copiada del Feed para funcionalidad) ---
+        const commentsModal = new bootstrap.Modal(document.getElementById('commentsModal'));
+        const modalList = document.getElementById('modalCommentsList');
+        const modalObjectIdInput = document.getElementById('modalObjectId');
+        const modalObjectTypeInput = document.getElementById('modalObjectType');
+        const commentForm = document.getElementById('commentForm');
+        const commentInput = document.getElementById('commentInput');
+        
+        // Setup de botones de comentarios
+        document.querySelectorAll('.comment-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const objectId = this.dataset.objectId; const objectType = this.dataset.objectType; 
+                modalObjectIdInput.value = objectId; modalObjectTypeInput.value = objectType;
+                // (Omitimos carga de imagen/autor detallado para no saturar, pero el fetch funciona)
+                modalList.innerHTML = '<p class="text-center text-muted mt-4">Cargando...</p>'; 
+                commentsModal.show(); 
+                let loadUrl = objectType === 'post' ? `/api/posts/comments/load/${objectId}/` : `/api/posts/itinerary/comments/load/${objectId}/`;
+                fetch(loadUrl).then(res => res.json()).then(data => {
+                    modalList.innerHTML = ''; 
+                    if(data.comments.length===0) modalList.innerHTML='<p class="text-center text-muted">Sin comentarios</p>';
+                    else data.comments.forEach(c => addCommentToDOM(c));
+                });
+            });
+        });
+
+        // Enviar comentario
+        commentForm.addEventListener('submit', function(e) {
+            e.preventDefault(); const text = commentInput.value.trim(); if (!text) return;
+            const objectId = modalObjectIdInput.value; const objectType = modalObjectTypeInput.value;
+            const formData = new FormData(); formData.append('text', text);
+            let addUrl = objectType === 'post' ? `/api/posts/comments/add/${objectId}/` : `/api/posts/itinerary/comments/add/${objectId}/`;
+            fetch(addUrl, {method: 'POST',headers: { 'X-CSRFToken': csrftoken },body: formData}).then(res => res.json()).then(data => {
+                if (data.status === 'success') {
+                    addCommentToDOM(data.new_comment);
+                    commentInput.value = '';
+                }
+            });
+        });
+
+        function addCommentToDOM(c) {
+            const html = `<div class="mb-3 d-flex"><img src="${c.avatar}" class="rounded-circle me-2" width="30" height="30"><div><strong>${c.user}</strong> <span class="text-muted">${c.text}</span></div></div>`;
+            modalList.insertAdjacentHTML('beforeend', html);
+        }
+
+        // --- 3. Script Atrapador (Para links directos) ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const openPostId = urlParams.get('open_post');
+        
+        if (openPostId) {
+            // Activar tab de posts
+            const postsTab = document.getElementById('posts-tab');
+            if(postsTab) {
+                const tab = new bootstrap.Tab(postsTab);
+                tab.show();
+            }
+            // Buscar y abrir modal
+            setTimeout(() => {
+                const targetSelector = `.comment-btn[data-object-id="${openPostId}"][data-object-type="post"]`; 
+                const targetBtn = document.querySelector(targetSelector);
+                if (targetBtn) { targetBtn.click(); }
+            }, 500);
+        }
+    });
+    </script>
+</body>
+</html>

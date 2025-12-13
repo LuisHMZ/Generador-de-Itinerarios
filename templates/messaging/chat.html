@@ -4,15 +4,13 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>
-        {% if is_saved_view %}Mis Guardados{% else %}Mensajes{% endif %} - MexTur
-    </title>
+    <title>Mensajes - MexTur</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- CORRECCIÓN 1: Importar correctamente los Iconos -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
     <link rel="stylesheet" href="{% static 'css/header-footer.css' %}">
@@ -20,23 +18,122 @@
     <link rel="stylesheet" href="{% static 'css/profile.css' %}">
 
     <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
-</head>
-<body>
+    
+    <style>
+        /* --- ESTILOS ESPECÍFICOS DEL CHAT --- */
 
-    <!-- Header General del Sitio -->
+        /* 1. OCULTAR SCROLLBAR (Pero mantener funcionalidad) */
+        .hide-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
+        }
+
+        /* 2. Chats No Leídos (Resaltado) */
+        .conversacion-item.unread-chat {
+            background-color: #fff8f0; /* Fondo naranja muy suave */
+            border-left: 4px solid #e57b28; /* Borde naranja mextur */
+        }
+        .conversacion-item.unread-chat h6 {
+            font-weight: 800 !important;
+            color: #000;
+        }
+        .conversacion-item.unread-chat p {
+            font-weight: 600;
+            color: #333 !important;
+        }
+
+        /* 3. Imágenes en el Chat */
+        .chat-image {
+            cursor: pointer;
+            transition: transform 0.2s;
+            max-width: 250px;
+            max-height: 300px;
+            object-fit: cover;
+        }
+        .chat-image:hover {
+            transform: scale(1.02);
+            opacity: 0.95;
+        }
+
+        /* 4. Botón de Eliminar Mensaje */
+        .message-group { position: relative; }
+        .delete-msg-btn {
+            display: none; /* Oculto por defecto */
+            position: absolute;
+            top: 0;
+            right: -25px;
+            cursor: pointer;
+            color: #dc3545;
+            padding: 5px;
+            font-size: 0.9rem;
+            z-index: 10;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .delete-msg-btn:hover { opacity: 1; transform: scale(1.1); }
+        .message-group:hover .delete-msg-btn { display: block; }
+
+        /* 5. Previsualización de Archivo (Footer) */
+        #chat-file-input { display: none; }
+        #file-preview { 
+            margin-left: 10px; 
+            margin-right: 10px; 
+            padding: 4px 8px; 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        #preview-thumb { 
+            width: 35px; height: 35px; 
+            object-fit: cover; 
+            border-radius: 6px; 
+            margin-right: 8px; 
+        }
+
+        /* 6. Lightbox (Imagen Grande) */
+        .modal-lightbox .modal-dialog { max-width: 95vw; margin: 1rem auto; }
+        .modal-lightbox .modal-content { background: rgba(0,0,0,0); border: none; box-shadow: none; }
+        .modal-lightbox .modal-header { border: none; }
+        .modal-lightbox img { 
+            max-height: 90vh; 
+            width: auto; 
+            max-width: 100%; 
+            margin: 0 auto; 
+            display: block; 
+            border-radius: 8px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
+        }
+
+        /* Estilos Reporte */
+        .modal-report-modern .modal-content { border-radius: 20px; border: none; }
+        .report-hero-icon { font-size: 3rem; color: #dc3545; background-color: #fff5f5; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 1rem auto; }
+        .report-option-card { display: flex; align-items: center; padding: 12px; border: 1px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        .report-option-input:checked + .report-option-card { border-color: #dc3545; background-color: #fff5f5; color: #dc3545; }
+        .custom-textarea { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; resize: none; }
+    </style>
+</head>
+<body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100" id="toastContainer"></div>
+
     <div id="site-header"></div>
 
-    <!-- Contenedor Principal "Full Height" -->
     <div class="container-fluid chat-wrapper">
         <div class="row chat-layout-row">
             
-            <!-- 1. MENÚ LATERAL (Izquierda) -->
-            <!-- d-none d-lg-block: Oculto en tablets y celulares para dar espacio -->
             <div class="col-lg-2 d-none d-lg-block sidebar-col">
-                <div class="menu-lateral-container">
-                    <!-- Reutilizamos tu estructura de menú pero sin la tarjeta -->
-                    <div class="menu-lateral">
+                <div class="menu-lateral-container hide-scrollbar"> <div class="menu-lateral">
                         <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <a href="{% url 'home' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
+                                    <i class="fa-solid fa-house fa-fw me-2"></i> Inicio
+                                </a>
+                            </li>
                             <li class="mb-2">
                                 <a href="{% url 'profile_view' user.username %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
                                     <i class="fa-solid fa-user fa-fw me-2"></i> Perfil
@@ -62,18 +159,11 @@
                                     <i class="fa-solid fa-users fa-fw me-2"></i> Amigos
                                 </a>
                             </li>
-                            <li class="mt-4 pt-3 border-top">
-                                <a href="{% url 'home' %}" class="menu-item text-decoration-none d-flex align-items-center text-muted small">
-                                    <i class="fa-solid fa-arrow-left fa-fw me-2"></i> Volver al Inicio
-                                </a>
-                            </li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. LISTA DE CHATS (Centro/Izquierda) -->
-            <!-- col-md-4 en tablet, col-lg-3 en escritorio -->
             <div class="col-md-4 col-lg-3 chat-sidebar">
                 <div class="conversations-container">
                     <div class="conv-header">
@@ -83,8 +173,7 @@
                             <input type="text" class="form-control bg-light border-start-0" placeholder="Buscar..." id="search-conversaciones">
                         </div>
                     </div>
-                    
-                    <div id="lista-conversaciones">
+                    <div id="lista-conversaciones" class="hide-scrollbar" style="overflow-y: auto; height: calc(100vh - 160px);">
                         <div class="text-center mt-5 text-muted">
                             <div class="spinner-border spinner-border-sm" role="status"></div>
                         </div>
@@ -92,21 +181,16 @@
                 </div>
             </div>
 
-            <!-- 3. CHAT ACTIVO (Derecha) -->
-            <!-- col-md-8 en tablet, col-lg-7 en escritorio -->
             <div class="col-md-8 col-lg-7 chat-main">
                 
-                <!-- ESTADO VACÍO (Visible al inicio) -->
                 <div id="empty-state">
                     <i class="far fa-paper-plane fa-3x mb-3 text-secondary"></i>
                     <h5 class="text-muted">Tus mensajes</h5>
                     <p class="text-muted small">Elige una conversación para empezar</p>
                 </div>
 
-                <!-- INTERFAZ DE CHAT (Oculta hasta seleccionar) -->
                 <div id="active-chat-interface" class="chat-interface" style="display: none !important;">
                     
-                    <!-- A. Header Fijo -->
                     <div class="chat-header-bar">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-arrow-left" id="btn-back-mobile"></i>
@@ -120,23 +204,41 @@
                                 </div>
                             </a>
                         </div>
-                        <div>
-                            <button class="btn btn-link text-muted"><i class="fas fa-ellipsis-v"></i></button>
+                        
+                        <div class="dropdown">
+                            <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <li>
+                                    <a class="dropdown-item text-danger report-trigger" href="#" id="btn-report-user">
+                                        <i class="bi bi-flag-fill me-2"></i> Reportar usuario
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
                     </div>
 
-                    <!-- B. Área de Mensajes (Scroll) -->
-                    <div id="chat-container">
+                    <div id="chat-container" class="hide-scrollbar">
                         <div id="messages-wrapper"></div>
                     </div>
 
-                    <!-- C. Footer Fijo -->
                     <div class="chat-footer-bar">
                         <form id="chat-form" class="d-flex gap-2 align-items-center">
-                            <button class="btn btn-light rounded-circle text-muted border" type="button">
+                            
+                            <input type="file" id="chat-file-input" accept="image/*">
+                            
+                            <button class="btn btn-light rounded-circle text-muted border" type="button" id="btn-attach" title="Adjuntar foto">
                                 <i class="fas fa-paperclip"></i>
                             </button>
+
+                            <div id="file-preview" class="d-none badge bg-light text-dark border align-items-center">
+                                <img id="preview-thumb" src="" alt="">
+                                <i class="fas fa-times text-danger" style="cursor:pointer;" id="btn-cancel-file" title="Cancelar envío"></i>
+                            </div>
+
                             <input type="text" id="chat-input" class="form-control rounded-pill bg-light border-0" placeholder="Escribe un mensaje..." autocomplete="off">
+                            
                             <button class="btn btn-primary rounded-circle" type="submit" style="background-color: #e57b28; border: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                                 <i class="fas fa-paper-plane"></i>
                             </button>
@@ -144,6 +246,64 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade modal-lightbox" id="lightboxModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header pt-0 pe-0">
+                    <button type="button" class="btn-close btn-close-white ms-auto m-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0 text-center">
+                    <img id="lightboxImage" src="" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade modal-report-modern" id="reportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header position-relative">
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 pb-4 pt-0">
+                    <form id="reportForm">
+                        <input type="hidden" id="reportObjectId" name="object_id">
+                        <input type="hidden" id="reportObjectType" name="object_type" value="user">
+                        
+                        <div class="text-center mb-4">
+                            <div class="report-hero-icon"><i class="bi bi-shield-exclamation"></i></div>
+                            <h4 class="fw-bold mb-1">Reportar usuario</h4>
+                            <p class="text-muted small">Tu reporte es anónimo.</p>
+                        </div>
+                        <h6 class="fw-bold mb-3" style="font-size: 0.9rem; text-transform: uppercase; color: #adb5bd;">Selecciona un motivo</h6>
+                        
+                        <div class="d-flex flex-column gap-2 mb-4">
+                            <label class="report-option-label"><input class="report-option-input" type="radio" name="reason" value="spam" checked><div class="report-option-card"><i class="bi bi-robot report-option-icon"></i><span>Es spam o acoso</span></div></label>
+                            <label class="report-option-label"><input class="report-option-input" type="radio" name="reason" value="offensive"><div class="report-option-card"><i class="bi bi-emoji-angry report-option-icon"></i><span>Lenguaje ofensivo</span></div></label>
+                            <label class="report-option-label"><input class="report-option-input" type="radio" name="reason" value="fake"><div class="report-option-card"><i class="bi bi-person-x report-option-icon"></i><span>Perfil falso</span></div></label>
+                        </div>
+                        <div class="mb-4">
+                            <textarea class="form-control custom-textarea p-3" id="reportDescription" rows="3" placeholder="Detalles adicionales..."></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger btn-lg rounded-pill fw-bold shadow-sm">Enviar Reporte</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Notificaciones</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-0"><div id="notifications-list"><p class="text-center text-muted p-3">Cargando...</p></div></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button></div>
             </div>
         </div>
     </div>
@@ -160,62 +320,161 @@
             const API_SEND_BASE = "/api/messaging/api/send/";
             const CSRF_TOKEN = "{{ csrf_token }}";
 
+            // Variables globales
             let activeChatId = null;
+            let currentChatPartnerId = null; 
             let lastMessageId = 0;
             let pollingInterval = null;
+            let listPollingInterval = null;
 
-            // UI References
+            // Elementos UI
             const listaUI = document.getElementById('lista-conversaciones');
             const emptyState = document.getElementById('empty-state');
             const chatInterface = document.getElementById('active-chat-interface');
-            
             const headerName = document.getElementById('header-name');
             const headerAvatar = document.getElementById('header-avatar');
             const headerLink = document.getElementById('header-profile-link');
-            
             const messagesWrapper = document.getElementById('messages-wrapper');
-            const chatContainer = document.getElementById('chat-container'); // El div con scroll
-            
+            const chatContainer = document.getElementById('chat-container'); 
             const input = document.getElementById('chat-input');
             const form = document.getElementById('chat-form');
             const btnBack = document.getElementById('btn-back-mobile');
+            
+            // Archivos y Lightbox
+            const fileInput = document.getElementById('chat-file-input');
+            const btnAttach = document.getElementById('btn-attach');
+            const filePreview = document.getElementById('file-preview');
+            const previewThumb = document.getElementById('preview-thumb');
+            const btnCancelFile = document.getElementById('btn-cancel-file');
+            const lightboxModal = new bootstrap.Modal(document.getElementById('lightboxModal'));
+            const lightboxImage = document.getElementById('lightboxImage');
 
-            // --- BACK BUTTON (MOBILE) ---
+            // --- MANEJO DE ARCHIVOS ---
+            btnAttach.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewThumb.src = e.target.result;
+                        filePreview.classList.remove('d-none');
+                        filePreview.classList.add('d-flex');
+                        btnAttach.classList.replace('text-muted', 'text-success');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            btnCancelFile.addEventListener('click', function() {
+                fileInput.value = '';
+                previewThumb.src = '';
+                filePreview.classList.add('d-none');
+                filePreview.classList.remove('d-flex');
+                btnAttach.classList.replace('text-success', 'text-muted');
+            });
+
+            window.openLightbox = function(url) {
+                lightboxImage.src = url;
+                lightboxModal.show();
+            };
+
+            // --- REPORTES ---
+            const btnReportUser = document.getElementById('btn-report-user');
+            const reportModalEl = document.getElementById('reportModal');
+            const reportModal = new bootstrap.Modal(reportModalEl);
+            const reportForm = document.getElementById('reportForm');
+
+            btnReportUser.addEventListener('click', function(e) {
+                e.preventDefault();
+                if(!currentChatPartnerId) { alert("Error: No se ha identificado al usuario."); return; }
+                document.getElementById('reportObjectId').value = currentChatPartnerId;
+                reportForm.reset();
+                reportModal.show();
+            });
+
+            reportForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const objectId = document.getElementById('reportObjectId').value;
+                const reasonRadio = document.querySelector('input[name="reason"]:checked').value;
+                const descriptionText = document.getElementById('reportDescription').value;
+                const finalReason = `[Chat Report - ${reasonRadio.toUpperCase()}] ${descriptionText}`;
+                
+                const url = "{% url 'create_report_api' %}"; 
+                fetch(url, {
+                    method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model_type: 'user', object_id: objectId, reason: finalReason })
+                }).then(res => res.json()).then(data => {
+                    reportModal.hide();
+                    showToast('Reporte enviado correctamente.', 'success');
+                });
+            });
+
+            // --- BORRAR MENSAJE ---
+            window.deleteMessage = function(msgId) {
+                if(!confirm("¿Borrar mensaje?")) return;
+                fetch(`/api/messaging/api/delete/${msgId}/`, {
+                    method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN }
+                }).then(res => res.json()).then(data => {
+                    if(data.status === 'success') {
+                        const el = document.getElementById(`msg-${msgId}`);
+                        if(el) el.remove();
+                    }
+                });
+            };
+
+            window.showToast = function(message, type = 'success') {
+                const container = document.getElementById('toastContainer');
+                const colorClass = type === 'success' ? 'text-bg-success' : 'text-bg-danger';
+                const html = `<div class="toast align-items-center ${colorClass} border-0" role="alert" aria-live="assertive" aria-atomic="true"><div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div></div>`;
+                container.insertAdjacentHTML('beforeend', html);
+                new bootstrap.Toast(container.lastElementChild, { delay: 4000 }).show();
+            };
+
+            // --- LÓGICA PRINCIPAL DEL CHAT ---
+            
+            // Carga inicial
+            loadConversationList();
+            checkURLForChat();
+
+            // Polling de lista (cada 4s) para detectar mensajes nuevos sin recargar
+            listPollingInterval = setInterval(loadConversationList, 4000);
+
             btnBack.addEventListener('click', function() {
                 document.body.classList.remove('mobile-chat-active');
                 if(pollingInterval) clearInterval(pollingInterval);
                 activeChatId = null;
-                // Refrescar lista al volver
+                currentChatPartnerId = null;
                 loadConversationList();
             });
-
-            loadConversationList();
-            checkURLForChat();
 
             function checkURLForChat() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const openChatId = urlParams.get('open_chat');
-                if(openChatId) {
-                    setTimeout(() => loadChat(openChatId), 500);
-                }
+                if(openChatId) setTimeout(() => loadChat(openChatId), 500);
             }
 
             function loadConversationList() {
-                fetch(API_LIST)
-                    .then(res => res.json())
-                    .then(data => {
-                        listaUI.innerHTML = '';
+                fetch(API_LIST).then(res => res.json()).then(data => {
                         if(data.conversations.length === 0) {
                             listaUI.innerHTML = '<div class="p-4 text-center text-muted small">No tienes mensajes aún.</div>';
-                            // Revisar si hay ID en URL aunque la lista esté vacía (chat nuevo)
                             checkURLForChatOnEmpty(data.conversations);
                             return;
                         }
-                        
+
+                        let htmlContent = '';
                         data.conversations.forEach(chat => {
                             const activeClass = chat.id == activeChatId ? 'active' : '';
-                            const item = `
-                                <a href="#" class="conversacion-item ${activeClass}" onclick="loadChat(${chat.id}, '${chat.name}', '${chat.avatar}', '${chat.username}')">
+                            
+                            // CORRECCIÓN CLAVE: Si este chat está activo, forzamos is_unread a falso visualmente
+                            // para que no parpadee ni se marque si el backend tarda en actualizarse
+                            let isUnread = chat.is_unread;
+                            if (chat.id == activeChatId) isUnread = false;
+
+                            const unreadClass = isUnread ? 'unread-chat' : '';
+                            
+                            htmlContent += `
+                                <a href="#" class="conversacion-item ${activeClass} ${unreadClass}" onclick="loadChat(${chat.id}, '${chat.name}', '${chat.avatar}', '${chat.username}')">
                                     <img src="${chat.avatar}" alt="Avatar" width="48" height="48" class="rounded-circle object-fit-cover">
                                     <div style="flex: 1; min-width: 0;">
                                         <div class="d-flex justify-content-between mb-1">
@@ -226,10 +485,9 @@
                                     </div>
                                 </a>
                             `;
-                            listaUI.insertAdjacentHTML('beforeend', item);
                         });
                         
-                        // Verificar si el chat de la URL existe en la lista
+                        listaUI.innerHTML = htmlContent;
                         checkURLForChatOnEmpty(data.conversations);
                     });
             }
@@ -239,12 +497,8 @@
                 const openChatId = urlParams.get('open_chat');
                 if (openChatId && activeChatId != openChatId) {
                     const target = conversations ? conversations.find(c => c.id == openChatId) : null;
-                    if (target) {
-                        loadChat(openChatId, target.name, target.avatar, target.username);
-                    } else {
-                        // Chat nuevo
-                        loadChat(openChatId, 'Nuevo Chat', '{% static "img/default-avatar.png" %}', '');
-                    }
+                    if (target) loadChat(openChatId, target.name, target.avatar, target.username);
+                    else loadChat(openChatId, 'Nuevo Chat', '{% static "img/default-avatar.png" %}', '');
                 }
             }
 
@@ -253,78 +507,77 @@
                 if(activeChatId === chatId) return;
                 
                 activeChatId = chatId;
+                currentChatPartnerId = chatId; 
                 lastMessageId = 0;
 
-                // Switch Views
                 emptyState.style.setProperty('display', 'none', 'important');
                 chatInterface.style.setProperty('display', 'flex', 'important');
                 
-                // Set Header Info
                 if(name) headerName.textContent = name;
                 if(avatar) headerAvatar.src = avatar;
-                
-                if(username) {
-                    headerLink.href = `/perfil/${username}/`;
-                    headerLink.style.pointerEvents = 'auto';
-                } else {
-                    headerLink.href = '#';
-                    headerLink.style.pointerEvents = 'none';
-                }
+                if(username) { headerLink.href = `/perfil/${username}/`; headerLink.style.pointerEvents = 'auto'; } 
+                else { headerLink.href = '#'; headerLink.style.pointerEvents = 'none'; }
 
-                // Reset Messages
                 messagesWrapper.innerHTML = '<div class="loading-overlay"><div class="spinner-border text-primary" role="status"></div></div>';
-
                 fetchMessages(true);
-
+                
                 if(pollingInterval) clearInterval(pollingInterval);
                 pollingInterval = setInterval(() => fetchMessages(false), 3000);
+                
+                // Forzar recarga inmediata de la lista para quitar la marca naranja visualmente
+                loadConversationList();
             };
 
             function fetchMessages(isFirstLoad) {
                 if(!activeChatId) return;
                 const url = isFirstLoad ? `${API_MSG_BASE}${activeChatId}/` : `${API_MSG_BASE}${activeChatId}/?last_id=${lastMessageId}`;
 
-                fetch(url)
-                    .then(res => res.json())
-                    .then(data => {
+                fetch(url).then(res => res.json()).then(data => {
                         if(isFirstLoad) messagesWrapper.innerHTML = '';
                         
-                        // Actualizar header si era chat nuevo
-                        if (isFirstLoad && data.chat_partner) {
-                             if (headerName.textContent === 'Nuevo Chat' || headerName.textContent === 'Usuario') {
-                                 headerName.textContent = data.chat_partner.name;
-                                 headerAvatar.src = data.chat_partner.avatar;
-                                 if(data.chat_partner.username) {
-                                     headerLink.href = `/perfil/${data.chat_partner.username}/`;
-                                     headerLink.style.pointerEvents = 'auto';
-                                 }
-                             }
+                        if (data.chat_partner && data.chat_partner.id) {
+                            currentChatPartnerId = data.chat_partner.id;
+                            if (isFirstLoad && (headerName.textContent === 'Nuevo Chat' || headerName.textContent === 'Usuario')) {
+                                headerName.textContent = data.chat_partner.name;
+                                headerAvatar.src = data.chat_partner.avatar;
+                                if(data.chat_partner.username) {
+                                    headerLink.href = `/perfil/${data.chat_partner.username}/`;
+                                    headerLink.style.pointerEvents = 'auto';
+                                }
+                            }
                         }
 
                         if(data.messages.length > 0) {
                             data.messages.forEach(msg => {
                                 if(document.getElementById(`msg-${msg.id}`)) return;
-                                
                                 const isMe = msg.is_me;
                                 const typeClass = isMe ? 'enviada' : 'recibida';
                                 
                                 const html = `
-                                    <div class="burbuja-mensaje ${typeClass}" id="msg-${msg.id}">
+                                    <div class="burbuja-mensaje ${typeClass} message-group" id="msg-${msg.id}">
                                         ${!isMe ? `<img src="${msg.avatar}" class="avatar-mensaje">` : ''}
-                                        <div class="texto-mensaje">
-                                            <div>${msg.content}</div>
+                                        
+                                        <div class="texto-mensaje position-relative">
+                                            ${msg.image_url ? `<img src="${msg.image_url}" class="img-fluid rounded mb-2 chat-image" onclick="openLightbox('${msg.image_url}')">` : ''}
+                                            
+                                            ${msg.content ? `<div>${msg.content}</div>` : ''}
                                             <div class="text-end mt-1" style="font-size: 0.65rem; opacity: 0.7;">${msg.time}</div>
+                                            
+                                            ${isMe ? `
+                                                <div class="delete-msg-btn" onclick="deleteMessage(${msg.id})">
+                                                    <i class="fas fa-trash"></i>
+                                                </div>
+                                            ` : ''}
                                         </div>
                                     </div>
                                 `;
                                 messagesWrapper.insertAdjacentHTML('beforeend', html);
                                 lastMessageId = Math.max(lastMessageId, msg.id);
                             });
-                            
-                            // Scroll to bottom
                             chatContainer.scrollTop = chatContainer.scrollHeight;
                             
-                            if(!isFirstLoad) loadConversationList();
+                            // Si entraron mensajes nuevos mientras veo el chat, refrescar la lista lateral
+                            if(!isFirstLoad) loadConversationList(); 
                         } else if (isFirstLoad) {
                             messagesWrapper.innerHTML = '<div class="text-center mt-5 text-muted small">Envía un mensaje para comenzar.</div>';
                         }
@@ -334,22 +587,24 @@
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 const text = input.value.trim();
-                if(!text || !activeChatId) return;
+                const file = fileInput.files[0];
+
+                if((!text && !file) || !activeChatId) return;
                 
                 const formData = new FormData();
                 formData.append('content', text);
-                input.value = ''; 
-                input.focus();
-                
+                if(file) formData.append('image', file);
+
+                input.value = ''; input.focus();
+                if(file) btnCancelFile.click(); // Limpiar preview
+
                 fetch(`${API_SEND_BASE}${activeChatId}/`, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': CSRF_TOKEN },
-                    body: formData
+                    method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN }, body: formData
                 }).then(res => res.json()).then(data => {
                     if(data.status === 'success') {
                         fetchMessages(false);
                         setTimeout(loadConversationList, 500); 
-                    }
+                    } else { alert('Error al enviar'); }
                 });
             });
         });

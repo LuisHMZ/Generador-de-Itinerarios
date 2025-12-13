@@ -1,4 +1,6 @@
-from django.db.models import Q  
+#apps/users/view.py
+from django.db.models import Count, Q
+from friendship.models import Friend
 from django.shortcuts import render, redirect, get_object_or_404 
 from django.urls import reverse
 from django.http import JsonResponse
@@ -268,40 +270,144 @@ def cancel_friend_request(request, request_id):
 
 
 # --- VISTA DE PERFIL ---
-
 @login_required
 def profile_view(request, username):
     profile_user = get_object_or_404(User, username=username)
-    try:
-        user_posts = Post.objects.filter(user=profile_user).select_related('user', 'user__profile').prefetch_related('pictures').order_by('-created_at')
-    except Exception:
-        user_posts = []
-    
-    is_self = (request.user == profile_user)
+    viewer = request.user
+
+    # ====================================================
+    # 1. LÓGICA DE RELACIÓN (Movida al principio para poder filtrar posts)
+    # ====================================================
+    is_self = (viewer == profile_user)
     friendship_status = None
     pending_request_id = None 
     
+    # Variable auxiliar para saber si son amigos rápidamente
+    are_friends = False 
+
     if not is_self:
-        if Friend.objects.are_friends(request.user, profile_user):
+        if Friend.objects.are_friends(viewer, profile_user):
             friendship_status = 'FRIENDS'
+            are_friends = True
         else:
-            sent = FriendshipRequest.objects.filter(from_user=request.user, to_user=profile_user, rejected__isnull=True).first()
+            # Lógica de solicitudes pendientes
+            sent = FriendshipRequest.objects.filter(from_user=viewer, to_user=profile_user, rejected__isnull=True).first()
             if sent:
                 friendship_status = 'PENDING_SENT'
                 pending_request_id = sent.id 
             else:
-                recv = FriendshipRequest.objects.filter(from_user=profile_user, to_user=request.user, rejected__isnull=True).first()
+                recv = FriendshipRequest.objects.filter(from_user=profile_user, to_user=viewer, rejected__isnull=True).first()
                 if recv:
                     friendship_status = 'PENDING_RECEIVED'
                     pending_request_id = recv.id 
                 else:
                     friendship_status = 'NOT_FRIENDS'
-            
+
+    # ====================================================
+    # 2. OBTENER POSTS (Con Filtros de Privacidad)
+    # ====================================================
+    try:
+        # Base query: Posts del usuario del perfil
+        posts_qs = Post.objects.filter(user=profile_user)
+
+        if is_self:
+            # Si soy yo: Veo TODO (No filtramos nada)
+            pass
+        elif are_friends:
+            # Si somos amigos: Veo 'public' O 'friends'
+            posts_qs = posts_qs.filter(Q(visibility='public') | Q(visibility='friends'))
+        else:
+            # Si es desconocido: Solo veo 'public'
+            posts_qs = posts_qs.filter(visibility='public')
+
+        # Optimizaciones y ordenamiento final
+        user_posts = posts_qs.select_related('user', 'user__profile').prefetch_related('pictures', 'likes', 'comments').order_by('-created_at')
+
+    except Exception as e:
+        print(f"Error cargando posts: {e}")
+        user_posts = []
+
+    # ====================================================
+    # 3. LÓGICA LATERAL (Barra derecha, sugerencias, etc.)
+    # ====================================================
+    
+    # A. Obtener mis amigos (del que ve la página)
+    try:
+        my_friends = Friend.objects.friends(viewer)
+    except Exception:
+        my_friends = []
+
+    # B. Amigos Online
+    time_threshold = timezone.now() - timedelta(minutes=15)
+    online_friends = []
+    for friend in my_friends:
+        if friend.last_login and friend.last_login > time_threshold:
+            online_friends.append(friend)
+
+    # C. Sugerencias de Amistad
+    # Nota: Filtramos para no sugerir al mismo usuario que estamos viendo
+    users_list = User.objects.exclude(id=viewer.id).exclude(id=profile_user.id)[:10] # Limite a 10 por rendimiento
+    users_with_status = []
+    
+    for user in users_list:
+        status_data = {'user': user, 'status': None, 'request_id': None}
+        
+        # Verificamos estado contra 'my_friends' que ya cargamos arriba
+        if user in my_friends:
+            status_data['status'] = 'FRIENDS'
+        else:
+            sent = FriendshipRequest.objects.filter(from_user=viewer, to_user=user, rejected__isnull=True).first()
+            if sent:
+                status_data['status'] = 'PENDING_SENT'
+                status_data['request_id'] = sent.id
+            else:
+                recv = FriendshipRequest.objects.filter(from_user=user, to_user=viewer, rejected__isnull=True).first()
+                if recv:
+                    status_data['status'] = 'PENDING_RECEIVED'
+                    status_data['request_id'] = recv.id
+        
+        users_with_status.append(status_data)
+
+    # D. Formulario para modal
+    create_post_form = CreatePostForm(user=viewer)
+    # Contamos todas las relaciones 'likes' de los posts de este usuario
+    total_likes = Post.objects.filter(user=profile_user).aggregate(total=Count('likes'))['total'] or 0
+
     context = {
         'profile_user': profile_user,
+        'total_likes': total_likes,
         'user_posts': user_posts,
         'is_self': is_self,
         'friendship_status': friendship_status,
-        'pending_request_id': pending_request_id, 
+        'pending_request_id': pending_request_id,
+        'online_friends': online_friends,
+        'users_with_status': users_with_status,
+        'create_post_form': create_post_form, 
     }
+    
     return render(request, 'users/profile.html', context)
+
+@login_required
+def create_post_page_view(request):
+    """
+    Vista para mostrar la pantalla completa de crear post.
+    """
+    if request.method == 'POST':
+        form = CreatePostForm(request.POST, request.FILES, user=request.user)
+        
+        if form.is_valid():
+            # --- CORRECCIÓN AQUÍ ---
+            # Quitamos el commit=False. Al llamar a form.save() directamente:
+            # 1. Se guarda el Post.
+            # 2. Se asigna el usuario (porque lo pusimos en el form).
+            # 3. Se ejecuta nuestra lógica manual para crear la Picture.
+            form.save() 
+            
+            messages.success(request, '¡Publicación creada con éxito!')
+            return redirect('profile_view', username=request.user.username)
+        else:
+            messages.error(request, 'Error al crear el post. Revisa los datos.')
+    else:
+        form = CreatePostForm(user=request.user)
+
+    return render(request, 'users/post.html', {'form': form})
