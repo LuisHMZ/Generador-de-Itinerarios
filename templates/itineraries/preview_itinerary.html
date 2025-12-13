@@ -62,7 +62,11 @@
                                 data-lat="{{ stop.touristic_place.lat }}"
                                 data-lng="{{ stop.touristic_place.long }}"
                                 data-nombre="{{ stop.touristic_place.name }}"
+                                {% if stop.touristic_place.photo %}
                                 data-img="{{ stop.touristic_place.photo.url|default_if_none:'/static/img/placeholder.png' }}"
+                                {% else %}
+                                data-img="/static/img/placeholder.png"
+                                {% endif %}
                                 data-direccion="{{ stop.touristic_place.address }}"
                                 data-descripcion="{{ stop.touristic_place.description|escapejs }}"
                                 data-website="{{ stop.touristic_place.website }}"
