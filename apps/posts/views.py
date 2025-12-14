@@ -180,7 +180,7 @@ def toggle_like(request, post_id):
         # Solo notificamos si el usuario no se dio like a sí mismo
         if post.user != user: 
             # Generamos el link relativo limpio: /home/?open_post=123
-            link = f"{reverse('/')}?open_post={post.id}"
+            link = f"{reverse('home')}?open_post={post.id}"
             
             Notification.objects.create(
                 recipient=post.user,
@@ -207,7 +207,7 @@ def add_comment(request, post_id):
         
         if post.user != request.user:
             # Link para abrir el post específico
-            link = f"{reverse('/')}?open_post={post.id}"
+            link = f"{reverse('home')}?open_post={post.id}"
             
             Notification.objects.create(
                 recipient=post.user, 
@@ -235,7 +235,7 @@ def add_itinerary_comment(request, itinerary_id):
         
         if itinerary.user != request.user:
             # Link específico para itinerarios
-            link = f"{reverse('/')}?open_itinerary={itinerary.id}"
+            link = f"{reverse('home')}?open_itinerary={itinerary.id}"
             
             Notification.objects.create(
                 recipient=itinerary.user, 
