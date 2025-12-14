@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 </a>
                 <div class="header-titulo"><h5 class="header-titulo-text"></h5></div>
                 <div class="header-actions">
+                    <a href="${homeUrl}" class="btn btn-profile" title="Ir al Inicio">
+                        <i class="bi bi-house-door-fill"></i>
+                    </a>
                     <a href="${profileUrl}" class="btn btn-profile" title="Mi Perfil">
                         <i class="bi bi-person-fill"></i>
                     </a>
@@ -131,7 +134,8 @@ document.addEventListener('DOMContentLoaded', function () {
         'recuperar.html': 'Recuperar contraseña',
         'editar-itinerario.html': 'Editar Itinerario',
         'ver-itinerario-final.html': 'Mi Itinerario',
-        'amigos.html': 'Mis Amigos'
+        'amigos.html': 'Mis Amigos',
+        'post.html': 'Craar Post'
     };
     function computeHeaderTitle() {
         const path = (location.pathname || '').split('/').filter(Boolean).pop() || 'home';

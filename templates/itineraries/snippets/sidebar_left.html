@@ -3,6 +3,11 @@
 <div class="menu-lateral p-3 bg-white rounded-4 shadow-sm">
     <ul class="list-unstyled mb-0">
         <li class="mb-3">
+            <a href="{% url 'home' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
+                <i class="fa-solid fa-house"></i> <span class="ms-2">Inicio</span>
+            </a>
+        </li>
+        <li class="mb-3">
             <a href="{% url 'profile_view' user.username %}"
                 class="menu-item text-decoration-none d-flex align-items-center text-dark">
                 <i class="fa-solid fa-user"></i> <span class="ms-2">Perfil</span>

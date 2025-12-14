@@ -8,6 +8,8 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
     <link rel="stylesheet" href="{% static 'css/header-footer.css' %}">
@@ -16,6 +18,31 @@
 
     <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" crossorigin="anonymous"></script>
+
+    <style>
+        /* --- ESTILOS DE MODALES Y UI --- */
+        .modal-facebook .modal-dialog { max-width: 90vw !important; margin: 1.5rem auto; }
+        .modal-facebook .modal-content { width: 100%; height: 85vh; border-radius: 16px; border: none; overflow: hidden; background-color: #fff; }
+        .modal-facebook .modal-body { padding: 0; height: 100%; }
+        .facebook-media-col { background-color: black; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        #modalPostImage { max-height: 100%; max-width: 100%; object-fit: contain; }
+        .facebook-comments-col { height: 100%; display: flex; flex-direction: column; border-left: 1px solid #dee2e6; }
+        .fb-comments-body { flex-grow: 1; overflow-y: auto; padding: 1rem; }
+
+        .modal-report-modern .modal-content { border-radius: 20px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .modal-report-modern .modal-header { border-bottom: none; padding-bottom: 0; }
+        .report-hero-icon { font-size: 3rem; color: #dc3545; background-color: #fff5f5; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 1rem auto; }
+        .report-option-label { display: block; cursor: pointer; position: relative; }
+        .report-option-input { position: absolute; opacity: 0; cursor: pointer; }
+        .report-option-card { display: flex; align-items: center; padding: 12px 16px; border: 1px solid #e9ecef; border-radius: 12px; transition: all 0.2s ease; background-color: white; }
+        .report-option-card:hover { background-color: #f8f9fa; transform: translateY(-2px); }
+        .report-option-input:checked + .report-option-card { border-color: #dc3545; background-color: #fff5f5; color: #dc3545; font-weight: 600; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15); }
+        .report-option-icon { font-size: 1.2rem; margin-right: 12px; color: #6c757d; transition: color 0.2s; }
+        .report-option-input:checked + .report-option-card .report-option-icon { color: #dc3545; }
+        .custom-textarea { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; resize: none; font-size: 0.95rem; }
+        .custom-textarea:focus { background-color: white; border-color: #dc3545; box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.1); }
+        .hover-elevate:hover { transform: translateY(-5px); background-color: #fff5eb !important; box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    </style>
     <style>
         .avatar{width:56px; height:56px; border-radius:50%; background:#e2e8f0; overflow:hidden; display:grid; place-items:center; font-weight:800; color:#475569}
         .avatar img {width: 100%; height: 100%; object-fit: cover;}
@@ -24,13 +51,16 @@
 
 <body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
 
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100" id="toastContainer">
         {% if messages %}
             {% for message in messages %}
             {% with tag=message.tags %}
             <div class="toast align-items-center text-bg-{% if tag == 'error' %}danger{% elif tag == 'warning' %}warning{% else %}success{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
-                    <div class="toast-body">{{ message }}</div>
+                    <div class="toast-body">
+                        {% if tag == 'success' %}<i class="bi bi-check-circle-fill me-2"></i>{% endif %}
+                        {{ message }}
+                    </div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
             </div>
@@ -67,7 +97,7 @@
                             <small class="text-muted">Publicaciones</small>
                         </div>
                         <div class="col">
-                            <span class="d-block fw-bold">0</span>
+                            <span class="d-block fw-bold">{{ total_likes|default:"0" }}</span>
                             <small class="text-muted">Likes</small>
                         </div>
                         <button class="dropdown-item text-danger btn-trigger-report" 
@@ -79,60 +109,95 @@
 
                     <div class="profile-actions">
                         {% if is_self %}
-                            <a href="#" class="btn btn-mextur w-100 mb-2"><i class="bi bi-pencil-square me-2"></i>Crear publicación</a>
-                            <a href="{% url 'itineraries:my_itineraries' %}" class="btn btn-mextur w-100 mb-2">
-                                <i class="fa-solid fa-map-location-dot"></i> <span class="ms-2">Mis Itinerarios</span>
+                            <a href="#" class="btn btn-mextur w-100 mb-2" data-bs-toggle="modal" data-bs-target="#creationChoiceModal">
+                                <i class="bi bi-plus-circle-fill me-2"></i>Crear nuevo
                             </a>
-                            <a href="#" class="btn btn-mextur w-100 mb-2"><i class="bi bi-bookmark-fill me-2"></i>Favoritos</a>
-                            <a href="#" class="btn btn-mextur w-100"><i class="bi bi-gear-fill me-2"></i>Configuración</a>
+                            <a href="{% url 'saved_posts_view' %}" class="btn btn-mextur w-100 mb-2">
+                                <i class="bi bi-bookmark-fill me-2"></i>Favoritos
+                            </a>
+                            <a href="#" class="btn btn-mextur w-100">
+                                <i class="bi bi-gear-fill me-2"></i>Configuración
+                            </a>
                         {% else %}
                             {% if friendship_status == 'FRIENDS' %}
                                 <a href="#" class="btn btn-primary w-100 mb-2"><i class="bi bi-envelope-fill me-2"></i>Enviar Mensaje</a>
-                                <a href="{% url 'remove_friend' profile_user.id %}" class="btn btn-outline-danger w-100"><i class="bi bi-person-dash-fill me-2"></i>Eliminar Amigo</a>
+                                <a href="{% url 'remove_friend' profile_user.id %}" class="btn btn-outline-danger w-100 mb-2"><i class="bi bi-person-dash-fill me-2"></i>Eliminar Amigo</a>
                             {% elif friendship_status == 'PENDING_SENT' %}
                                 <a href="{% url 'cancel_friend_request' pending_request_id %}" class="btn btn-warning w-100 mb-2"><i class="bi bi-hourglass-split me-2"></i>Cancelar Solicitud</a>
                             {% elif friendship_status == 'PENDING_RECEIVED' %}
                                 <a href="{% url 'accept_friend_request' pending_request_id %}" class="btn btn-success w-100 mb-2"><i class="bi bi-person-check-fill me-2"></i>Aceptar Solicitud</a>
-                                <a href="{% url 'reject_friend_request' pending_request_id %}" class="btn btn-outline-danger w-100"><i class="bi bi-person-x-fill me-2"></i>Rechazar Solicitud</a>
+                                <a href="{% url 'reject_friend_request' pending_request_id %}" class="btn btn-outline-danger w-100 mb-2"><i class="bi bi-person-x-fill me-2"></i>Rechazar Solicitud</a>
                             {% else %}
                                 <a href="{% url 'send_friend_request' profile_user.id %}" class="btn btn-success w-100 mb-2"><i class="bi bi-person-plus-fill me-2"></i>Agregar Amigo</a>
                             {% endif %}
+
+                            <button class="btn btn-outline-secondary w-100 mt-2 report-trigger"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#reportModal"
+                                    data-id="{{ profile_user.id }}"
+                                    data-type="user">
+                                <i class="bi bi-flag-fill me-2"></i>Reportar Usuario
+                            </button>
                         {% endif %}
                     </div>
                 </div>
             </div>
 
             <div class="col-lg-6 col-md-8">
-                
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="mb-0">Publicaciones</h3>
-                    
                 </div>
                 
                 {% if user_posts %}
                     <div id="profile-posts-container">
                         {% for post in user_posts %}
                             <article class="post-card mb-4">
-                                <header class="post-header">
-                                    {% if post.user.profile.profile_picture %}
-                                        <img src="{{ post.user.profile.profile_picture.url }}" class="avatar" alt="{{ post.user.username }}">
-                                    {% else %}
-                                        <img src="{% static 'img/default-avatar.png' %}" class="avatar" alt="Avatar por defecto">
-                                    {% endif %}
-                                    <div>
-                                        <strong>{{ post.user.username }}</strong>
-                                        {% if post.location %}
-                                            <p class="location">{{ post.location }}</p>
+                                <header class="post-header d-flex justify-content-between align-items-start" style="padding: 16px;">
+                                    <div class="d-flex align-items-center">
+                                        {% if post.user.profile.profile_picture %}
+                                            <img src="{{ post.user.profile.profile_picture.url }}" class="avatar" alt="{{ post.user.username }}">
+                                        {% else %}
+                                            <img src="{% static 'img/default-avatar.png' %}" class="avatar" alt="Avatar por defecto">
                                         {% endif %}
+                                        <div>
+                                            <strong>{{ post.user.username }}</strong>
+                                            {% if post.location %}
+                                                <p class="location mb-0">{{ post.location }}</p>
+                                            {% endif %}
+                                            <small class="text-muted">
+                                                {% if post.visibility == 'public' %}
+                                                    <i class="bi bi-globe" title="Público"></i>
+                                                {% elif post.visibility == 'friends' %}
+                                                    <i class="bi bi-people-fill" title="Solo Amigos"></i>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="dropdown">
+                                        <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical fs-5"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                                            <li>
+                                                <a class="dropdown-item text-danger report-trigger" 
+                                                   href="#" 
+                                                   data-bs-toggle="modal" 
+                                                   data-bs-target="#reportModal"
+                                                   data-id="{{ post.id }}"
+                                                   data-type="post">
+                                                   <i class="bi bi-flag-fill me-2"></i> Reportar
+                                                </a>
+                                            </li>
+                                        </ul>
                                     </div>
                                 </header>
+
                                 <div class="post-photo" role="img">
                                     {% with pictures=post.pictures.all %}
-                                    {% if pictures %}
-                                        <img src="{{ pictures.0.pic_url.url }}" alt="Foto del post">
-                                    {% else %}
-                                        <span class="placeholder-icon"><i class="bi bi-image"></i></span>
-                                    {% endif %}
+                                        {% if pictures %}
+                                            <img src="{{ pictures.0.pic_url.url }}" alt="Foto del post">
+                                        {% endif %}
                                     {% endwith %}
                                 </div>
                                 
@@ -142,12 +207,41 @@
                                     </h5>
                                 {% endif %}
                                 <p class="post-desc">{{ post.text }}</p>
-    
+ 
                                 <footer class="post-actions">
-                                    <div><i class="bi bi-heart"></i> {{ post.likes.count | default:0 }}</div>
-                                    <div><i class="bi bi-chat"></i> {{ post.comments.count | default:0 }}</div>
-                                    <div><i class="bi bi-star-fill"></i> {{ post.rating | default:"N/A" }}/5</div>
-                                    <div class="save"><i class="bi bi-bookmark"></i></div>
+                                    <div class="action-btn like-btn" data-url="{% url 'posts:toggle_like' post.id %}" style="cursor: pointer;">
+                                        {% if request.user in post.likes.all %}
+                                            <i class="bi bi-heart-fill text-danger"></i>
+                                        {% else %}
+                                            <i class="bi bi-heart"></i>
+                                        {% endif %}
+                                        <span class="like-count ms-1">{{ post.likes.count }}</span>
+                                    </div>
+                                    
+                                    <div class="action-btn comment-btn" 
+                                         style="cursor: pointer;"
+                                         data-object-id="{{ post.id }}"
+                                         data-object-type="post" 
+                                         {% if post.pictures.all %}
+                                            data-image-url="{{ post.pictures.all.0.pic_url.url }}"
+                                         {% else %}
+                                            data-image-url="" 
+                                         {% endif %}
+                                         data-author="{{ post.user.username }}"
+                                         data-author-avatar="{% if post.user.profile.profile_picture %}{{ post.user.profile.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
+                                         data-text="{{ post.text }}">
+                                        
+                                        <i class="bi bi-chat"></i> 
+                                        <span class="comment-count">{{ post.comments.count|default:0 }}</span>
+                                    </div>
+
+                                    <div class="action-btn save-btn ms-auto" data-url="{% url 'posts:toggle_save' post.id %}" style="cursor: pointer;">
+                                        {% if request.user in post.saved_by.all %}
+                                            <i class="bi bi-bookmark-fill text-primary"></i>
+                                        {% else %}
+                                            <i class="bi bi-bookmark"></i>
+                                        {% endif %}
+                                    </div>
                                 </footer>
                             </article>
                         {% endfor %}
@@ -165,68 +259,185 @@
 
             <div class="col-lg-3 col-md-0 d-none d-lg-block">
                 
-                <!-- Barra de búsqueda con ancho reducido y altura aumentada -->
-                <div class="input-group mb-3 profile-sidebar-search" style="border-radius: 20px; background-color: #f6f6f6;">
-                    <span class="input-group-text bg-transparent border-0" id="search-icon">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input type="text" class="form-control bg-transparent border-0" placeholder="Buscar..." aria-label="Buscar" aria-describedby="search-icon" style="box-shadow: none;">
-                </div>
+                <div class="right-sidebar-sticky">
+                    
+                    <h6 class="text-muted fw-bold mb-3 ms-2 text-uppercase" style="font-size: 0.8rem;">Contactos</h6>
+                    <ul class="contacts-list mb-4">
+                        {% for friend in online_friends %}
+                        <li>
+                            <a href="{% url 'messaging:start_conversation' friend.id %}" class="contact-item" title="Enviar mensaje">
+                                <div class="contact-avatar-wrapper">
+                                    {% if friend.profile.profile_picture %}
+                                        <img src="{{ friend.profile.profile_picture.url }}" class="contact-avatar">
+                                    {% else %}
+                                        <img src="{% static 'img/default-avatar.png' %}" class="contact-avatar">
+                                    {% endif %}
+                                    <div class="online-indicator"></div>
+                                </div>
+                                <span class="contact-name">{{ friend.username }}</span>
+                            </a>
+                        </li>
+                        {% empty %}
+                            <li class="text-muted small ms-2">No hay amigos conectados.</li>
+                        {% endfor %}
+                    </ul>
 
-                <div class="preferences-card bg-white rounded-4 shadow-sm">
-                    <h5>Preferencias</h5>
-                    <ul class="list-unstyled mb-0">
-                        <li><a href="#">Naturaleza</a></li>
-                        <li><a href="#">Gastronomía</a></li>
-                        <li><a href="#">Cultura</a></li>
+                    <hr class="my-4">
+
+                    <h6 class="text-muted fw-bold mb-3 ms-2 text-uppercase" style="font-size: 0.8rem;">Sugerencias</h6>
+                    <ul class="contacts-list">
+                        {% for data in users_with_status %}
+                            {% if data.status != 'FRIENDS' %}
+                            <li class="mb-3">
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded hover-bg-light">
+                                    <a href="{% url 'profile_view' data.user.username %}" class="d-flex align-items-center text-decoration-none text-dark">
+                                        <div class="contact-avatar-wrapper me-2">
+                                            {% if data.user.profile.profile_picture %}
+                                                <img src="{{ data.user.profile.profile_picture.url }}" class="contact-avatar" style="width: 40px; height: 40px;">
+                                            {% else %}
+                                                <img src="{% static 'img/default-avatar.png' %}" class="contact-avatar" style="width: 40px; height: 40px;">
+                                            {% endif %}
+                                        </div>
+                                        <div style="line-height: 1.2;">
+                                            <span class="d-block fw-bold" style="font-size: 0.9rem;">{{ data.user.username }}</span>
+                                            <small class="text-muted" style="font-size: 0.75rem;">Sugerencia</small>
+                                        </div>
+                                    </a>
+                                    <div>
+                                        {% if data.status == 'PENDING_SENT' %}
+                                            <a href="{% url 'cancel_friend_request' data.request_id %}" class="btn btn-sm btn-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" title="Cancelar"><i class="fas fa-times"></i></a>
+                                        {% elif data.status == 'PENDING_RECEIVED' %}
+                                            <a href="{% url 'accept_friend_request' data.request_id %}" class="btn btn-sm btn-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" title="Aceptar"><i class="fas fa-check"></i></a>
+                                        {% else %} 
+                                            <a href="{% url 'send_friend_request' data.user.id %}" class="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" title="Agregar"><i class="fas fa-user-plus"></i></a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
                     </ul>
                 </div>
             </div>
             
         </div> 
     </main>
-    {% include 'snippets/footer.html' %}
+    <div id="site-footer"></div>
 
-    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="notificationsModalLabel">Notificaciones</h5>
+    <div class="modal fade" id="creationChoiceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0" style="overflow: hidden;">
+                <div class="modal-header border-0 pb-0">
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-0">
-                    <div id="notifications-list">
-                        <p class="text-center text-muted p-3">Cargando...</p>
+                <div class="modal-body text-center pb-5 px-4">
+                    <h3 class="fw-bold mb-4">¿Qué quieres crear hoy?</h3>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="{% url 'create_post_page' %}" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm hover-elevate p-3" style="background-color: #f8f9fa; transition: 0.3s;">
+                                    <div class="card-body">
+                                        <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center mb-3 text-primary shadow-sm" style="width: 60px; height: 60px;">
+                                            <i class="bi bi-pencil-square fs-3"></i>
+                                        </div>
+                                        <h5 class="text-dark fw-bold">Post</h5>
+                                        <p class="text-muted small mb-0">Comparte una foto o pensamiento.</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="#" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm hover-elevate p-3" style="background-color: #f8f9fa; transition: 0.3s;">
+                                    <div class="card-body">
+                                        <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center mb-3 text-warning shadow-sm" style="width: 60px; height: 60px;">
+                                            <i class="bi bi-map-fill fs-3" style="color: #E57B28;"></i>
+                                        </div>
+                                        <h5 class="text-dark fw-bold">Itinerario</h5>
+                                        <p class="text-muted small mb-0">Planifica una nueva aventura.</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
-    <div class="modal fade" id="modalReportar" tabindex="-1" aria-hidden="true">
+
+    <div class="modal fade modal-facebook" id="commentsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold text-danger">
-                        <i class="fas fa-flag me-2"></i>Reportar Contenido
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content">
+                <div class="modal-body p-0 h-100">
+                    <div class="row h-100 g-0">
+                        <div class="col-md-8 facebook-media-col" id="modalImageContainer">
+                            <img src="" id="modalPostImage" alt="Image">
+                            <div id="modalNoImage" class="text-white d-none"><h4>Contenido de texto</h4></div>
+                        </div>
+                        <div class="col-md-4 facebook-comments-col">
+                            <div class="fb-comments-header d-flex align-items-center justify-content-between p-3 border-bottom">
+                                <div class="d-flex align-items-center">
+                                    <img src="" id="modalAuthorAvatar" class="comment-avatar me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
+                                    <div>
+                                        <strong id="modalAuthorName" class="d-block text-dark text-decoration-none"></strong>
+                                        <small id="modalPostText" class="text-muted text-truncate" style="max-width: 200px; display:block;"></small>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="fb-comments-body flex-grow-1 p-3" id="modalCommentsList">
+                                <p class="text-center text-muted mt-4">Cargando comentarios...</p>
+                            </div>
+                            <div class="fb-comments-footer p-3 border-top">
+                                <form id="commentForm" class="d-flex">
+                                    <input type="hidden" id="modalObjectId">
+                                    <input type="hidden" id="modalObjectType">
+                                    <input type="text" id="commentInput" class="form-control rounded-pill me-2" placeholder="Escribe un comentario..." autocomplete="off">
+                                    <button type="submit" class="btn btn-primary rounded-circle"><i class="bi bi-send-fill"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <p class="text-muted small">
-                        Ayúdanos a mantener la comunidad segura. ¿Por qué quieres reportar esto?
-                    </p>
-                    <form id="formReportar">
-                        <input type="hidden" id="reportModelType">
-                        <input type="hidden" id="reportObjectId">
-                        
-                        <div class="mb-3">
-                            <textarea class="form-control bg-light" id="reportReason" rows="3" placeholder="Describe el problema (spam, ofensivo, etc.)" required></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade modal-report-modern" id="reportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header position-relative">
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 pb-4 pt-0">
+                    <form id="reportForm">
+                        <input type="hidden" id="reportObjectId" name="object_id">
+                        <input type="hidden" id="reportObjectType" name="object_type">
+                        <div class="text-center mb-4">
+                            <div class="report-hero-icon"><i class="bi bi-shield-exclamation"></i></div>
+                            <h4 class="fw-bold mb-1">Reportar contenido</h4>
+                            <p class="text-muted small">Tu reporte es anónimo.</p>
+                        </div>
+                        <h6 class="fw-bold mb-3" style="font-size: 0.9rem; text-transform: uppercase; color: #adb5bd;">Selecciona un motivo</h6>
+                        <div class="d-flex flex-column gap-2 mb-4">
+                            <label class="report-option-label">
+                                <input class="report-option-input" type="radio" name="reason" value="spam" checked>
+                                <div class="report-option-card"><i class="bi bi-robot report-option-icon"></i><span>Es spam o publicidad</span></div>
+                            </label>
+                            <label class="report-option-label">
+                                <input class="report-option-input" type="radio" name="reason" value="offensive">
+                                <div class="report-option-card"><i class="bi bi-emoji-angry report-option-icon"></i><span>Contenido ofensivo</span></div>
+                            </label>
+                            <label class="report-option-label">
+                                <input class="report-option-input" type="radio" name="reason" value="false_info">
+                                <div class="report-option-card"><i class="bi bi-info-circle report-option-icon"></i><span>Información falsa</span></div>
+                            </label>
+                        </div>
+                        <div class="mb-4">
+                            <textarea class="form-control custom-textarea p-3" id="reportDescription" rows="3" placeholder="Detalles adicionales..."></textarea>
                         </div>
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-danger rounded-pill">Enviar Reporte</button>
+                            <button type="submit" class="btn btn-danger btn-lg rounded-pill fw-bold shadow-sm">Enviar Reporte</button>
                         </div>
                     </form>
                 </div>
@@ -234,83 +445,164 @@
         </div>
     </div>
     
+    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Notificaciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="notifications-list">
+                        <p class="text-center text-muted p-3">Cargando...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/headerFooter.js' %}" defer></script>
     
     <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            const toastElList = document.querySelectorAll('.toast');
-            const toastList = [...toastElList].map(toastEl => {
-                const toast = new bootstrap.Toast(toastEl, {
-                    delay: 3000
-                });
-                toast.show();
-                return toast;
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- 1. CONFIGURACIÓN DE TOASTS ---
+        [...document.querySelectorAll('.toast')].map(toastEl => new bootstrap.Toast(toastEl, { delay: 4000 }).show());
+
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const colorClass = type === 'success' ? 'text-bg-success' : (type === 'error' ? 'text-bg-danger' : 'text-bg-warning');
+            const icon = type === 'success' ? '<i class="bi bi-check-circle-fill me-2"></i>' : '<i class="bi bi-exclamation-triangle-fill me-2"></i>';
+            const html = `<div class="toast align-items-center ${colorClass} border-0" role="alert" aria-live="assertive" aria-atomic="true"><div class="d-flex"><div class="toast-body">${icon}${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div></div>`;
+            container.insertAdjacentHTML('beforeend', html);
+            const newToastEl = container.lastElementChild;
+            const toastBootstrap = new bootstrap.Toast(newToastEl, { delay: 4000 });
+            toastBootstrap.show();
+        };
+
+        function getCookie(name) {let cookieValue = null;if (document.cookie && document.cookie !== '') {const cookies = document.cookie.split(';');for (let i = 0; i < cookies.length; i++) {const cookie = cookies[i].trim();if (cookie.substring(0, name.length + 1) === (name + '=')) {cookieValue = decodeURIComponent(cookie.substring(name.length + 1));break;}}}return cookieValue;}
+        const csrftoken = getCookie('csrftoken');
+        
+        // --- FUNCIONES INTERACTIVAS (Like, Save, Comment, Report) ---
+        // (Tu código JS original para posts, comentarios y reportes)
+        document.querySelectorAll('.like-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');const countSpan = this.querySelector('.like-count');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {countSpan.textContent = data.count;if (data.liked) {icon.classList.replace('bi-heart', 'bi-heart-fill');icon.classList.add('text-danger');} else {icon.classList.replace('bi-heart-fill', 'bi-heart');icon.classList.remove('text-danger');}}});});});
+        document.querySelectorAll('.save-btn').forEach(btn => {btn.addEventListener('click', function() {const url = this.getAttribute('data-url');const icon = this.querySelector('i');fetch(url, {method: 'POST',headers: {'X-CSRFToken': csrftoken,'Content-Type': 'application/json'}}).then(response => response.json()).then(data => {if (data.status === 'success') {if (data.saved) {icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');icon.classList.add('text-primary');} else {icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');icon.classList.remove('text-primary');}}});});});
+
+        const commentsModal = new bootstrap.Modal(document.getElementById('commentsModal'));
+        const modalImg = document.getElementById('modalPostImage'); const modalNoImg = document.getElementById('modalNoImage'); const modalAvatar = document.getElementById('modalAuthorAvatar'); const modalAuthor = document.getElementById('modalAuthorName'); const modalText = document.getElementById('modalPostText'); const modalList = document.getElementById('modalCommentsList'); const modalObjectIdInput = document.getElementById('modalObjectId'); const modalObjectTypeInput = document.getElementById('modalObjectType'); const commentForm = document.getElementById('commentForm'); const commentInput = document.getElementById('commentInput'); let replyingToCommentId = null; const replyIndicator = document.createElement('div'); replyIndicator.className = 'replying-to-alert d-none'; commentForm.parentNode.insertBefore(replyIndicator, commentForm);
+        window.cancelReply = function() {replyingToCommentId = null;replyIndicator.classList.add('d-none');replyIndicator.innerHTML = '';commentInput.placeholder = "Escribe un comentario...";}
+        
+        document.querySelectorAll('.comment-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const objectId = this.dataset.objectId; const objectType = this.dataset.objectType; 
+                cancelReply(); modalObjectIdInput.value = objectId; modalObjectTypeInput.value = objectType;
+                modalAuthor.textContent = this.dataset.author; modalAvatar.src = this.dataset.authorAvatar; modalText.textContent = this.dataset.text; 
+                if (this.dataset.imageUrl) { modalImg.src = this.dataset.imageUrl; modalImg.classList.remove('d-none'); modalNoImg.classList.add('d-none'); } else { modalImg.classList.add('d-none'); modalNoImg.classList.remove('d-none'); } 
+                modalList.innerHTML = '<p class="text-center text-muted mt-4"><div class="spinner-border text-primary" role="status"></div></p>'; 
+                commentsModal.show(); 
+                let loadUrl = objectType === 'post' ? `/api/posts/comments/load/${objectId}/` : `/api/posts/itinerary/comments/load/${objectId}/`;
+                fetch(loadUrl).then(res => res.json()).then(data => {modalList.innerHTML = '';if (data.comments.length === 0) {modalList.innerHTML = '<p id="no-comments-msg" class="text-center text-muted mt-5">Sé el primero en comentar.</p>';} else {data.comments.forEach(c => addCommentToDOM(c));modalList.scrollTop = modalList.scrollHeight;}});
             });
-            // 1. Lógica para abrir el modal desde cualquier botón
-            const modalReportarEl = document.getElementById('modalReportar');
-            if (modalReportarEl) {
-                const modalReportar = new bootstrap.Modal(modalReportarEl);
-                
-                // Escuchar clics en cualquier elemento que tenga la clase .btn-trigger-report
-                document.body.addEventListener('click', (e) => {
-                    const btn = e.target.closest('.btn-trigger-report');
-                    if (btn) {
-                        // Leer datos del botón
-                        const tipo = btn.dataset.type; // 'user', 'itinerary', etc.
-                        const id = btn.dataset.id;
-                        
-                        // Llenar el modal
-                        document.getElementById('reportModelType').value = tipo;
-                        document.getElementById('reportObjectId').value = id;
-                        document.getElementById('reportReason').value = ''; // Limpiar texto anterior
-                        
-                        modalReportar.show();
-                    }
-                });
-
-                // 2. Lógica para enviar el reporte
-                document.getElementById('formReportar').addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    
-                    const tipo = document.getElementById('reportModelType').value;
-                    const id = document.getElementById('reportObjectId').value;
-                    const motivo = document.getElementById('reportReason').value;
-                    const btnSubmit = e.target.querySelector('button[type="submit"]');
-
-                    btnSubmit.disabled = true; // Evitar doble clic
-
-                    try {
-                        const response = await fetch('/api/reports/api/crear/', { // Ajustar URL según corresponda
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': getCookie('csrftoken') // Tu función getCookie existente
-                            },
-                            body: JSON.stringify({
-                                model_type: tipo,
-                                object_id: id,
-                                reason: motivo
-                            })
-                        });
-
-                        const data = await response.json();
-
-                        if (response.ok) {
-                            alert('Gracias. Hemos recibido tu reporte.');
-                            modalReportar.hide();
-                        } else {
-                            alert('Error: ' + data.error);
-                        }
-                    } catch (error) {
-                        console.error(error);
-                        alert('Ocurrió un error al enviar el reporte.');
-                    } finally {
-                        btnSubmit.disabled = false;
-                    }
-                });
-            }
         });
+        
+        commentForm.addEventListener('submit', function(e) {
+            e.preventDefault(); const text = commentInput.value.trim(); if (!text) return;
+            const objectId = modalObjectIdInput.value; const objectType = modalObjectTypeInput.value;
+            const formData = new FormData(); formData.append('text', text); if (replyingToCommentId) { formData.append('parent_id', replyingToCommentId); }
+            let addUrl = objectType === 'post' ? `/api/posts/comments/add/${objectId}/` : `/api/posts/itinerary/comments/add/${objectId}/`;
+            fetch(addUrl, {method: 'POST',headers: { 'X-CSRFToken': csrftoken },body: formData}).then(res => res.json()).then(data => {if (data.status === 'success') {if (replyingToCommentId) {const p = document.getElementById(`replies-${replyingToCommentId}`);if (p) p.insertAdjacentHTML('beforeend', generateCommentHTML(data.new_comment));} else {addCommentToDOM(data.new_comment);modalList.scrollTop = modalList.scrollHeight;const countSpan = document.querySelector(`.comment-btn[data-object-id="${objectId}"][data-object-type="${objectType}"] .comment-count`);if(countSpan) countSpan.textContent = parseInt(countSpan.textContent) + 1;}commentInput.value = '';cancelReply();}});
+        });
+        
+        function generateCommentHTML(c) {
+            const deleteBtn = c.is_owner ? `<small class="delete-action ms-2 text-danger" style="cursor:pointer;" onclick="deleteComment(${c.id}, this)">Eliminar</small>` : '';
+            const likeClass = c.is_liked ? 'text-danger' : '';
+            return `<div class="mb-3 comment-item" id="comment-${c.id}"><div class="d-flex"><img src="${c.avatar}" class="comment-avatar me-2"><div><div class="comment-bubble"><strong class="d-block mb-1" style="font-size: 0.9em;">${c.user}</strong><span style="font-size: 0.95em;">${c.text}</span></div><div class="ms-2 mt-1 comment-actions d-flex align-items-center"><small class="${likeClass} me-3" style="cursor:pointer; font-weight:bold;" onclick="likeComment(${c.id}, this)">${c.is_liked ? 'Te gusta' : 'Me gusta'} <span class="count">${c.likes_count > 0 ? '('+c.likes_count+')' : ''}</span></small><small class="me-3" style="cursor:pointer;" onclick="replyTo(${c.id}, '${c.user}')">Responder</small><small class="text-muted fw-normal">${c.created_at}</small>${deleteBtn}</div></div></div><div class="comment-replies" id="replies-${c.id}" style="margin-left: 40px;">${c.replies ? c.replies.map(r => generateCommentHTML(r)).join('') : ''}</div></div>`;
+        }
+        function addCommentToDOM(c) {const noMsg = document.getElementById('no-comments-msg');if (noMsg) noMsg.remove();const html = generateCommentHTML(c);modalList.insertAdjacentHTML('beforeend', html);}
+        window.replyTo = function(commentId, username) {replyingToCommentId = commentId;replyIndicator.classList.remove('d-none');replyIndicator.innerHTML = `<small class="ms-2">Respondiendo a <strong>${username}</strong> <a href="#" onclick="cancelReply(); return false;" class="text-danger ms-1">Cancelar</a></small>`;commentInput.placeholder = `Escribe una respuesta a ${username}...`;commentInput.focus();}
+        window.likeComment = function(commentId, element) {fetch(`/api/posts/comments/like/${commentId}/`, {method: 'POST',headers: { 'X-CSRFToken': csrftoken }}).then(res => res.json()).then(data => {if (data.status === 'success') {const countText = data.count > 0 ? `(${data.count})` : '';element.innerHTML = `${data.liked ? 'Te gusta' : 'Me gusta'} <span class="count">${countText}</span>`;if (data.liked) element.classList.add('text-danger');else element.classList.remove('text-danger');}});}
+        window.deleteComment = function(commentId, element) {if (!confirm("¿Estás seguro de eliminar este comentario?")) return;fetch(`/api/posts/comments/delete/${commentId}/`, {method: 'POST',headers: { 'X-CSRFToken': csrftoken }}).then(res => res.json()).then(data => {if (data.status === 'success') {const commentDiv = document.getElementById(`comment-${commentId}`);if (commentDiv) commentDiv.remove();}});}
+
+        const reportModal = document.getElementById('reportModal');
+        const reportForm = document.getElementById('reportForm');
+        if (reportModal) {
+            reportModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const objectId = button.getAttribute('data-id');
+                const objectType = button.getAttribute('data-type');
+                document.getElementById('reportObjectId').value = objectId;
+                document.getElementById('reportObjectType').value = objectType;
+                reportForm.reset();
+            });
+        }
+        if (reportForm) {
+            reportForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const objectId = document.getElementById('reportObjectId').value;
+                const objectType = document.getElementById('reportObjectType').value;
+                const reasonRadio = document.querySelector('input[name="reason"]:checked').value;
+                const descriptionText = document.getElementById('reportDescription').value;
+                const finalReason = `[${reasonRadio.toUpperCase()}] ${descriptionText}`;
+                const dataToSend = { model_type: objectType, object_id: objectId, reason: finalReason };
+                const url = "{% url 'create_report_api' %}"; 
+                fetch(url, {
+                    method: 'POST', headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataToSend)
+                })
+                .then(response => { if (!response.ok) return response.json().then(err => { throw new Error(err.error || 'Error desconocido'); }); return response.json(); })
+                .then(data => {
+                    const modalInstance = bootstrap.Modal.getInstance(reportModal);
+                    modalInstance.hide();
+                    showToast('Reporte enviado correctamente.', 'success');
+                })
+                .catch(error => { console.error('Error:', error); showToast('Error al enviar: ' + error.message, 'error'); });
+            });
+        }
+
+        // =========================================================
+        // 3. EL "ATRAPADOR" DE NOTIFICACIONES (AGREGADO AQUÍ)
+        // =========================================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const openPostId = urlParams.get('open_post');
+        const openItinId = urlParams.get('open_itinerary');
+        
+        let targetSelector = null;
+
+        // Definimos qué botón buscar según el parámetro en la URL
+        if (openPostId) { 
+            targetSelector = `.comment-btn[data-object-id="${openPostId}"][data-object-type="post"]`; 
+        } 
+        else if (openItinId) { 
+            targetSelector = `.comment-btn[data-object-id="${openItinId}"][data-object-type="itinerary"]`; 
+        }
+
+        if (targetSelector) {
+            const tryOpenModal = () => {
+                const targetBtn = document.querySelector(targetSelector);
+                
+                if (targetBtn) { 
+                    console.log("¡Notificación encontrada! Abriendo modal...");
+                    targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+                    targetBtn.click(); 
+                    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname; 
+                    window.history.replaceState({path: newUrl}, '', newUrl); 
+                    return true; 
+                } 
+                return false;
+            };
+
+            if (!tryOpenModal()) { 
+                setTimeout(() => { 
+                    if (!tryOpenModal()) { 
+                        setTimeout(tryOpenModal, 1500); 
+                    } 
+                }, 500); 
+            }
+        }
+    });
     </script>
 </body>
 </html>

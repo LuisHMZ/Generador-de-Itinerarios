@@ -1,3 +1,4 @@
+#apps/messaging/urls.py
 from django.urls import path
 from . import views
 
@@ -12,4 +13,6 @@ urlpatterns = [
     path('api/list/', views.get_conversations, name='api_list'),
     path('api/messages/<int:conversation_id>/', views.get_messages, name='api_messages'),
     path('api/send/<int:conversation_id>/', views.send_message, name='api_send'),
+
+    path('api/delete/<int:message_id>/', views.delete_message, name='api_delete'),
 ]

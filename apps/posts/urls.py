@@ -3,6 +3,7 @@ from . import views
 
 app_name = 'posts'
 
+
 urlpatterns = [
     path('create/', views.create_post_view, name='create_post'),
     path('toggle-like/<int:post_id>/', views.toggle_like, name='toggle_like'),
@@ -24,4 +25,9 @@ urlpatterns = [
     # --- ACCIONES GENERALES ---
     path('comments/like/<int:comment_id>/', views.like_comment, name='like_comment'),
     path('comments/delete/<int:comment_id>/', views.delete_comment, name='delete_comment'),
+
+    #--ruta para post----
+    path('post/new/', views.create_post_page_view, name='create_post_page'),
+
+    path('search/', views.search_view, name='search'),
 ]
