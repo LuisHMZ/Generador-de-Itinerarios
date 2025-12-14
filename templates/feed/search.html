@@ -247,48 +247,47 @@
 
                     <div class="tab-pane fade" id="pills-posts" role="tabpanel">
                         {% if posts %}
-                        {% for post in posts %}
-                        <article class="post-card mb-4">
-                            <header class="post-header d-flex justify-content-between align-items-start"
-                                style="padding: 16px;">
-                                <div class="d-flex align-items-center">
-                                    <a href="{% url 'profile_view' post.user.username %}"
-                                        class="text-decoration-none d-flex align-items-center text-dark">
-                                        {% if post.user.profile.profile_picture %}
-                                        <img src="{{ post.user.profile.profile_picture.url }}" class="avatar">
-                                        {% else %}
-                                        <img src="{% static 'img/default-avatar.png' %}" class="avatar">
-                                        {% endif %}
-                                        <div class="ms-2">
-                                            <strong>{{ post.user.username }}</strong>
-                                            {% if post.location %}<p class="location mb-0">{{ post.location }}</p>{%
-                                            endif %}
-                                        </div>
-                                    </a>
+                            {% for post in posts %}
+                            <article class="post-card mb-4">
+                                <header class="post-header d-flex justify-content-between align-items-start"
+                                    style="padding: 16px;">
+                                    <div class="d-flex align-items-center">
+                                        <a href="{% url 'profile_view' post.user.username %}"
+                                            class="text-decoration-none d-flex align-items-center text-dark">
+                                            {% if post.user.profile.profile_picture %}
+                                            <img src="{{ post.user.profile.profile_picture.url }}" class="avatar">
+                                            {% else %}
+                                            <img src="{% static 'img/default-avatar.png' %}" class="avatar">
+                                            {% endif %}
+                                            <div class="ms-2">
+                                                <strong>{{ post.user.username }}</strong>
+                                                {% if post.location %}<p class="location mb-0">{{ post.location }}</p>{% endif %}
+                                            </div>
+                                        </a>
+                                    </div>
+                                </header>
+
+                                {% if post.pictures.all %}
+                                <div class="post-photo">
+                                    <img src="{{ post.pictures.all.0.pic_url.url }}" alt="Post image">
                                 </div>
-                            </header>
+                                {% endif %}
 
-                            {% if post.pictures.all %}
-                            <div class="post-photo">
-                                <img src="{{ post.pictures.all.0.pic_url.url }}" alt="Post image">
-                            </div>
-                            {% endif %}
-
-                            <div class="p-3">
-                                {% if post.title %}<h5 class="fw-bold">{{ post.title }}</h5>{% endif %}
-                                <p class="post-desc">{{ post.text|truncatewords:30 }}</p>
-                            </div>
-
-                            <footer class="post-actions p-3 pt-0">
-                                <div class="action-btn comment-btn" style="cursor: pointer;"
-                                    data-object-id="{{ post.id }}" data-object-type="post"
-                                    data-author="{{ post.user.username }}" data-text="{{ post.text }}">
-                                    <i class="bi bi-chat me-1"></i> <span class="comment-count">{{ post.comments.count
-                                        }}</span>
+                                <div class="p-3">
+                                    {% if post.title %}<h5 class="fw-bold">{{ post.title }}</h5>{% endif %}
+                                    <p class="post-desc">{{ post.text|truncatewords:30 }}</p>
                                 </div>
-                            </footer>
-                        </article>
-                        {% endfor %}
+
+                                <footer class="post-actions p-3 pt-0">
+                                    <div class="action-btn comment-btn" style="cursor: pointer;"
+                                        data-object-id="{{ post.id }}" data-object-type="post"
+                                        data-author="{{ post.user.username }}" data-text="{{ post.text }}">
+                                        <i class="bi bi-chat me-1"></i> <span class="comment-count">{{ post.comments.count
+                                            }}</span>
+                                    </div>
+                                </footer>
+                            </article>
+                            {% endfor %}
                         {% else %}
                         <div class="text-center py-5 text-muted">
                             <i class="bi bi-grid fs-1 mb-2"></i>

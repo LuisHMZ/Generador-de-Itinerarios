@@ -148,10 +148,10 @@
                     {% endif %}
                     
                     <form action="{% url 'posts:search' %}" method="get" style="flex-grow: 1; display: flex;">
-    <input type="text" name="q" placeholder="Buscar locaciones, amigos, hashtags...." style="width: 100%; border: none; outline: none; background: transparent;">
-</form>
+                        <input type="text" name="q" placeholder="Buscar locaciones, amigos, hashtags...." style="width: 100%; border: none; outline: none; background: transparent;">
+                        <button type="submit" class="btn-new-post" data-bs-toggle="modal">Buscar</button>
+                    </form>
 
-                    <a href="#" class="btn-new-post" data-bs-toggle="modal" data-bs-target="#creationChoiceModal">Crear publicación</a>
                 </div>
                 {% endif %}
 
