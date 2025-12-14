@@ -128,48 +128,13 @@
         {% endif %}
     </div>
 
-    {% include 'snippets/header.html' %}
+    <div id="site-header"></div>
 
      <main class="container py-4" style="background-color: #f8f9fa;">
         <div class="row gx-4">
 
             <aside class="col-lg-2 col-md-3 d-none d-md-block">
                 {% include 'itineraries/snippets/sidebar_left.html' %}
-                <div class="menu-lateral p-3 bg-white rounded-4 shadow-sm">
-                    <ul class="list-unstyled mb-0">
-                        
-                        <li class="mb-3">
-                            <a href="{% url 'home' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                <i class="fa-solid fa-house"></i> <span class="ms-2">Inicio</span>
-                            </a>
-                        </li>
-                        <li class="mb-3">
-                            <a href="{% url 'profile_view' user.username %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                <i class="fa-solid fa-user"></i> <span class="ms-2">Perfil</span>
-                            </a>
-                        </li>
-                        <li class="mb-3">
-                            <a href="{% url 'messaging:inbox' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                <i class="fa-solid fa-envelope"></i> <span class="ms-2">Mensajes</span>
-                            </a>
-                        </li>
-                        <li class="mb-3">
-                            <a href="#" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                <i class="fa-solid fa-map-location-dot"></i> <span class="ms-2">Mis Itinerarios</span>
-                            </a>
-                        </li>
-                        <li class="mb-3">
-                            <a href="{% url 'saved_posts_view' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                <i class="fa-solid fa-bookmark"></i> <span class="ms-2">Guardados</span>
-                            </a>
-                        </li>
-                        <li class="mb-3">
-                            <a href="{% url 'friend_requests_view' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                <i class="fa-solid fa-users"></i> <span class="ms-2">Amigos</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
             </aside>
 
             <div class="col-lg-7 col-md-9">
@@ -485,7 +450,23 @@
 
     <div id="site-footer"></div>
 
-    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Notificaciones</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div id="notifications-list"><p class="text-center text-muted p-3">Cargando...</p></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button></div></div></div></div>
+    <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header" <div class="modal-header" style="background-color: #49A3A3;">
+                    <h5 class="modal-title">Notificaciones</h5><button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="notifications-list">
+                        <p class="text-center text-muted p-3">Cargando...</p>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">Cerrar</button></div>
+            </div>
+        </div>
+    </div>
     
     <div class="modal fade" id="creationChoiceModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">

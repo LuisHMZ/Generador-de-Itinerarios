@@ -9,6 +9,7 @@
 
     <!-- Bootstrap CSS (CDN) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <!-- Font Awesome (CDN) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
@@ -18,16 +19,12 @@
     <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
     <!-- Tus estilos CSS -->
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'css/header-footer.css' %}">
     {% block extra_css %}{% endblock %} <!-- Para CSS adicional por página -->
 </head>
-<body>
+<body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
     <!-- Header (Navbar) -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container d-flex justify-content-center align-items-center">
-            <img class="navbar-logo" src="{% static 'img/logo.png' %}" alt="Logo">
-            <a class="navbar-brand d-flex align-items-center me-0" href="{% url 'home' %}">MEX<span>TUR</span></a>
-        </div>
-    </nav>
+    <div id="site-header"></div>
    
 
     <!-- Contenido Principal (Será reemplazado por cada página hija) -->
@@ -38,40 +35,11 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer mt-auto"> {# Añadido mt-auto para empujar al fondo #}
-        <div class="container">
-            <!-- ... (Contenido del footer sin cambios) ... -->
-             <div class="row">
-                <div class="col-md-6">
-                    <h5>MEX<span>TUR</span></h5>
-                    <p>Explora los destinos más increíbles de México con nosotros.</p>
-                </div>
-                <div class="col-md-3">
-                    <h5>Enlaces</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="{% url 'home' %}">Inicio</a></li>
-                        <li><a href="#">Destinos</a></li> {# Reemplaza '#' #}
-                        <li><a href="#">Contacto</a></li> {# Reemplaza '#' #}
-                    </ul>
-                </div>
-                <div class="col-md-3">
-                    <h5>Contacto</h5>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-phone me-2"></i> +52 55 1234 5678</li>
-                        <li><i class="fas fa-envelope me-2"></i> info@mextur.com</li>
-                        <li><i class="fas fa-map-marker-alt me-2"></i> Ciudad de México</li>
-                    </ul>
-                </div>
-            </div>
-            <hr>
-            <div class="text-center">
-                <p>&copy; {% now "Y" %} MexTur. Todos los derechos reservados.</p>
-            </div>
-        </div>
-    </footer>
+    <div id="site-footer"></div>
 
     <!-- Bootstrap JS (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/headerFooter.js' %}" defer></script>
     <!-- Tus Scripts JS -->
     {% block extra_js %}{% endblock %} <!-- Para JS adicional por página -->
 </body>

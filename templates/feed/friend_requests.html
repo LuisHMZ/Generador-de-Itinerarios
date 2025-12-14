@@ -23,7 +23,7 @@
 
 <body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
 
-    {% include 'snippets/header.html' %}
+    <div id="site-header"></div>
 
     <main class="container py-4" style="background-color: #f8f9fa;">
         <div class="row gx-4">
@@ -123,7 +123,7 @@
     <div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header" style="background-color: #49A3A3;">
                     <h5 class="modal-title">Notificaciones</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -139,7 +139,7 @@
         </div>
     </div>
 
-    {% include 'snippets/footer.html' %}
+    <div id="site-footer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/headerFooter.js' %}" defer></script>

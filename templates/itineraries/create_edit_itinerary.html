@@ -17,7 +17,7 @@
 </head>
 <body {% if itinerary %} data-itinerary-id="{{ itinerary.id }}" {% endif %}>
 <!-- HEADER, después se va a quitar -->
-{% include 'snippets/header.html' %}
+<div id="site-header"></div>
     <main class="container my-5">
         <div class="titulo-editar mb-4">
             <h1 class="h3">{{ mode|default:"Crear" }} Itinerario
@@ -130,6 +130,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'js/itineraries/cancel_button.js' %}" defer></script>
     <script src="{% static 'js/itineraries/post_itinerary.js' %}" defer></script>
+    <script src="{% static 'js/headerFooter.js' %}" defer></script>
 
     <script>
         const fileInput = document.getElementById('banner-pic');
