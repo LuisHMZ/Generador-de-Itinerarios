@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // --- 1. LECTURA DE URLs DE DJANGO (Variables dinámicas) ---
     const logoutUrl = document.body.dataset.logoutUrl || '#';
-    const homeUrl = '/home/'; 
+    const homeUrl = '/'; 
     // Leemos el username del body para el enlace de perfil
     const currentUsername = document.body.dataset.username || '';
     const profileUrl = currentUsername ? `/perfil/${currentUsername}/` : '#';
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
         'editar-itinerario.html': 'Editar Itinerario',
         'ver-itinerario-final.html': 'Mi Itinerario',
         'amigos.html': 'Mis Amigos',
-        'post.html': 'Craar Post'
+        'post.html': 'Crear Post'
     };
     function computeHeaderTitle() {
         const path = (location.pathname || '').split('/').filter(Boolean).pop() || 'home';
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let notificationModal = bootstrap.Modal.getInstance(modalElement);
         if (!notificationModal) {
             notificationModal = new bootstrap.Modal(modalElement, {
-                backdrop: false,  // Permite backdrop pero no estático
+                backdrop: true,   // Permite cerrar al hacer clic fuera
                 keyboard: true    // Permite cerrar con ESC
             });
         }
