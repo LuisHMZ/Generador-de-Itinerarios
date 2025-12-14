@@ -252,19 +252,39 @@ class TouristicPlaceSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'external_api_id', 'external_api_rating', 'rating', 'categories', 'photo', 'photo_url', 'types']
 
     def get_photo_url(self, obj):
+        """
+        Devuelve la URL pública de la foto del lugar.
+        
+        Funciona en dos escenarios:
+        
+        1. DESARROLLO LOCAL:
+           - obj.photo.url devuelve: /media/place_photos/place_106.jpg
+           - MEDIA_URL = /media/
+           - Resultado: /media/place_photos/place_106.jpg (ya es URL completa relativa)
+        
+        2. PRODUCCIÓN (SUPABASE STORAGE):
+           - obj.photo.url devuelve: place_photos/place_106.jpg (solo ruta relativa)
+           - MEDIA_URL = https://project.supabase.co/storage/v1/object/public/media/
+           - Resultado: https://project.supabase.co/storage/v1/object/public/media/place_photos/place_106.jpg
+        """
         try:
             if obj.photo and hasattr(obj.photo, 'url'):
-                # Construir URL completa si es necesario
                 url = obj.photo.url
-                # Si la URL no comienza con http, añadir el dominio/contexto
-                if url and not url.startswith('http'):
+                
+                # Si la URL ya es absoluta (comienza con http), devolverla tal cual
+                if url and url.startswith('http'):
+                    return url
+                
+                # Si es relativa, combinarla con MEDIA_URL
+                if url:
                     from django.conf import settings
-                    # Asegurar que la URL tenga el prefijo correcto
                     if hasattr(settings, 'MEDIA_URL'):
-                        # Si la URL ya tiene MEDIA_URL, no duplicar
-                        if not url.startswith(settings.MEDIA_URL):
-                            url = settings.MEDIA_URL + url
-                return url
+                        media_url = settings.MEDIA_URL
+                        # Evitar duplicar MEDIA_URL si ya está prefijado
+                        if not url.startswith(media_url):
+                            return media_url + url
+                    return url
+                    
         except Exception as e:
             print(f"!!! [ERROR] get_photo_url para {obj.name}: {e}")
         return None
