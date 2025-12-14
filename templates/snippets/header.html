@@ -31,6 +31,15 @@
                     <i class="bi bi-list"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
+                    <!-- Opción de Panel de Administración (Solo para Staff/Superuser) -->
+                    {% if user.is_staff or user.is_superuser %}
+                        <li>
+                            <a class="dropdown-item" href="{% url 'admin_users' %}">
+                                <i class="fas fa-user-shield me-2"></i>Panel de Administración
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    {% endif %}
                     <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Configuración</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="{% url 'simple_logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>

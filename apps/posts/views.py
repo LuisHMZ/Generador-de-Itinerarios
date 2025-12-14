@@ -59,7 +59,7 @@ def feed_view(request):
     # Itinerarios: 
     # - Del usuario y sus amigos: mostrar 'friends' y 'public'
     # - De otros usuarios: mostrar solo 'public'
-    raw_itineraries = list(
+    """ raw_itineraries = list(
         Itinerary.objects.filter(
             Q(
                 user_id__in=relevant_users,
@@ -67,6 +67,22 @@ def feed_view(request):
                 privacy__in=['friends', 'public']
             ) | Q(
                 status='published',
+                privacy='public'
+            )
+        ).select_related('user', 'user__profile').distinct()
+    ) """# Itinerarios: 
+    # - ACTIVOS (is_active=True) <--- Filtro de moderación
+    # - PUBLICADOS (status='published')
+    # - Lógica de privacidad (Amigos/Público)
+    raw_itineraries = list(
+        Itinerary.objects.filter(
+            is_active=True,      # <--- AGREGADO: Oculta los baneados por admin
+            status='published'   # <--- MOVIDO: Aplica a todos, lo sacamos de los Q
+        ).filter(
+            Q(
+                user_id__in=relevant_users,
+                privacy__in=['friends', 'public']
+            ) | Q(
                 privacy='public'
             )
         ).select_related('user', 'user__profile').distinct()
@@ -109,11 +125,19 @@ def saved_posts_view(request):
     saved_rels = SavedItinerary.objects.filter(user=request.user).select_related('itinerary', 'itinerary__user')
     # Obtener solo los itinerarios guardados que estén publicados y tengan privacy 'friends' o 'public'
     saved_itin_ids = [rel.itinerary_id for rel in saved_rels]
-    raw_itineraries = list(
+    """ raw_itineraries = list(
         Itinerary.objects.filter(
             id__in=saved_itin_ids,
             status='published',
             privacy__in=['friends', 'public']
+        ).select_related('user', 'user__profile')
+    ) """
+    raw_itineraries = list(
+        Itinerary.objects.filter(
+            id__in=saved_itin_ids,
+            status='published',
+            privacy__in=['friends', 'public'],
+            is_active=True  # <--- AGREGAR ESTO: Filtra los baneados/ocultos
         ).select_related('user', 'user__profile')
     )
     itineraries = process_itineraries(raw_itineraries, request.user)

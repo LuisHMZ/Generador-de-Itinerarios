@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+import ast
 
 # --- Modelos de la App `itineraries` ---
 
@@ -26,6 +27,28 @@ class TouristicPlace(models.Model):
     categories = models.ManyToManyField(Category, related_name="places")
     is_active = models.BooleanField(default=True)
 
+    def get_hours_list(self):
+        """
+        Intenta convertir el string de horarios "['Lunes...', 'Martes...']" 
+        en una lista real de Python. Si falla, devuelve el texto tal cual.
+        """
+        if not self.opening_hours:
+            return []
+            
+        try:
+            # Si el texto empieza con corchete, intentamos parsearlo como lista
+            if self.opening_hours.strip().startswith('['):
+                lista = ast.literal_eval(self.opening_hours)
+                if isinstance(lista, list):
+                    return lista
+            
+            # Si no es lista pero tiene saltos de línea, lo dividimos
+            return self.opening_hours.split('\n')
+            
+        except (ValueError, SyntaxError):
+            # Si falla el parseo, devolvemos una lista con el texto original crudo
+            return [self.opening_hours]
+    
     def __str__(self):
         return self.name
 
@@ -65,7 +88,11 @@ class Itinerary(models.Model):
         choices=PRIVACY_CHOICES, 
         default='public' # O 'private', según tu preferencia
     )
-
+    # NUEVO CAMPO PARA MODERACIÓN
+    is_active = models.BooleanField(
+        default=True, 
+        help_text="Define si el itinerario es visible en la plataforma. Usado para moderación."
+    )
     def total_likes(self):
         return self.likes.count()
 

@@ -13,7 +13,11 @@ class Message(models.Model):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
     user = models.ForeignKey(User, on_delete=models.CASCADE) # El remitente
     content = models.TextField()
+    # --- NUEVO CAMPO ---
+    image = models.ImageField(upload_to='chat_images/', null=True, blank=True)
+    # -------------------
     created_at = models.DateTimeField(auto_now_add=True)
+    
 
 class MessageReadStatus(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE)

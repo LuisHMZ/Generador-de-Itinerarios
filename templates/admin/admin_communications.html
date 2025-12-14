@@ -1,0 +1,461 @@
+{% extends 'Adminbase.html' %}
+{% load static %}
+
+{% block title %}Panel de Comunicaciones - Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<link rel="stylesheet" href="{% static 'css/panel_admin.css' %}">
+    <link rel="stylesheet" href="{% static 'css/admin-permisos.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+<style>
+    /* --- Estilos base del Admin --- */
+    .admin-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden; }
+    .nav-pills .nav-link { color: #64748b; background-color: transparent; border: 1px solid #e2e8f0; font-weight: 600; transition: all 0.2s; }
+    .nav-pills .nav-link.active { background-color: #1F3C5A; color: white; border-color: #1F3C5A; box-shadow: 0 4px 6px rgba(31, 60, 90, 0.2); }
+    .nav-pills .nav-link:hover:not(.active) { background-color: #f8fafc; color: #1F3C5A; }
+    .selector-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; cursor: pointer; transition: all 0.2s; background: white; }
+    .selector-card:hover { border-color: #1F3C5A; background-color: #f8fafc; }
+    .form-check-input:checked + .selector-card { border-color: #1F3C5A; background-color: #f0f7ff; color: #1F3C5A; font-weight: bold; box-shadow: 0 0 0 1px #1F3C5A; }
+    
+    .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; }
+    .file-upload-wrapper input[type=file] { position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; width: 100%; }
+
+    /* --   - NUEVOS ESTILOS: BUSCADOR DE USUARIOS --- */
+    .admin-card {
+    /* ANTES: overflow: hidden; */
+    overflow: visible !important; /* Permitimos que los hijos salgan de la tarjeta */
+}
+
+.search-results-container {
+    position: absolute;
+    top: 100%;  
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Sombra más fuerte */
+    z-index: 1050; /* Z-Index superior al de Bootstrap (1000) */
+    max-height: 250px;
+    overflow-y: auto;
+    display: none;
+}
+    .search-result-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #f8f9fa;
+        transition: background 0.2s;
+    }
+    .search-result-item:hover { background-color: #f1f5f9; }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-right: 10px; }
+
+    /* --- NUEVOS ESTILOS: EMOJI PICKER --- */
+    .textarea-wrapper { position: relative; }
+    .emoji-trigger {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+    }
+    .emoji-trigger:hover { opacity: 1; transform: scale(1.1); }
+    /* Contenedor del picker (popover) */
+    #emoji-picker-container { position: absolute; bottom: 50px; right: 0; z-index: 10; display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="container my-1 flex-grow-1">
+        <div class="row g-0 admin-container shadow-sm rounded-4 overflow-hidden">
+            <aside class="col-lg-3 admin-sidebar p-4 border-end bg-light">
+                <div class="text-center mb-4 profile-section">
+                    {% if request.user.profile.profile_picture %}
+                        <img src="{{ request.user.profile.profile_picture.url }}" class="admin-avatar mb-3 rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                    {% else %}
+                        <img src="https://via.placeholder.com/100" alt="Admin" class="admin-avatar mb-3 rounded-circle">
+                    {% endif %}
+                    <h5 class="fw-bold mb-0">{{ request.user.first_name|default:request.user.username }}</h5>
+                    <small class="text-muted">{{ request.user.email }}</small>
+                </div>
+
+                <nav class="nav flex-column admin-nav">
+                    
+                    <div class="nav-item-group mb-2">
+                        <button class="nav-link btn-collapse w-100 d-flex justify-content-between align-items-center collapsed" 
+                                type="button" data-bs-toggle="collapse" data-bs-target="#menuUsuarios" aria-expanded="true">
+                            <span><i class="fas fa-users-cog fa-fw me-2"></i> Gestionar usuarios</span>
+                            <i class="fas fa-chevron-down small transition-icon"></i>
+                        </button>
+                        <div class="collapse" id="menuUsuarios">
+                            <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
+                                <li>
+                                    <a href="{% url 'admin_login_logs' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                        Inicios de sesión
+                                    </a>
+                                </li>
+                                <li><a href="{% url 'admin_users' %}" class="d-block py-1 text-decoration-none text-secondary small">Permisos de usuario</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="nav-item-group mb-2">
+                        <button class="nav-link btn-collapse w-100 d-flex justify-content-between align-items-center collapsed" 
+                                type="button" data-bs-toggle="collapse" data-bs-target="#menuSistema">
+                            <span><i class="fas fa-cogs fa-fw me-2"></i> Gestionar sistema</span>
+                            <i class="fas fa-chevron-down small transition-icon"></i>
+                        </button>
+                        <div class="collapse " id="menuSistema">
+                            <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
+                                <li>
+                                    <a href="{% url 'admin_reports_list' %}" class="d-block py-1 text-decoration-none  text-secondary small">
+                                        Reportes
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'itineraries:admin_places_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                        Administrar locaciones
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="nav-item-group mb-4">
+                        <button class="nav-link btn-collapse w-100 d-flex justify-content-between align-items-center collapsed" 
+                                type="button" data-bs-toggle="collapse" data-bs-target="#menuContenido">
+                            <span><i class="fas fa-folder-open fa-fw me-2"></i> Gestionar contenido</span>
+                            <i class="fas fa-chevron-down small transition-icon"></i>
+                        </button>
+                        <div class="collapse show" id="menuContenido">
+                            <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
+                                <li><a href="{% url 'admin_communications' %}" class="d-block py-1 text-decoration-none fw-bold text-primary small">Envío de notificaciones</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'simple_logout' %}" class="nav-link text-danger fw-semibold mt-auto" data-bs-toggle="modal" data-bs-target="#modalCerrarSesion">
+                        <i class="fas fa-sign-out-alt fa-fw me-2"></i> Cerrar sesión
+                    </a>
+                </nav>
+            </aside>
+
+            <section class="col-lg-9 p-4 bg-white d-flex flex-column">
+            <h2 class="fw-bold mb-4" style="color: #1F3C5A;">Centro de Comunicaciones</h2>
+
+            <div class="admin-card">
+                <div class="card-header bg-white border-bottom p-4">
+                    <ul class="nav nav-pills nav-fill gap-3" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active py-3" id="pills-notif-tab" data-bs-toggle="pill" 
+                                    data-type="notification" onclick="setCommType('notification')">
+                                <i class="fas fa-bell fa-lg me-2"></i>
+                                <span>Enviar Notificación</span>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link py-3" id="pills-chat-tab" data-bs-toggle="pill" 
+                                    data-type="chat" onclick="setCommType('chat')">
+                                <i class="fas fa-comments fa-lg me-2"></i>
+                                <span>Mensaje Privado</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST" action="" enctype="multipart/form-data" id="commForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="comm_type" id="commTypeInput" value="notification">
+
+                        <div class="mb-5">
+                            <label class="fw-bold text-uppercase text-muted small mb-3 letter-spacing-1">1. Destinatarios</label>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="d-block position-relative">
+                                        <input class="form-check-input d-none" type="radio" name="scope" id="scopeIndividual" value="individual" checked onchange="toggleUserField()">
+                                        <div class="selector-card d-flex align-items-center h-100">
+                                            <div class="bg-light rounded-circle p-3 me-3 text-secondary">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">Usuario Específico</div>
+                                                <small class="text-muted">Contactar a una sola persona</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="d-block position-relative">
+                                        <input class="form-check-input d-none" type="radio" name="scope" id="scopeGlobal" value="global" onchange="toggleUserField()">
+                                        <div class="selector-card d-flex align-items-center h-100" id="cardGlobal">
+                                            <div class="bg-light rounded-circle p-3 me-3 text-secondary">
+                                                <i class="fas fa-bullhorn"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">Global (Todos)</div>
+                                                <small class="text-muted">Enviar a toda la comunidad</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 collapse show" id="userFieldContainer">
+                                <div class="bg-light p-3 rounded-3 border position-relative">
+                                    <label class="form-label fw-bold small text-muted mb-1">Buscar Usuario</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0 text-muted">@</span>
+                                        <input type="text" id="userSearchInput" name="target_username" class="form-control border-start-0" placeholder="Escribe para buscar..." autocomplete="off" required>
+                                    </div>
+                                    <div id="searchResults" class="search-results-container"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="fw-bold text-uppercase text-muted small mb-3 letter-spacing-1">2. Contenido</label>
+                            
+                            <div class="textarea-wrapper">
+                                <textarea id="messageContent" name="content" class="form-control p-3 mb-3" rows="5" placeholder="Escribe tu comunicado aquí..." style="resize: none;" required></textarea>
+                                
+                                <button type="button" class="emoji-trigger" id="emojiBtn" title="Insertar Emoji">
+                                    <i class="far fa-smile"></i>
+                                </button>
+                                <div id="emoji-picker-container"></div>
+                            </div>
+                            
+                            <div id="imageUploadSection" style="display: none;">
+                                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded border border-dashed">
+                                    <div class="file-upload-wrapper btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-image me-2"></i>Adjuntar Imagen
+                                        <input type="file" name="image" accept="image/*" onchange="previewImage(this)">
+                                    </div>
+                                    <small class="text-muted" id="fileNameDisplay">Ningún archivo seleccionado</small>
+                                </div>
+                            </div>
+
+                            <div class="" id="chatWarning" style="display:none;">
+                                
+                            </div>
+                        </div>
+
+                        <div class="d-grid pt-3 border-top">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm" style="background-color: #e57b28; border-color: #e57b28;">
+                                <i class="fas fa-paper-plane me-2"></i>Enviar Comunicado
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+</main>    
+
+       
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://unpkg.com/picmo@latest/dist/umd/index.js"></script>
+
+<script>
+    // --- 1. LÓGICA DE SWEETALERT (Reemplaza mensajes flash) ---
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Convertimos los mensajes de Django en un Array de objetos JS válido
+        // Esto evita errores de sintaxis por saltos de línea dentro de las funciones
+        const djangoMessages = [
+            {% for message in messages %}
+                {
+                    "tags": "{{ message.tags }}",
+                    "text": "{{ message|escapejs }}"
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        // 2. Recorremos el array con JavaScript puro
+        djangoMessages.forEach(msg => {
+            let iconType = 'info';
+            let titleText = 'Información';
+            
+            // Lógica para determinar el icono y título según el tag de Django
+            if (msg.tags.includes('error')) {
+                iconType = 'error';
+                titleText = '¡Error!';
+            } else if (msg.tags.includes('warning')) {
+                iconType = 'warning';
+                titleText = 'Atención';
+            } else if (msg.tags.includes('success')) {
+                iconType = 'success';
+                titleText = '¡Éxito!';
+            }
+
+            // Disparamos la alerta
+            Swal.fire({
+                icon: iconType,
+                title: titleText,
+                text: msg.text,
+                confirmButtonColor: '#1F3C5A',
+                timer: 5000,
+                timerProgressBar: true
+            });
+        });
+    });
+
+    // --- 2. LÓGICA DE EMOJI PICKER (PICMO) ---
+    const container = document.getElementById('emoji-picker-container');
+    const trigger = document.getElementById('emojiBtn');
+    const textarea = document.getElementById('messageContent');
+    let picker;
+
+    // Crear el picker
+    if (window.picmo) {
+        picker = picmo.createPicker({ 
+            rootElement: container,
+            locale: 'es', // Intentar español
+            showRecents: false
+        });
+
+        picker.addEventListener('emoji:select', selection => {
+            // Insertar emoji en la posición del cursor
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            textarea.value = text.substring(0, start) + selection.emoji + text.substring(end);
+            textarea.focus();
+            textarea.selectionEnd = start + selection.emoji.length;
+            
+            // Ocultar picker después de seleccionar
+            container.style.display = 'none';
+        });
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evitar cerrar inmediatamente
+            const isVisible = container.style.display === 'block';
+            container.style.display = isVisible ? 'none' : 'block';
+        });
+
+        // Cerrar si clic afuera
+        document.addEventListener('click', (e) => {
+            if (!container.contains(e.target) && e.target !== trigger) {
+                container.style.display = 'none';
+            }
+        });
+    }
+
+    // --- 3. LÓGICA DE BUSCADOR DE USUARIOS (AJAX) ---
+    const searchInput = document.getElementById('userSearchInput');
+    const resultsContainer = document.getElementById('searchResults');
+    let debounceTimer;
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        clearTimeout(debounceTimer);
+        
+        if (query.length < 2) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+
+        // Debounce para no saturar el servidor
+        debounceTimer = setTimeout(() => {
+            // Asegúrate de crear la URL en urls.py como 'api_search_users'
+            fetch(`/api/search-users/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    resultsContainer.innerHTML = '';
+                    if (data.length > 0) {
+                        resultsContainer.style.display = 'block';
+                        data.forEach(user => {
+                            const item = document.createElement('div');
+                            item.className = 'search-result-item';
+                            item.innerHTML = `
+                                <img src="${user.avatar}" class="search-avatar">
+                                <div>
+                                    <div class="fw-bold small">@${user.username}</div>
+                                    <div class="text-muted small" style="font-size: 0.75rem;">${user.full_name || 'Sin nombre'}</div>
+                                </div>
+                            `;
+                            
+                            // Al hacer clic, rellenar el input
+                            item.addEventListener('click', () => {
+                                searchInput.value = user.username;
+                                resultsContainer.style.display = 'none';
+                            });
+                            
+                            resultsContainer.appendChild(item);
+                        });
+                    } else {
+                        resultsContainer.style.display = 'none';
+                    }
+                })
+                .catch(err => console.error('Error buscando usuarios:', err));
+        }, 300); // Esperar 300ms después de dejar de escribir
+    });
+
+    // Ocultar resultados si clic afuera
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.style.display = 'none';
+        }
+    });
+
+
+    // --- 4. TUS FUNCIONES ORIGINALES ---
+    function setCommType(type) {
+        document.getElementById('commTypeInput').value = type;
+        const scopeGlobal = document.getElementById('scopeGlobal');
+        const cardGlobal = document.getElementById('cardGlobal');
+        const chatWarning = document.getElementById('chatWarning');
+        const imageSection = document.getElementById('imageUploadSection');
+        
+        if (type === 'chat') {
+            scopeGlobal.disabled = true;
+            cardGlobal.style.opacity = '0.5';
+            cardGlobal.style.pointerEvents = 'none';
+            document.getElementById('scopeIndividual').click();
+            chatWarning.style.display = 'flex';
+            imageSection.style.display = 'block';
+        } else {
+            scopeGlobal.disabled = false;
+            cardGlobal.style.opacity = '1';
+            cardGlobal.style.pointerEvents = 'auto';
+            chatWarning.style.display = 'none';
+            imageSection.style.display = 'none';
+        }
+    }
+
+    function toggleUserField() {
+        const isGlobal = document.getElementById('scopeGlobal').checked;
+        const container = document.getElementById('userFieldContainer');
+        const input = container.querySelector('input');
+        if (isGlobal) {
+            new bootstrap.Collapse(container, { toggle: false }).hide();
+            input.required = false;
+        } else {
+            new bootstrap.Collapse(container, { toggle: false }).show();
+            input.required = true;
+        }
+    }
+
+    function previewImage(input) {
+        const display = document.getElementById('fileNameDisplay');
+        if (input.files && input.files[0]) {
+            display.textContent = input.files[0].name;
+            display.classList.add('text-success', 'fw-bold');
+        } else {
+            display.textContent = "Ningún archivo seleccionado";
+            display.classList.remove('text-success', 'fw-bold');
+        }
+    }
+</script>
+{% endblock %}

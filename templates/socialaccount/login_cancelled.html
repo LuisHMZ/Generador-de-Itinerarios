@@ -1,0 +1,78 @@
+{% extends "_base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Inicio de sesión cancelado" %}{% endblock %}
+
+{% block extra_css %}
+    <!-- Reutilizamos los estilos de login para el contenedor -->
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <style>
+        .cancelled-icon {
+            color: #f39c12; /* Un color naranja/ámbar de advertencia */
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+{% endblock %}
+
+<!-- 
+    Sobrescribimos la barra de navegación.
+    El usuario no se logueó, así que mostramos las opciones de autenticación.
+-->
+{% block navbar_links %}
+    <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}">Inicio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}">Destinos</a>
+        </li> 
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}">Contacto</a>
+        </li>
+        
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'simple_login' %}">Iniciar Sesión</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'simple_register' %}">Registrarse</a>
+        </li>
+    </ul>
+{% endblock navbar_links %}
+
+
+{% block content %}
+<div class="container my-5">
+    <div class="container-register text-center" style="max-width: 650px; margin: 0 auto;">
+        
+        <!-- Icono visual -->
+        <div class="cancelled-icon">
+            <i class="fas fa-ban"></i>
+        </div>
+
+        <h1 class="register-title">{% trans "Inicio de sesión cancelado" %}</h1>
+        
+        <div class="alert alert-light mt-3 text-center border" role="alert">
+            <p class="register-subtitle mb-0">
+                {% url 'simple_login' as login_url %}
+                {% blocktrans %}Ha decidido cancelar el inicio de sesión en nuestro sitio usando una de sus cuentas. Si ha sido un error, por favor <a href="{{ login_url }}" style="color: #49a3a3; font-weight: 600; text-decoration: none;">inicie sesión</a> nuevamente.{% endblocktrans %}
+            </p>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="d-grid gap-2 mt-5">
+            <!-- Botón principal para reintentar login -->
+            <a href="{% url 'simple_login' %}" class="btn btn-register">
+                <span><i class="fas fa-sign-in-alt me-2"></i> VOLVER A INICIAR SESIÓN</span>   
+            </a>
+            
+            <!-- Botón secundario para volver al inicio -->
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary mt-2" style="border-radius: 8px;">
+                {% trans "Ir a Inicio" %}
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

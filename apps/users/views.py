@@ -2,6 +2,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.http import JsonResponse
+
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login as auth_login, logout as auth_logout
@@ -16,6 +17,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.views.decorators.http import require_POST
 User = get_user_model()
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 
@@ -34,9 +36,10 @@ from apps.posts.models import Post
 from apps.itineraries.models import Itinerary
 from friendship.models import Friend, FriendshipRequest 
 from friendship.exceptions import AlreadyFriendsError, AlreadyExistsError 
-
+from apps.itineraries.models import Itinerary
+from apps.posts.models import Post
 User = get_user_model()
-
+from apps.messaging.models import Conversation, Message
 
 # --- VISTAS DE AUTENTICACIÓN (Register, Login, Logout) ---
 import traceback
@@ -590,10 +593,13 @@ def admin_user_detail_view(request, user_id):
     # 2. Intentamos obtener su perfil (si existe)
     # Usamos getattr para evitar errores si por alguna razón no tiene perfil creado
     profile = getattr(target_user, 'profile', None)
-
+    user_itineraries = Itinerary.objects.filter(user=target_user).order_by('-created_at')
+    user_posts = Post.objects.filter(user=target_user).order_by('-created_at')
     context = {
         'target_user': target_user,
-        'profile': profile
+        'profile': profile,
+        'user_itineraries': user_itineraries, # <--- Pasar al template
+        'user_posts': user_posts,
     }
     return render(request, 'users/admin_user_profile.html', context)    
 
@@ -647,3 +653,97 @@ def remove_user_admin(request, user_id):
     usuario.save()
     messages.success(request, f"Se han revocado los permisos de administrador a {usuario.username}.")
     return redirect('admin_users')
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def admin_communications_panel(request):
+    if request.method == 'POST':
+        comm_type = request.POST.get('comm_type') # 'notification' o 'chat'
+        scope = request.POST.get('scope')         # 'global' o 'individual'
+        target_username = request.POST.get('target_username')
+        content = request.POST.get('content')
+        image_file = request.FILES.get('image')
+        
+        if not content:
+            messages.error(request, "El mensaje no puede estar vacío.")
+            return redirect('admin_communications')
+
+        # --- LÓGICA DE DESTINATARIOS ---
+        recipients = []
+        if scope == 'global':
+            recipients = User.objects.filter(is_active=True)
+        else:
+            try:
+                user = User.objects.get(username=target_username)
+                recipients = [user]
+            except User.DoesNotExist:
+                messages.error(request, f"El usuario @{target_username} no existe.")
+                return redirect('admin_communications')
+
+        # --- CASO 1: NOTIFICACIONES (Campanita) ---
+        if comm_type == 'notification':
+            # Usamos bulk_create para eficiencia masiva
+            notifs_to_create = [
+                Notification(
+                    recipient=user,
+                    actor=request.user,
+                    message=f"Aviso Admin: {content}",
+                    link="#" # Opcional: link a normas o post específico
+                ) for user in recipients
+            ]
+            Notification.objects.bulk_create(notifs_to_create)
+            messages.success(request, f"Notificación enviada a {len(notifs_to_create)} usuarios.")
+
+        # --- CASO 2: MENSAJES DE CHAT ---
+        elif comm_type == 'chat':
+            if scope == 'global':
+                messages.warning(request, "Por seguridad y rendimiento, no se permite el envío masivo por Chat. Usa Notificaciones.")
+            else:
+                # Lógica para mensaje individual (1 a 1)
+                target_user = recipients[0]
+                
+                # 1. Buscar o Crear Conversación
+                # Esta lógica depende de cómo tu equipo definió Conversation.
+                # Asumimos que busca una conversación entre Admin y Target.
+                conversation = Conversation.objects.filter(participants=request.user).filter(participants=target_user).first()
+                
+                if not conversation:
+                    conversation = Conversation.objects.create()
+                    conversation.participants.add(request.user, target_user)
+                
+                # 2. Crear el Mensaje
+                Message.objects.create(
+                    conversation=conversation,
+                    user=request.user,
+                    content=content,
+                    image=request.FILES.get('image')
+                )
+                messages.success(request, f"Mensaje enviado a @{target_user.username}.")
+
+        return redirect('admin_communications')
+
+    return render(request, 'admin/admin_communications.html')
+
+@login_required
+def api_search_users(request):
+    query = request.GET.get('q', '')
+    if len(query) < 2:
+        return JsonResponse([], safe=False)
+    
+    # Busca por username, nombre o email
+    users = User.objects.filter(
+        Q(username__icontains=query) | 
+        Q(email__icontains=query) |
+        Q(first_name__icontains=query)
+    ).exclude(is_active=False)[:10] # Limitar a 10 resultados
+    
+    results = []
+    for u in users:
+        pic_url = u.profile.profile_picture.url if hasattr(u, 'profile') and u.profile.profile_picture else '/static/img/default-avatar.png'
+        results.append({
+            'username': u.username,
+            'full_name': u.get_full_name(),
+            'avatar': pic_url
+        })
+    
+    return JsonResponse(results, safe=False)

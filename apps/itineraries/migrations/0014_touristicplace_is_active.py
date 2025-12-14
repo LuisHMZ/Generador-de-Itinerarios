@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('itineraries', '0013_itinerary_privacy'),
+        ('itineraries', '0011_itinerarycomment_parent'),
     ]
 
     operations = [

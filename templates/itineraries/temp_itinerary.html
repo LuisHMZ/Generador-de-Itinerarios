@@ -1,0 +1,662 @@
+{% extends "Adminbase.html" %}
+{% load static %}
+
+{% block title %}{{ itinerary.title }} - MexTur{% endblock %}
+{% block extra_css %}
+  <style>
+    /* Estilos originales de tu perfil.html */
+    :root{ --brand:#1CA6A6; --brand2:#2EC2C2; --text:#0f172a; --muted:#64748b; --border:#e2e8f0; --bg:#f8fafc; --card:#ffffff; --primary:#e67e22; --primary-700:#cf6d13; --shadow:0 10px 24px rgba(2, 6, 23, .08); --radius:18px; }
+    .wrap{display:grid; grid-template-columns: 260px 1fr; gap:26px; max-width:1200px; margin:22px auto; padding:0 18px}
+    aside{background:#fff; border:1px solid var(--border); border-radius:12px; padding:10px; }
+    .aside-title{padding:14px 14px 6px; font-weight:700; color:#0b3f3f; opacity:.85}
+    .nav{display:flex; flex-direction:column}
+    .nav a{display:flex; align-items:center; gap:10px; padding:12px 14px; margin:4px 6px; border-radius:10px; color:var(--text); text-decoration:none; font-weight:600}
+    .nav a svg{width:18px; height:18px; color:var(--muted)}
+    .nav a:hover{background:#f1f5f9}
+    main h1{font-size:40px; margin:10px 0 18px}
+    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px}
+    .card-head{display:flex; align-items:center; justify-content:space-between; padding-bottom:14px; border-bottom:1px dashed var(--border)}
+    .userbox{display:flex; gap:14px; align-items:center}
+    .avatar{width:36px; height:36px; border-radius:50%; background:#e2e8f0; overflow:hidden; display:grid; place-items:center; font-weight:800; color:#475569}
+    .avatar img {width: 100%; height: 100%; object-fit: cover;}
+    .u-meta strong{display:block}
+    .u-meta small{color:var(--muted)}
+    .status{display:flex; align-items:center; gap:8px; color:var(--muted); font-weight:600}
+    .dot{width:10px;height:10px;border-radius:50%;}
+    .dot-active{background:#22c55e;box-shadow:0 0 0 3px #dcfce7}
+    .dot-suspended{background:#ef4444;box-shadow:0 0 0 3px #fee2e2}
+    
+    .field{display:grid; gap:6px; margin-bottom: 16px;}
+    label{font-weight:700; color:#0b3f3f}
+    input[type="text"], input[type="date"], textarea{width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:#fff; outline:none; font:inherit}
+    /* Hacemos que los inputs parezcan de solo lectura */
+    input:disabled, textarea:disabled {background:#f8fafc; color:#64748b; cursor: not-allowed;}
+    .rowPerfil{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+
+    .itinerary-tags .badge {
+        margin-right: 5px;
+        font-size: 0.75em;
+        padding: 0.4em 0.7em;
+        border-radius: 6px;
+        color: #fff;
+    }
+
+    .tag-cultura {
+        background-color: #f39c12;
+    }
+    .card-lugar-itinerario {
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+    }
+    .card-lugar-itinerario:hover {
+        transform: translateX(5px);
+        background-color: #f8f9fa; /* Gris muy suave */
+        border-color: #dee2e6 !important;
+    }
+    
+    /* Icono de chevron al hacer hover */
+    .card-lugar-itinerario:hover .btn-light {
+        background-color: #1F3C5A;
+        color: white !important;
+        border-color: #1F3C5A !important;
+    }
+
+    /* Línea de tiempo */
+    .day-section {
+        border-left-color: #e9ecef !important; /* Color de la línea vertical */
+    }
+   .itinerary-card {
+    max-width: 800px; /* Ancho máximo de la tarjeta principal */
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+}
+
+.itinerary-title {
+    color: #1F3C5A; /* Azul oscuro */
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.itinerary-location {
+    font-size: 0.9em;
+    color: #6c757d; /* Gris */
+}
+
+.itinerary-tags .badge {
+    margin-right: 5px;
+    font-size: 0.75em;
+    padding: 0.4em 0.7em;
+    border-radius: 6px;
+    color: #fff;
+}
+.tag-cultura { background-color: #f39c12; } /* Naranja */
+.tag-museos { background-color: #3498db; } /* Azul claro */
+.tag-actividades { background-color: #9b59b6; } /* Morado */
+.tag-naturaleza { background-color: #2ecc71; } /* Verde */
+.tag-cultural { background-color: #f39c12; } /* Naranja */
+
+
+.itinerary-main-image img {
+    max-height: 300px; /* Limita altura de imagen principal */
+    object-fit: cover;
+    width: 100%;
+}
+
+.itinerary-description p {
+    color: #555;
+    line-height: 1.6;
+}
+
+/* Estilos de los Días */
+.day-section .day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #49A3A3; /* Azul oscuro */
+    color: #ffffff;
+    padding: 10px 15px;
+    border-radius: 8px 8px 0 0;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+.day-section .day-date {
+    font-size: 0.9em;
+    font-weight: 400;
+    color: #bdcde0;
+}
+
+.day-stops {
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    background-color: #ffffff;
+}
+
+.stop-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 15px;
+}
+/* Quita borde inferior del último item */
+.list-group-flush > .list-group-item:last-child {
+    border-bottom-width: 0;
+}
+
+.stop-number {
+    font-weight: 600;
+    color: #49A3A3; /* Teal */
+    font-size: 1em;
+    min-width: 20px;
+    text-align: center;
+}
+
+.stop-image {
+    width: 50px;
+    height: 35px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.stop-name {
+    flex-grow: 1;
+    font-weight: 500;
+    color: #333;
+    font-size: 0.95em;
+}
+
+.stop-actions .btn {
+    font-size: 0.75em;
+    padding: 0.2rem 0.5rem;
+}
+
+/* Sección Rutas */
+.route-section .route-header {
+    color: #1F3C5A;
+}
+.route-section .form-select-sm {
+    font-size: 0.8em;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+}
+.mapa-placeholder-final {
+    background-color: #e9ecef;
+    min-height: 250px; /* Altura mínima para el mapa */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.mapa-placeholder-final img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Botones Finales */
+.final-actions .boton-atras {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+.final-actions .boton-atras:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+.final-actions .boton-guardar-cambios {
+    background-color: #48bbbb; /* Teal */
+    border-color: #48bbbb;
+}
+.final-actions .boton-guardar-cambios:hover {
+    background-color: #3a9a9a;
+    border-color: #3a9a9a;
+}
+.final-actions .btn {
+     padding: 0.5rem 1.5rem;
+     font-weight: 500;
+     border-radius: 8px;
+}
+
+/* Media Queries */
+@media (max-width: 576px) {
+    .itinerary-card .card-body {
+        padding: 20px;
+    }
+    .itinerary-title {
+        font-size: 1.5rem;
+    }
+    .stop-item {
+        gap: 10px;
+        flex-wrap: wrap; /* Permite que los botones bajen si no caben */
+    }
+    .stop-image {
+        width: 40px;
+        height: 30px;
+    }
+    .stop-name {
+        font-size: 0.9em;
+        flex-basis: 100%; /* Nombre ocupa toda la línea bajo la imagen */
+        margin-top: -10px; /* Ajuste visual */
+        margin-left: 30px; /* Alineación con el texto superior */
+    }
+    .stop-actions {
+       margin-left: 30px;
+    }
+     .final-actions {
+        flex-direction: column-reverse; /* Apila botones */
+        gap: 10px;
+        align-items: stretch; /* Ancho completo */
+    }
+
+    .modal-detalle-lugar .imagen-principal {
+        width: 100%;             /* La imagen ocupa el 100% del ancho del modal */
+        max-height: 350px;       /* ¡Esta es la clave! Fija una altura máxima */
+        object-fit: cover;       /* Evita que la imagen se distorsione */
+        border-radius: 0.5rem;   /* Bordes redondeados (opcional, por estilo) */
+        margin-bottom: 1.5rem;   /* Espacio antes del texto */
+    }
+
+}
+
+.btn-primary {
+    background-color: #49A3A3;
+    border-color: #49A3A3;
+}
+
+.btn-primary:hover {
+    background-color: #3a9a9a;
+    border-color: #3a9a9a;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container my-5 d-flex justify-content-center">
+        
+    <aside class="col-lg-2 col-md-3 d-md-block">
+        <div class="aside-title">Acciones Admin</div>
+        <nav class="nav">
+            <a href="{% url 'admin_users' %}">
+                <i class="fas fa-arrow-left text-muted me-2"></i> Volver a la lista
+            </a>
+            <a href="mailto:{{ target_user.email }}?subject=Comunicado Oficial MexTur - Atención al Usuario&body=Hola {{ target_user.username|urlencode }},%0D%0A%0D%0AEscribo respecto a tu cuenta en MexTur..." 
+            class="text-decoration-none text-dark d-block p-2 rounded hover-bg-light">
+                <i class="fas fa-envelope text-muted me-2"></i> Contactar Usuario
+            </a>
+            <hr style="margin: 10px 0; border-color: #eee;">
+            
+        </nav>
+    </aside>
+    
+    <div class="justify-content-center">
+        <h2 class="fw-bold mb-4" style="color: #1F3C5A;">Itinerario Reportado</h2>
+        <div class="col-lg-9">
+            
+            <div class="card shadow border-0 rounded-4 overflow-hidden mb-5">
+                
+                <div class="position-relative" style="height: 350px;">
+                    {% if itinerary.banner_pic %}
+                        <img src="{{ itinerary.banner_pic.url }}" class="w-100 h-100 object-fit-cover">
+                    {% else %}
+                        <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center">
+                            <i class="fas fa-map-marked-alt fa-4x text-white opacity-50"></i>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-body p-4 p-lg-5">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="fw-bold text-dark mb-2" style="font-family: 'Poppins', sans-serif;">{{ itinerary.title }}</h1>
+                            <div class="mb-3 itinerary-tags">
+                                <span class="badge tag-cultura">{{ itinerary.category }}</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar">
+                                    {% if itinerary.user.profile.profile_picture %}
+                                        <img src="{{ itinerary.user.profile.profile_picture.url }}" alt="Avatar">
+                                    {% else %}
+                                        {{ itinerary.user.username|slice:":1"|upper }}
+                                    {% endif %}
+                                </div>
+                            <!-- <img src="{% if itinerary.user.profile.profile_picture %}{{ itinerary.user.profile.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                                class="rounded-circle border" 
+                                style="width: 30px; height: 30px;"> -->
+                                <span class="text-muted">Por <strong>{{ itinerary.user.username }}</strong></span>
+                                <span class="text-muted small">• {{ itinerary.created_at|date:"d M Y" }}</span>
+                                
+                            </div>
+                            
+                        </div>
+                        
+                        <div class="text-center bg-light rounded-3 px-3 py-2 border align-items-center justify-content-center">
+    
+                            <div class="h4 fw-bold text-warning mb-0">
+                                {{ itinerary.get_average_rating|default:"0.0" }} 
+                                <small class="text-muted fs-6">/5</small>
+                            </div>
+
+                            <small class="text-muted" style="font-size: 0.7rem;">
+                                {{ itinerary.feed_ratings.count }} Reseñas
+                            </small>
+
+                        </div>  
+                    </div>
+
+                    <p class="text-secondary lead fs-6 mb-4">{{ itinerary.description }}</p>
+                    <div class="info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span class="text-muted">Del {{ itinerary.start_date|date:"d M. Y" }} al {{ itinerary.end_date|date:"d M. Y" }}</span>
+                    </div>        
+                    <hr class="my-4 text-muted opacity-25">
+
+                    <h4 class="fw-bold mb-4" style="color: #1F3C5A;"><i class="fas fa-route me-2"></i>Ruta del Viaje</h4>
+                    
+                    <div class="itinerary-days mt-4">
+                        {% if stops_by_day %}
+                            {% for day, stops in stops_by_day %}
+                                <div class="day-section mb-5 position-relative ps-4 border-start border-2 border-light">
+                                    
+                                    <div class="position-absolute top-0 start-0 translate-middle-x bg-white py-1">
+                                        <div class="rounded-circle bg-warning border border-4 border-white shadow-sm" style="width: 16px; height: 16px;"></div>
+                                    </div>
+                                    
+                                    <h4 class="day-header fw-bold mb-3 ms-2" style="color: #1F3C5A;">
+                                        <i class="far fa-calendar-alt me-2 text-muted small"></i>Día {{ day }}
+                                    </h4>
+
+                                    <div class="list-group list-group-flush day-stops gap-3 ms-2">
+                                        {% for stop in stops %}
+                                        <div class="card card-lugar-itinerario border-0 shadow-sm rounded-3 overflow-hidden cursor-pointer position-relative"
+                                            onclick="cargarLugarModal(this)"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalDetalleLugar"
+                                            data-lat="{{ stop.touristic_place.lat }}"
+                                            data-lng="{{ stop.touristic_place.long }}"
+                                            data-nombre="{{ stop.touristic_place.name }}"
+                                            data-img="{% if stop.touristic_place.photo %}{{ stop.touristic_place.photo.url }}{% endif %}"
+                                            data-addr="{{ stop.touristic_place.address }}"
+                                            data-desc="{{ stop.touristic_place.description|default:'Sin descripción' }}">
+                                            
+                                            <div class="card-body p-3 d-flex align-items-center gap-3">
+                                                <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle bg-light text-secondary fw-bold border" 
+                                                    style="width: 35px; height: 35px;">
+                                                    {{ stop.placement }}
+                                                </div>
+
+                                                <div class="flex-shrink-0 rounded-3 overflow-hidden border" style="width: 60px; height: 60px;">
+                                                    {% if stop.touristic_place.photo %}
+                                                        <img src="{{ stop.touristic_place.photo.url }}" class="w-100 h-100 object-fit-cover">
+                                                    {% else %}
+                                                        <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-white small">
+                                                            <i class="fas fa-image"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1 fw-bold text-dark">{{ stop.touristic_place.name }}</h6>
+                                                    <p class="mb-0 text-muted small text-truncate" style="max-width: 90%;">
+                                                        <i class="fas fa-map-marker-alt text-danger me-1"></i>{{ stop.touristic_place.address }}
+                                                    </p>
+                                                </div>
+
+                                                <div class="ms-auto">
+                                                    <button class="btn btn-sm btn-light rounded-circle border text-primary">
+                                                        <i class="fas fa-chevron-right"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-light border text-center py-4 rounded-3">
+                                <i class="fas fa-map-signs fa-2x text-muted mb-2"></i>
+                                <p class="text-muted mb-0">Este itinerario aún no tiene paradas registradas.</p>
+                            </div>
+                        {% endif %}
+
+                        <div class="route-section mt-5 bg-white p-1 rounded-4 shadow-sm border">
+                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-light rounded-top-4">
+                                <h5 class="mb-0 fw-bold" style="color: #1F3C5A;"><i class="fas fa-map-marked-alt me-2"></i>Vista de Mapa</h5>
+                                <select id="dia-mapa-select" class="form-select form-select-sm border-0 bg-white shadow-sm fw-bold text-secondary" style="width: auto;">
+                                    <option value="todos">Todos los días</option>
+                                    {% for day, stops in stops_by_day %}
+                                        <option value="{{ day }}">Día {{ day }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="position-relative" style="height: 400px; width: 100%;">
+                                <div id="map-preview" class="h-100 w-100 rounded-bottom-4"></div>
+                                
+                                {% if not google_api_key %}
+                                <div class="position-absolute top-0 start-0 w-100 h-100 bg-light d-flex align-items-center justify-content-center z-3 opacity-75">
+                                    <span class="text-muted">Mapa requiere API Key</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalDetalleLugar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 rounded-4 overflow-hidden shadow-lg">
+            
+            <div class="position-relative" style="height: 250px;">
+                
+                <img id="modalLugarImg" src="" class="w-100 h-100 object-fit-cover" style="display: none;">
+                
+                <div id="modalLugarFallback" class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-white" style="display: none;">
+                    <i class="fas fa-image fa-4x opacity-50"></i>
+                </div>
+
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 bg-white p-2 rounded-circle opacity-100" data-bs-dismiss="modal"></button>
+                
+                <div class="position-absolute bottom-0 start-0 w-100 p-4" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+                    <h3 class="fw-bold text-white mb-0" id="modalLugarTitulo" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);"></h3>
+                </div>
+            </div>
+
+            <div class="modal-body p-4 bg-white">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6 class="fw-bold text-uppercase text-secondary small mb-2">Descripción</h6>
+                        <p class="text-muted" id="modalLugarDesc"></p>
+                    </div>
+                    <div class="col-md-4 border-start">
+                        <h6 class="fw-bold text-uppercase text-secondary small mb-2">Ubicación</h6>
+                        <p class="small text-muted mb-0"><i class="fas fa-map-marker-alt text-danger me-2"></i><span id="modalLugarAddr"></span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-dark-transparent {
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    }
+    .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    .hover-scale:hover { transform: scale(1.01); transition: transform 0.2s; }
+</style>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+    // ==========================================
+    // 1. LÓGICA DEL MODAL (Visualización)
+    // ==========================================
+    function cargarLugarModal(element) {
+    const nombre = element.getAttribute('data-nombre');
+    const desc = element.getAttribute('data-desc');
+    const addr = element.getAttribute('data-addr');
+    // Obtenemos la imagen y quitamos espacios en blanco accidentales
+    let img = (element.getAttribute('data-img') || '').trim();
+
+    document.getElementById('modalLugarTitulo').textContent = nombre;
+    document.getElementById('modalLugarDesc').textContent = desc || "Sin descripción disponible.";
+    document.getElementById('modalLugarAddr').textContent = addr || "Dirección no especificada.";
+    
+    const imgEl = document.getElementById('modalLugarImg');
+    const fallbackEl = document.getElementById('modalLugarFallback');
+
+    // Lógica corregida: Si img tiene contenido real, mostramos la foto
+    if (img && img.length > 0 && img !== 'None') {
+        imgEl.src = img;
+        imgEl.style.display = 'block';
+        if(fallbackEl) fallbackEl.style.display = 'none';
+    } else {
+        // Si no hay foto, mostramos el cuadro gris (fallback)
+        imgEl.style.display = 'none';
+        imgEl.src = ''; // Limpiamos src anterior
+        if(fallbackEl) fallbackEl.style.display = 'flex';
+    }
+}
+
+    // ==========================================
+    // 2. LÓGICA DEL MAPA (Marcadores + Rutas)
+    // ==========================================
+    let map = null;
+    let markers = [];
+    let directionsService = null;
+    let directionsRenderer = null;
+
+    function initMap() {
+        const mapElement = document.getElementById("map-preview");
+        if (!mapElement) return;
+
+        // Inicializar Mapa
+        map = new google.maps.Map(mapElement, {
+            zoom: 10,
+            center: { lat: 19.4326, lng: -99.1332 }, 
+            mapTypeControl: false,
+        });
+
+        // Servicios de Ruta
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: true, // Ocultamos los de Google (A, B) para usar los nuestros (1, 2)
+            preserveViewport: true 
+        });
+
+        // Carga inicial
+        const todosLosLugares = obtenerLugaresDeHTML();
+        actualizarMapa(todosLosLugares);
+
+        // Listener del Filtro
+        const selectorDia = document.getElementById('dia-mapa-select');
+        if (selectorDia) {
+            selectorDia.addEventListener('change', (e) => {
+                const dia = e.target.value;
+                let lugaresFiltrados = (dia === 'todos') 
+                    ? obtenerLugaresDeHTML() 
+                    : obtenerLugaresDeHTML(dia);
+                
+                actualizarMapa(lugaresFiltrados);
+            });
+        }
+    }
+
+    function obtenerLugaresDeHTML(diaFiltrado = null) {
+        const lugares = [];
+        const secciones = document.querySelectorAll('.day-section');
+        
+        secciones.forEach((seccion) => {
+            const textoDia = seccion.querySelector('.day-header').innerText; 
+            const numeroDia = textoDia.match(/\d+/)[0]; 
+
+            if (diaFiltrado && diaFiltrado !== numeroDia) return; 
+
+            const tarjetas = seccion.querySelectorAll('.card-lugar-itinerario');
+            tarjetas.forEach(card => {
+                const lat = parseFloat(card.getAttribute('data-lat'));
+                const lng = parseFloat(card.getAttribute('data-lng'));
+                
+                // Solo agregamos si son coordenadas válidas
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    lugares.push({
+                        lat: lat,
+                        lng: lng,
+                        nombre: card.getAttribute('data-nombre')
+                    });
+                }
+            });
+        });
+        return lugares;
+    }
+
+    // --- FUNCIÓN HÍBRIDA: Marcadores Míos + Ruta Tuya ---
+    async function actualizarMapa(lugares) {
+        // 1. Limpieza
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+        directionsRenderer.setDirections({ routes: [] });
+
+        if (lugares.length === 0) return;
+
+        const bounds = new google.maps.LatLngBounds();
+
+        // 2. DIBUJAR MARCADORES (Siempre útil en Admin)
+        lugares.forEach((lugar, i) => {
+            const pos = { lat: lugar.lat, lng: lugar.lng };
+            const marker = new google.maps.Marker({
+                position: pos,
+                map: map,
+                title: lugar.nombre,
+                label: (i + 1).toString()
+            });
+            markers.push(marker);
+            bounds.extend(pos);
+        });
+
+        // Ajustar zoom a los puntos
+        map.fitBounds(bounds);
+
+        // 3. CALCULAR RUTA (Tu lógica mejorada)
+        if (lugares.length > 1) {
+            const origin = lugares[0];
+            const destination = lugares[lugares.length - 1];
+            
+            // Waypoints son los del medio (excluyendo inicio y fin)
+            const waypoints = lugares.slice(1, -1).map(lugar => ({
+                location: { lat: lugar.lat, lng: lugar.lng },
+                stopover: true
+            }));
+
+            const request = {
+                origin: { lat: origin.lat, lng: origin.lng },
+                destination: { lat: destination.lat, lng: destination.lng },
+                waypoints: waypoints,
+                travelMode: 'WALKING' // O 'WALKING' según prefieras
+            };
+
+            try {
+                const response = await directionsService.route(request);
+                if (response.status === 'OK') {
+                    directionsRenderer.setDirections(response);
+                } else {
+                    console.warn("Ruta no disponible:", response.status);
+                }
+            } catch (error) {
+                console.error("Error API Google:", error);
+            }
+        }
+    }
+</script>
+
+{% if google_api_key %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=places,marker&callback=initMap" async defer></script>
+{% endif %}
+{% endblock %}

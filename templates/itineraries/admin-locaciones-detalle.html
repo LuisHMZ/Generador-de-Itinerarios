@@ -90,9 +90,18 @@
                         <div class="col-md-6">
                             <div class="d-flex">
                                 <i class="fas fa-clock text-warning mt-1 me-3"></i>
-                                <div>
-                                    <strong class="d-block text-dark">Horario</strong>
-                                    <span class="text-muted small">{{ place.opening_hours|default:"No especificado" }}</span>
+                                <div class="w-100">
+                                    <strong class="d-block text-dark mb-1">Horario</strong>
+                                    
+                                    <ul class="list-unstyled mb-0 small text-muted">
+                                        {% for dia in place.get_hours_list %}
+                                            <li class="mb-1">
+                                                {{ dia }}
+                                            </li>
+                                        {% empty %}
+                                            <li>No especificado</li>
+                                        {% endfor %}
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -124,7 +133,12 @@
                             {% endif %}
                         </form>
 
-                        <button class="btn btn-outline-danger fw-bold" data-bs-toggle="modal" data-bs-target="#modalEliminar">
+                        <button class="btn btn-outline-danger fw-bold" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#modalEliminar"
+                                data-nombre="{{ place.name}}"
+                                data-url="{% url 'itineraries:admin_place_delete' place.id %}"
+                                onclick="confirmarEliminar(this)">
                             <i class="fas fa-trash-alt me-2"></i> Eliminar Lugar
                         </button>
                     </div>
