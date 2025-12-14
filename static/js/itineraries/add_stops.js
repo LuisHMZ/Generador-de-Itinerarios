@@ -327,6 +327,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAX_DIAS = 3;
     // Límite de lugares por día
     const MAX_PLACES_PER_DAY = 10;
+    
+    // Variable para controlar el modo de filtrado estricto
+    let filtroEstrictoActivo = true; // Por defecto activado
 
 
     if (!miItinerarioLista || !buscadorLugares) {
@@ -522,10 +525,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Obtener la categoría del itinerario desde el dataset del body
             const itineraryCategory = document.body.dataset.itineraryCategory || '';
-            // console.log(`[DEBUG] Categoría del itinerario: "${itineraryCategory}"`);
+            console.log(`[DEBUG] Categoría del itinerario: "${itineraryCategory}"`);
 
             const url = `/api/places/nearby/?lat=${encodeURIComponent(refLat)}&lng=${encodeURIComponent(refLng)}&radius_km=${encodeURIComponent(radiusKm)}`;
-            // console.log('[DEBUG] Llamando a API:', url);
+            console.log('[DEBUG] Llamando a API:', url);
             
             const resp = await fetch(url);
             if (!resp.ok) {
@@ -535,33 +538,35 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const places = await resp.json();
-            // console.log('[DEBUG] Lugares recibidos de la API:', places.length);
+            console.log('[DEBUG] Lugares recibidos de la API:', places.length);
 
             // Filtrar lugares que ya están en el día actual para evitar duplicados
             let newPlaces = places.filter(p => !existingIds.has(p.id));
-            // console.log('[DEBUG] Lugares después de filtrar duplicados:', newPlaces.length);
+            console.log('[DEBUG] Lugares después de filtrar duplicados:', newPlaces.length);
 
             // Filtrar por categoría del itinerario si está definida
             if (itineraryCategory && itineraryCategory.trim() !== '') {
                 const beforeFilter = newPlaces.length;
+                console.log(`[DEBUG] ===== INICIANDO FILTRADO POR CATEGORÍA: "${itineraryCategory}" =====`);
+                console.log(`[DEBUG] Modo filtrado estricto: ${filtroEstrictoActivo ? 'ACTIVADO' : 'DESACTIVADO'}`);
                 newPlaces = newPlaces.filter(p => {
                     const categoria = determinarCategoriaPrincipal(p.types || []);
                     const categoriaNormalized = categoria.toLowerCase();
                     const itineraryCategoryNormalized = itineraryCategory.toLowerCase();
                     
-                    // console.log(`[DEBUG] Comparando lugar - Categoría: "${categoria}", Types:`, p.types);
+                    console.log(`[DEBUG] Lugar: "${p.name}" | Categoría principal: "${categoria}" | Types:`, p.types);
                     
                     // Comparación flexible:
                     // 1. Coincidencia directa de la categoría traducida
                     if (categoriaNormalized === itineraryCategoryNormalized) {
-                        // console.log(`[DEBUG] ✓ Coincidencia directa: ${categoria} === ${itineraryCategory}`);
+                        console.log(`[DEBUG] ✓ ACEPTADO - Coincidencia directa: "${categoria}" === "${itineraryCategory}"`);
                         return true;
                     }
                     
                     // 2. Coincidencia parcial (una incluye a la otra)
                     if (categoriaNormalized.includes(itineraryCategoryNormalized) || 
                         itineraryCategoryNormalized.includes(categoriaNormalized)) {
-                        // console.log(`[DEBUG] ✓ Coincidencia parcial: ${categoria} ~ ${itineraryCategory}`);
+                        console.log(`[DEBUG] ✓ ACEPTADO - Coincidencia parcial: "${categoria}" ~ "${itineraryCategory}"`);
                         return true;
                     }
                     
@@ -570,28 +575,37 @@ document.addEventListener('DOMContentLoaded', () => {
                         for (let type of p.types) {
                             const mappedCategory = MAPEO_CATEGORIAS[type];
                             if (mappedCategory && mappedCategory.toLowerCase() === itineraryCategoryNormalized) {
-                                // console.log(`[DEBUG] ✓ Coincidencia por type: ${type} → ${mappedCategory} === ${itineraryCategory}`);
+                                console.log(`[DEBUG] ✓ ACEPTADO - Coincidencia por type: "${type}" → "${mappedCategory}" === "${itineraryCategory}"`);
                                 return true;
                             }
                         }
                     }
                     
                     // 4. FALLBACK: Si tiene "point_of_interest" como type, incluirlo como último recurso
-                    if (p.types && Array.isArray(p.types) && p.types.includes('point_of_interest')) {
-                        // console.log(`[DEBUG] ✓ Fallback - point_of_interest: ${categoria} (sin coincidencia exacta)`);
+                    // PERO SOLO SI EL FILTRO ESTRICTO NO ESTÁ ACTIVO
+                    if (!filtroEstrictoActivo && p.types && Array.isArray(p.types) && (p.types.includes('point_of_interest') || p.types.includes('Puntos de Interés')) ) {
+                        console.log(`[DEBUG] ⚠ ACEPTADO (FALLBACK) - point_of_interest sin coincidencia exacta: "${categoria}"`);
                         return true;
                     }
                     
-                    // console.log(`[DEBUG] ✗ No coincide: ${categoria} con ${itineraryCategory}`);
+                    // Si el filtro estricto está activo y llegamos aquí, rechazamos
+                    if (filtroEstrictoActivo) {
+                        console.log(`[DEBUG] ✗ RECHAZADO (FILTRO ESTRICTO) - "${categoria}" no coincide con "${itineraryCategory}"`);
+                    } else {
+                        console.log(`[DEBUG] ✗ RECHAZADO - "${categoria}" no coincide con "${itineraryCategory}" y no es point_of_interest`);
+                    }
                     return false;
                 });
-                // console.log(`[DEBUG] Lugares después de filtrar por categoría "${itineraryCategory}": ${newPlaces.length} (de ${beforeFilter})`);
+                console.log(`[DEBUG] ===== RESULTADO FINAL DEL FILTRADO =====`);
+                console.log(`[DEBUG] Lugares ACEPTADOS: ${newPlaces.length} de ${beforeFilter}`);
+                console.log(`[DEBUG] Lugares RECHAZADOS: ${beforeFilter - newPlaces.length}`);
+                console.log(`[DEBUG] =======================================`);
             }
 
             // Renderizar en el contenedor de recomendaciones (hasta 6)
             recomendacionesContainer.innerHTML = '';
             if (!newPlaces || newPlaces.length === 0) {
-                // console.log('[DEBUG] No hay recomendaciones para mostrar');
+                console.log('[DEBUG] ⚠ No hay recomendaciones para mostrar después del filtrado');
                 recomendacionesContainer.innerHTML = '<p class="text-muted">No se encontraron recomendaciones cercanas que coincidan con la categoría del itinerario.</p>';
                 return;
             }
@@ -1551,6 +1565,22 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarItinerarioActual().then(() => {
         try { cargarRecomendacionesCercanas(); } catch (e) { console.warn(e); }
     });
+
+    // --- Event Listener para el Switch de Filtro Estricto ---
+    const filtroEstrictoSwitch = document.getElementById('filtro-estricto-switch');
+    if (filtroEstrictoSwitch) {
+        filtroEstrictoSwitch.addEventListener('change', (event) => {
+            filtroEstrictoActivo = event.target.checked;
+            console.log(`[DEBUG] Filtro estricto cambió a: ${filtroEstrictoActivo ? 'ACTIVADO' : 'DESACTIVADO'}`);
+            
+            // Recargar recomendaciones con el nuevo modo de filtrado
+            try {
+                cargarRecomendacionesCercanas();
+            } catch (e) {
+                console.error('Error al recargar recomendaciones tras cambiar filtro:', e);
+            }
+        });
+    }
 
 
 });
