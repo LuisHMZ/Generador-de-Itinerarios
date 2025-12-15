@@ -28,11 +28,14 @@ urlpatterns = [
     path('solicitudes/', views.friend_requests_view, name='friend_requests_view'),
 
     path('perfil/<str:username>/', views.profile_view, name='profile_view'),
-<<<<<<< HEAD
 
+    # --- RUTA PARA CREAR PUBLICACIÓN ---
     path('crear/post/', views.create_post_page_view, name='create_post_page'),
-=======
+
+    # --- RUTA PARA EL PANEL DEL ADMIN ---
     path('panel/comunicaciones/', views.admin_communications_panel, name='admin_communications'),
+
+    # --- RUTA PARA LA BÚSQUEDA (API) ---
     path('api/search-users/', views.api_search_users, name='api_search_users'),
->>>>>>> origin/mejora-chat-admin
+
 ]

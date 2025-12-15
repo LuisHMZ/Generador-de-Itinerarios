@@ -6,11 +6,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-<<<<<<< HEAD:apps/itineraries/migrations/0013_touristicplace_is_active.py
+
         ('itineraries', '0012_itinerary_privacy'),
-=======
-        ('itineraries', '0011_itinerarycomment_parent'),
->>>>>>> origin/mejora-chat-admin:apps/itineraries/migrations/0014_touristicplace_is_active.py
+        #('itineraries', '0011_itinerarycomment_parent'),
+        #hola 
     ]
 
     operations = [

@@ -15,23 +15,17 @@ class Conversation(models.Model):
 
 class Message(models.Model):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
-<<<<<<< HEAD
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     
     # --- CAMBIOS AQUÍ ---
     # 1. Content ahora puede estar vacío (blank=True, null=True)
     content = models.TextField(blank=True, null=True) 
+
     # 2. Nuevo campo Image
     image = models.ImageField(upload_to='chat_images/', blank=True, null=True) 
     # --------------------
-    
-=======
-    user = models.ForeignKey(User, on_delete=models.CASCADE) # El remitente
-    content = models.TextField()
-    # --- NUEVO CAMPO ---
-    image = models.ImageField(upload_to='chat_images/', null=True, blank=True)
-    # -------------------
->>>>>>> origin/mejora-chat-admin
+        
     created_at = models.DateTimeField(auto_now_add=True)
     
 
@@ -43,3 +37,10 @@ class MessageReadStatus(models.Model):
     
     class Meta:
         unique_together = ('message', 'user')
+
+
+
+    
+    
+    
+    

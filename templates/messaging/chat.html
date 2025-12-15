@@ -18,106 +18,7 @@
     <link rel="stylesheet" href="{% static 'css/profile.css' %}">
 
     <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
-<<<<<<< HEAD
     
-    <style>
-        /* --- ESTILOS ESPECÍFICOS DEL CHAT --- */
-
-        /* 1. OCULTAR SCROLLBAR (Pero mantener funcionalidad) */
-        .hide-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none; /* Chrome, Safari and Opera */
-        }
-
-        /* 2. Chats No Leídos (Resaltado) */
-        .conversacion-item.unread-chat {
-            background-color: #fff8f0; /* Fondo naranja muy suave */
-            border-left: 4px solid #e57b28; /* Borde naranja mextur */
-        }
-        .conversacion-item.unread-chat h6 {
-            font-weight: 800 !important;
-            color: #000;
-        }
-        .conversacion-item.unread-chat p {
-            font-weight: 600;
-            color: #333 !important;
-        }
-
-        /* 3. Imágenes en el Chat */
-        .chat-image {
-            cursor: pointer;
-            transition: transform 0.2s;
-            max-width: 250px;
-            max-height: 300px;
-            object-fit: cover;
-        }
-        .chat-image:hover {
-            transform: scale(1.02);
-            opacity: 0.95;
-        }
-
-        /* 4. Botón de Eliminar Mensaje */
-        .message-group { position: relative; }
-        .delete-msg-btn {
-            display: none; /* Oculto por defecto */
-            position: absolute;
-            top: 0;
-            right: -25px;
-            cursor: pointer;
-            color: #dc3545;
-            padding: 5px;
-            font-size: 0.9rem;
-            z-index: 10;
-            opacity: 0.6;
-            transition: opacity 0.2s;
-        }
-        .delete-msg-btn:hover { opacity: 1; transform: scale(1.1); }
-        .message-group:hover .delete-msg-btn { display: block; }
-
-        /* 5. Previsualización de Archivo (Footer) */
-        #chat-file-input { display: none; }
-        #file-preview { 
-            margin-left: 10px; 
-            margin-right: 10px; 
-            padding: 4px 8px; 
-            border-radius: 12px; 
-            display: flex; 
-            align-items: center;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-        }
-        #preview-thumb { 
-            width: 35px; height: 35px; 
-            object-fit: cover; 
-            border-radius: 6px; 
-            margin-right: 8px; 
-        }
-
-        /* 6. Lightbox (Imagen Grande) */
-        .modal-lightbox .modal-dialog { max-width: 95vw; margin: 1rem auto; }
-        .modal-lightbox .modal-content { background: rgba(0,0,0,0); border: none; box-shadow: none; }
-        .modal-lightbox .modal-header { border: none; }
-        .modal-lightbox img { 
-            max-height: 90vh; 
-            width: auto; 
-            max-width: 100%; 
-            margin: 0 auto; 
-            display: block; 
-            border-radius: 8px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
-        }
-
-        /* Estilos Reporte */
-        .modal-report-modern .modal-content { border-radius: 20px; border: none; }
-        .report-hero-icon { font-size: 3rem; color: #dc3545; background-color: #fff5f5; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 1rem auto; }
-        .report-option-card { display: flex; align-items: center; padding: 12px; border: 1px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: 0.2s; }
-        .report-option-input:checked + .report-option-card { border-color: #dc3545; background-color: #fff5f5; color: #dc3545; }
-        .custom-textarea { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; resize: none; }
-=======
-
     <style>
         /* --- LAYOUT GLOBAL --- */
         html, body { 
@@ -277,56 +178,109 @@
             body.mobile-chat-active .header-global { display: none !important; } /* Ocultar header global para full screen */
             
             #btn-back-mobile { display: block; }
+
+        /* --- ESTILOS ESPECÍFICOS DEL CHAT --- */
+
+        /* 1. OCULTAR SCROLLBAR (Pero mantener funcionalidad) */
+        .hide-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
->>>>>>> origin/mejora-chat-admin
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
+        }
+
+        /* 2. Chats No Leídos (Resaltado) */
+        .conversacion-item.unread-chat {
+            background-color: #fff8f0; /* Fondo naranja muy suave */
+            border-left: 4px solid #e57b28; /* Borde naranja mextur */
+        }
+        .conversacion-item.unread-chat h6 {
+            font-weight: 800 !important;
+            color: #000;
+        }
+        .conversacion-item.unread-chat p {
+            font-weight: 600;
+            color: #333 !important;
+        }
+
+        /* 3. Imágenes en el Chat */
+        .chat-image {
+            cursor: pointer;
+            transition: transform 0.2s;
+            max-width: 250px;
+            max-height: 300px;
+            object-fit: cover;
+        }
+        .chat-image:hover {
+            transform: scale(1.02);
+            opacity: 0.95;
+        }
+
+        /* 4. Botón de Eliminar Mensaje */
+        .message-group { position: relative; }
+        .delete-msg-btn {
+            display: none; /* Oculto por defecto */
+            position: absolute;
+            top: 0;
+            right: -25px;
+            cursor: pointer;
+            color: #dc3545;
+            padding: 5px;
+            font-size: 0.9rem;
+            z-index: 10;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .delete-msg-btn:hover { opacity: 1; transform: scale(1.1); }
+        .message-group:hover .delete-msg-btn { display: block; }
+
+        /* 5. Previsualización de Archivo (Footer) */
+        #chat-file-input { display: none; }
+        #file-preview { 
+            margin-left: 10px; 
+            margin-right: 10px; 
+            padding: 4px 8px; 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        #preview-thumb { 
+            width: 35px; height: 35px; 
+            object-fit: cover; 
+            border-radius: 6px; 
+            margin-right: 8px; 
+        }
+
+        /* 6. Lightbox (Imagen Grande) */
+        .modal-lightbox .modal-dialog { max-width: 95vw; margin: 1rem auto; }
+        .modal-lightbox .modal-content { background: rgba(0,0,0,0); border: none; box-shadow: none; }
+        .modal-lightbox .modal-header { border: none; }
+        .modal-lightbox img { 
+            max-height: 90vh; 
+            width: auto; 
+            max-width: 100%; 
+            margin: 0 auto; 
+            display: block; 
+            border-radius: 8px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
+        }
+
+        /* Estilos Reporte */
+        .modal-report-modern .modal-content { border-radius: 20px; border: none; }
+        .report-hero-icon { font-size: 3rem; color: #dc3545; background-color: #fff5f5; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 1rem auto; }
+        .report-option-card { display: flex; align-items: center; padding: 12px; border: 1px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        .report-option-input:checked + .report-option-card { border-color: #dc3545; background-color: #fff5f5; color: #dc3545; }
+        .custom-textarea { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; resize: none; }
+
     </style>
 </head>
 <body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
 
-<<<<<<< HEAD
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100" id="toastContainer"></div>
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100" id="toastContainer"></div>
 
-    <div id="site-header"></div>
-
-    <div class="container-fluid chat-wrapper">
-        <div class="row chat-layout-row">
-            
-            <div class="col-lg-2 d-none d-lg-block sidebar-col">
-                <div class="menu-lateral-container hide-scrollbar"> <div class="menu-lateral">
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2">
-                                <a href="{% url 'home' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                    <i class="fa-solid fa-house fa-fw me-2"></i> Inicio
-                                </a>
-                            </li>
-                            <li class="mb-2">
-                                <a href="{% url 'profile_view' user.username %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                    <i class="fa-solid fa-user fa-fw me-2"></i> Perfil
-                                </a>
-                            </li>
-                            <li class="mb-2">
-                                <a href="{% url 'messaging:inbox' %}" class="menu-item text-decoration-none d-flex align-items-center text-primary fw-bold bg-light rounded">
-                                    <i class="fa-solid fa-envelope fa-fw me-2"></i> Mensajes
-                                </a>
-                            </li>
-                            <li class="mb-2">
-                                <a href="{% url 'itineraries:my_itineraries' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                    <i class="fa-solid fa-map-location-dot fa-fw me-2"></i> Itinerarios
-                                </a>
-                            </li>
-                            <li class="mb-2">
-                                <a href="{% url 'saved_posts_view' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                    <i class="fa-solid fa-bookmark fa-fw me-2"></i> Guardados
-                                </a>
-                            </li>
-                            <li class="mb-2">
-                                <a href="{% url 'friend_requests_view' %}" class="menu-item text-decoration-none d-flex align-items-center text-dark">
-                                    <i class="fa-solid fa-users fa-fw me-2"></i> Amigos
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-=======
     {% include 'snippets/header.html' %}
 
     <div class="container-fluid p-0">
@@ -340,23 +294,39 @@
                                 <i class="fa-solid fa-user me-2 text-muted"></i> Perfil
                             </a>
                         </li>
+                        
                         <li>
                             <a href="{% url 'messaging:inbox' %}" class="btn btn-primary-subtle w-100 text-start border-0 fw-bold text-primary">
                                 <i class="fa-solid fa-envelope me-2"></i> Mensajes
                             </a>
                         </li>
+
                         <li>
                             <a href="{% url 'itineraries:my_itineraries' %}" class="btn btn-light w-100 text-start border-0">
                                 <i class="fa-solid fa-map-location-dot me-2 text-muted"></i> Itinerarios
                             </a>
                         </li>
+
+                        <li>
+                            <a href="{% url 'saved_posts_view' %}" class="btn btn-light w-100 text-start border-0">
+                                <i class="fa-solid fa-bookmark me-2 text-muted"></i> Guardados
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{% url 'friend_requests_view' %}" class="btn btn-light w-100 text-start border-0">
+                                <i class="fa-solid fa-users me-2 text-muted"></i> Amigos
+                            </a>
+                        </li>
+
                         <li class="mt-4 pt-3 border-top">
                             <a href="{% url 'home' %}" class="btn btn-link w-100 text-start text-decoration-none text-muted small">
                                 <i class="fa-solid fa-arrow-left me-2"></i> Volver al Inicio
                             </a>
                         </li>
                     </ul>
->>>>>>> origin/mejora-chat-admin
+                </div>
+            </div>
                 </div>
             </div>
 
@@ -367,35 +337,20 @@
                         <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                         <input type="text" class="form-control rounded-pill ps-5 bg-light border-0" placeholder="Buscar chat..." id="search-conversaciones">
                     </div>
-<<<<<<< HEAD
-                    <div id="lista-conversaciones" class="hide-scrollbar" style="overflow-y: auto; height: calc(100vh - 160px);">
-                        <div class="text-center mt-5 text-muted">
-                            <div class="spinner-border spinner-border-sm" role="status"></div>
-                        </div>
-=======
+
                 </div>
                 
                 <div id="lista-conversaciones" class="conversations-container">
                     <div class="text-center mt-5 text-muted">
                         <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
->>>>>>> origin/mejora-chat-admin
+
                     </div>
                 </div>
             </div>
 
             <div class="col-md-8 col-lg-7 chat-main">
                 
-<<<<<<< HEAD
-                <div id="empty-state">
-                    <i class="far fa-paper-plane fa-3x mb-3 text-secondary"></i>
-                    <h5 class="text-muted">Tus mensajes</h5>
-                    <p class="text-muted small">Elige una conversación para empezar</p>
-                </div>
 
-                <div id="active-chat-interface" class="chat-interface" style="display: none !important;">
-                    
-                    <div class="chat-header-bar">
-=======
                 <div id="empty-state" class="d-flex flex-column align-items-center justify-content-center h-100 text-center p-4">
                     <img src="{% static 'img/logo.png' %}" alt="MexTur" style="width: 80px; opacity: 0.5; margin-bottom: 20px;">
                     <h5 class="text-dark fw-bold">Tus mensajes en MexTur</h5>
@@ -405,7 +360,7 @@
                 <div id="active-chat-interface" class="h-100 flex-column" style="display: none !important;">
                     
                     <div class="chat-header-bar shadow-sm">
->>>>>>> origin/mejora-chat-admin
+
                         <div class="d-flex align-items-center">
                             <i class="fas fa-arrow-left text-secondary me-3" id="btn-back-mobile"></i>
                             
@@ -419,9 +374,7 @@
                                 </div>
                             </a>
                         </div>
-<<<<<<< HEAD
-                        
-                        <div class="dropdown">
+             <div class="dropdown">
                             <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
@@ -433,38 +386,11 @@
                                 </li>
                             </ul>
                         </div>
-                    </div>
-
-                    <div id="chat-container" class="hide-scrollbar">
-=======
-                        <button class="btn btn-link text-muted p-0"><i class="fas fa-ellipsis-v"></i></button>
-                    </div>
-
-                    <div id="chat-container">
->>>>>>> origin/mejora-chat-admin
+                    </div> <div id="chat-container" class="hide-scrollbar">
                         <div id="messages-wrapper"></div>
                     </div>
 
                     <div class="chat-footer-bar">
-<<<<<<< HEAD
-                        <form id="chat-form" class="d-flex gap-2 align-items-center">
-                            
-                            <input type="file" id="chat-file-input" accept="image/*">
-                            
-                            <button class="btn btn-light rounded-circle text-muted border" type="button" id="btn-attach" title="Adjuntar foto">
-                                <i class="fas fa-paperclip"></i>
-                            </button>
-
-                            <div id="file-preview" class="d-none badge bg-light text-dark border align-items-center">
-                                <img id="preview-thumb" src="" alt="">
-                                <i class="fas fa-times text-danger" style="cursor:pointer;" id="btn-cancel-file" title="Cancelar envío"></i>
-                            </div>
-
-                            <input type="text" id="chat-input" class="form-control rounded-pill bg-light border-0" placeholder="Escribe un mensaje..." autocomplete="off">
-                            
-                            <button class="btn btn-primary rounded-circle" type="submit" style="background-color: #e57b28; border: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-paper-plane"></i>
-=======
                         
                         <div id="image-preview-container">
                             <div class="preview-wrapper">
@@ -489,7 +415,7 @@
                             
                             <button class="btn btn-primary rounded-circle shadow-sm p-0" type="submit" style="width: 42px; height: 42px; display: grid; place-items: center; background: #E57B28; border: none;">
                                 <i class="fas fa-paper-plane text-white"></i>
->>>>>>> origin/mejora-chat-admin
+
                             </button>
                         </form>
                     </div>
@@ -630,18 +556,15 @@
             const API_MSG_BASE = "/api/messaging/api/messages/"; 
             const API_SEND_BASE = "/api/messaging/api/send/";
             const CSRF_TOKEN = "{{ csrf_token }}";
-
-<<<<<<< HEAD
-            // Variables globales
-=======
+       
             // --- VARIABLES DE ESTADO ---
->>>>>>> origin/mejora-chat-admin
+
             let activeChatId = null;
             let currentChatPartnerId = null; 
             let lastMessageId = 0;
             let pollingInterval = null;
-<<<<<<< HEAD
             let listPollingInterval = null;
+            let picker = null; // Instancia Emoji Picker
 
             // Elementos UI
             const listaUI = document.getElementById('lista-conversaciones');
@@ -652,24 +575,13 @@
             const headerLink = document.getElementById('header-profile-link');
             const messagesWrapper = document.getElementById('messages-wrapper');
             const chatContainer = document.getElementById('chat-container'); 
-            const input = document.getElementById('chat-input');
-=======
-            let picker = null; // Instancia Emoji Picker
 
-            // --- ELEMENTOS DOM ---
-            const listaUI = document.getElementById('lista-conversaciones');
-            const emptyState = document.getElementById('empty-state');
-            const chatInterface = document.getElementById('active-chat-interface');
-            const chatContainer = document.getElementById('chat-container');
-            const messagesWrapper = document.getElementById('messages-wrapper');
-            
             // Header Chat
             const headerName = document.getElementById('header-name');
             const headerAvatar = document.getElementById('header-avatar');
             const headerLink = document.getElementById('header-profile-link');
             
             // Inputs
->>>>>>> origin/mejora-chat-admin
             const form = document.getElementById('chat-form');
             const input = document.getElementById('chat-input');
             const imageInput = document.getElementById('image-input');
@@ -785,7 +697,7 @@
             // Polling de lista (cada 4s) para detectar mensajes nuevos sin recargar
             listPollingInterval = setInterval(loadConversationList, 4000);
 
-<<<<<<< HEAD
+
             btnBack.addEventListener('click', function() {
                 document.body.classList.remove('mobile-chat-active');
                 if(pollingInterval) clearInterval(pollingInterval);
@@ -794,7 +706,6 @@
                 loadConversationList();
             });
 
-=======
             // ==========================================
             // 1. INICIALIZACIÓN
             // ==========================================
@@ -849,7 +760,7 @@
             // ==========================================
             // 3. NAVEGACIÓN Y CARGA DE CHATS
             // ==========================================
->>>>>>> origin/mejora-chat-admin
+
             function checkURLForChat() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const openChatId = urlParams.get('open_chat');
@@ -859,11 +770,9 @@
             function loadConversationList() {
                 fetch(API_LIST).then(res => res.json()).then(data => {
                         if(data.conversations.length === 0) {
-<<<<<<< HEAD
-                            listaUI.innerHTML = '<div class="p-4 text-center text-muted small">No tienes mensajes aún.</div>';
-=======
+
                             listaUI.innerHTML = '<div class="p-4 text-center text-muted small">No hay conversaciones recientes.</div>';
->>>>>>> origin/mejora-chat-admin
+
                             checkURLForChatOnEmpty(data.conversations);
                             return;
                         }
@@ -871,23 +780,24 @@
                         let htmlContent = '';
                         data.conversations.forEach(chat => {
                             const activeClass = chat.id == activeChatId ? 'active' : '';
-<<<<<<< HEAD
-                            
+
+                                    // 1. LÓGICA DE NO LEÍDO (De HEAD - Vital para UX)
                             // CORRECCIÓN CLAVE: Si este chat está activo, forzamos is_unread a falso visualmente
                             // para que no parpadee ni se marque si el backend tarda en actualizarse
                             let isUnread = chat.is_unread;
-                            if (chat.id == activeChatId) isUnread = false;
+                            // Asegúrate de que activeChatId esté definido o usa comprobación segura
+                            if (typeof activeChatId !== 'undefined' && chat.id == activeChatId) isUnread = false;
 
                             const unreadClass = isUnread ? 'unread-chat' : '';
                             
+                            // 2. CONSTRUCCIÓN DEL ELEMENTO (Híbrido)
+                            // Usamos 'htmlContent +=' para acumular el HTML (como en HEAD)
+                            // Incluimos ${unreadClass} para el resaltado naranja
+                            // Usamos el width="50" y la clase 'border' (de ORIGIN) para el diseño nuevo
                             htmlContent += `
                                 <a href="#" class="conversacion-item ${activeClass} ${unreadClass}" onclick="loadChat(${chat.id}, '${chat.name}', '${chat.avatar}', '${chat.username}')">
-                                    <img src="${chat.avatar}" alt="Avatar" width="48" height="48" class="rounded-circle object-fit-cover">
-=======
-                            const item = `
-                                <a href="#" class="conversacion-item ${activeClass}" onclick="loadChat(${chat.id}, '${chat.name}', '${chat.avatar}', '${chat.username}')">
                                     <img src="${chat.avatar}" alt="Avatar" width="50" height="50" class="rounded-circle object-fit-cover border">
->>>>>>> origin/mejora-chat-admin
+
                                     <div style="flex: 1; min-width: 0;">
                                         <div class="d-flex justify-content-between mb-1">
                                             <h6 class="mb-0 text-truncate fw-bold text-dark" style="font-size: 0.95rem;">${chat.name}</h6>
@@ -898,11 +808,9 @@
                                 </a>
                             `;
                         });
-<<<<<<< HEAD
                         
                         listaUI.innerHTML = htmlContent;
-=======
->>>>>>> origin/mejora-chat-admin
+
                         checkURLForChatOnEmpty(data.conversations);
                     });
             }
@@ -927,19 +835,6 @@
                 currentChatPartnerId = chatId; 
                 lastMessageId = 0;
 
-<<<<<<< HEAD
-                emptyState.style.setProperty('display', 'none', 'important');
-                chatInterface.style.setProperty('display', 'flex', 'important');
-                
-                if(name) headerName.textContent = name;
-                if(avatar) headerAvatar.src = avatar;
-                if(username) { headerLink.href = `/perfil/${username}/`; headerLink.style.pointerEvents = 'auto'; } 
-                else { headerLink.href = '#'; headerLink.style.pointerEvents = 'none'; }
-
-                messagesWrapper.innerHTML = '<div class="loading-overlay"><div class="spinner-border text-primary" role="status"></div></div>';
-                fetchMessages(true);
-                
-=======
                 // UI Switch
                 emptyState.style.setProperty('display', 'none', 'important');
                 chatInterface.style.setProperty('display', 'flex', 'important');
@@ -960,7 +855,6 @@
                 fetchMessages(true);
 
                 // Polling
->>>>>>> origin/mejora-chat-admin
                 if(pollingInterval) clearInterval(pollingInterval);
                 pollingInterval = setInterval(() => fetchMessages(false), 3000);
                 
@@ -986,7 +880,6 @@
                 fetch(url).then(res => res.json()).then(data => {
                         if(isFirstLoad) messagesWrapper.innerHTML = '';
                         
-<<<<<<< HEAD
                         if (data.chat_partner && data.chat_partner.id) {
                             currentChatPartnerId = data.chat_partner.id;
                             if (isFirstLoad && (headerName.textContent === 'Nuevo Chat' || headerName.textContent === 'Usuario')) {
@@ -997,18 +890,7 @@
                                     headerLink.style.pointerEvents = 'auto';
                                 }
                             }
-=======
-                        // Actualizar info si es chat nuevo
-                        if (isFirstLoad && data.chat_partner) {
-                             if (headerName.textContent === 'Nuevo Chat' || headerName.textContent === 'Usuario') {
-                                 headerName.textContent = data.chat_partner.name;
-                                 headerAvatar.src = data.chat_partner.avatar;
-                                 if(data.chat_partner.username) {
-                                     headerLink.href = `/perfil/${data.chat_partner.username}/`;
-                                     headerLink.style.pointerEvents = 'auto';
-                                 }
-                             }
->>>>>>> origin/mejora-chat-admin
+
                         }
 
                         if(data.messages.length > 0) {
@@ -1036,50 +918,42 @@
                                 }
 
                                 const html = `
-<<<<<<< HEAD
+
                                     <div class="burbuja-mensaje ${typeClass} message-group" id="msg-${msg.id}">
-                                        ${!isMe ? `<img src="${msg.avatar}" class="avatar-mensaje">` : ''}
+                                        ${!isMe ? `<img src="${msg.avatar}" class="avatar-mensaje align-self-end mb-2">` : ''}
                                         
                                         <div class="texto-mensaje position-relative">
+                                            
+                                            ${!isMe ? `<div class="fw-bold mb-1 text-primary small">${msg.sender_name} ${adminBadge}</div>` : ''}
+                                            
                                             ${msg.image_url ? `<img src="${msg.image_url}" class="img-fluid rounded mb-2 chat-image" onclick="openLightbox('${msg.image_url}')">` : ''}
                                             
                                             ${msg.content ? `<div>${msg.content}</div>` : ''}
-                                            <div class="text-end mt-1" style="font-size: 0.65rem; opacity: 0.7;">${msg.time}</div>
+                                            
+                                            <div class="text-end mt-1" style="font-size: 0.65rem; opacity: 0.6;">${msg.time}</div>
                                             
                                             ${isMe ? `
                                                 <div class="delete-msg-btn" onclick="deleteMessage(${msg.id})">
                                                     <i class="fas fa-trash"></i>
                                                 </div>
                                             ` : ''}
-=======
-                                    <div class="burbuja-mensaje ${typeClass}" id="msg-${msg.id}">
-                                        ${!isMe ? `<img src="${msg.avatar}" class="avatar-mensaje align-self-end mb-2">` : ''}
-                                        <div class="texto-mensaje">
-                                            ${!isMe ? `<div class="fw-bold mb-1 text-primary small">${msg.sender_name} ${adminBadge}</div>` : ''}
-                                            
-                                            ${imageHtml}
-                                            
-                                            ${msg.content ? `<div>${msg.content}</div>` : ''}
-                                            
-                                            <div class="text-end mt-1" style="font-size: 0.65rem; opacity: 0.6;">${msg.time}</div>
->>>>>>> origin/mejora-chat-admin
+                                        </div>
+                                    </div>
+
                                         </div>
                                     </div>
                                 `;
                                 messagesWrapper.insertAdjacentHTML('beforeend', html);
                                 lastMessageId = Math.max(lastMessageId, msg.id);
                             });
-<<<<<<< HEAD
-                            chatContainer.scrollTop = chatContainer.scrollHeight;
-                            
-                            // Si entraron mensajes nuevos mientras veo el chat, refrescar la lista lateral
-                            if(!isFirstLoad) loadConversationList(); 
-=======
+
                             
                             // Auto scroll al final
                             chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                            // Si entraron mensajes nuevos mientras veo el chat, refrescar la lista lateral
                             if(!isFirstLoad) loadConversationList();
->>>>>>> origin/mejora-chat-admin
+
                         } else if (isFirstLoad) {
                             messagesWrapper.innerHTML = '<div class="text-center mt-5 text-muted small opacity-50"><i class="far fa-comments fa-2x mb-2"></i><br>Saluda para comenzar.</div>';
                         }
@@ -1089,19 +963,7 @@
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 const text = input.value.trim();
-<<<<<<< HEAD
-                const file = fileInput.files[0];
 
-                if((!text && !file) || !activeChatId) return;
-                
-                const formData = new FormData();
-                formData.append('content', text);
-                if(file) formData.append('image', file);
-
-                input.value = ''; input.focus();
-                if(file) btnCancelFile.click(); // Limpiar preview
-
-=======
                 const imageFile = imageInput.files[0];
 
                 if((!text && !imageFile) || !activeChatId) return;
@@ -1119,7 +981,6 @@
                 input.placeholder = "Escribe un mensaje...";
                 input.focus();
                 
->>>>>>> origin/mejora-chat-admin
                 fetch(`${API_SEND_BASE}${activeChatId}/`, {
                     method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN }, body: formData
                 }).then(res => res.json()).then(data => {
@@ -1127,13 +988,11 @@
                         fetchMessages(false);
                         // Pequeño delay para asegurar que el server procesó antes de actualizar lista
                         setTimeout(loadConversationList, 500); 
-<<<<<<< HEAD
-                    } else { alert('Error al enviar'); }
-=======
+
                     } else {
                         alert("Error al enviar: " + (data.message || "Intenta de nuevo"));
                     }
->>>>>>> origin/mejora-chat-admin
+
                 });
             });
 
@@ -1149,3 +1008,4 @@
     </script>
 </body>
 </html>
+
