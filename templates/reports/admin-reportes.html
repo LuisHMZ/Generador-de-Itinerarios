@@ -39,19 +39,19 @@
                 <nav class="nav flex-column admin-nav">
                     
                     <div class="nav-item-group mb-2">
-                        <button class="nav-link btn-collapse w-100 d-flex justify-content-between align-items-center" 
+                        <button class="nav-link btn-collapse w-100 d-flex justify-content-between align-items-center collapsed" 
                                 type="button" data-bs-toggle="collapse" data-bs-target="#menuUsuarios" aria-expanded="true">
                             <span><i class="fas fa-users-cog fa-fw me-2"></i> Gestionar usuarios</span>
                             <i class="fas fa-chevron-down small transition-icon"></i>
                         </button>
-                        <div class="collapse show" id="menuUsuarios">
+                        <div class="collapse" id="menuUsuarios">
                             <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
                                 <li>
                                     <a href="{% url 'admin_login_logs' %}" class="d-block py-1 text-decoration-none text-secondary small">
                                         Inicios de sesión
                                     </a>
                                 </li>
-                                <li><a href="admin-permisos.html" class="d-block py-1 text-decoration-none fw-bold text-primary small">Permisos de usuario</a></li>
+                                <li><a href="{% url 'admin_users' %}" class="d-block py-1 text-decoration-none text-secondary small">Permisos de usuario</a></li>
                             </ul>
                         </div>
                     </div>
@@ -62,10 +62,10 @@
                             <span><i class="fas fa-cogs fa-fw me-2"></i> Gestionar sistema</span>
                             <i class="fas fa-chevron-down small transition-icon"></i>
                         </button>
-                        <div class="collapse" id="menuSistema">
+                        <div class="collapse show" id="menuSistema">
                             <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
                                 <li>
-                                    <a href="{% url 'admin_reports_list' %}" class="d-block py-1 text-decoration-none text-secondary small">
+                                    <a href="{% url 'admin_reports_list' %}" class="d-block py-1 text-decoration-none fw-bold text-primary small">
                                         Reportes
                                     </a>
                                 </li>

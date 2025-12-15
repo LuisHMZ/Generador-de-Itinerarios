@@ -30,5 +30,7 @@ urlpatterns = [
     path('panel/locaciones/eliminar/<int:place_id>/', views.admin_place_delete, name='admin_place_delete'),
     path('panel/locaciones/toggle/<int:place_id>/', views.admin_place_toggle_visibility, name='admin_place_toggle_visibility'),
     path('panel/locaciones/ver/<int:place_id>/', views.admin_place_detail, name='admin_place_detail'),
+    path('panel/itinerarios/revision/<int:itinerary_id>/', views.admin_itinerary_preview, name='admin_itinerary_preview'),
+    path('panel/itinerarios/toggle/<int:itinerary_id>/', views.admin_toggle_itinerary_visibility, name='admin_toggle_itinerary_visibility'),
     # -------------------------------------------
 ]

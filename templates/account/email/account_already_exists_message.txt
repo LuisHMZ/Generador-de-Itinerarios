@@ -1,0 +1,12 @@
+{% load i18n %}
+{% blocktrans with site_name=current_site.name %}¡Hola de parte de {{ site_name }}!{% endblocktrans %}
+
+{% blocktrans with site_name=current_site.name %}Usted está recibiendo este correo electrónico porque usted (u otra persona) intentó registrarse para una cuenta en {{ site_name }} utilizando esta dirección de correo electrónico:{% endblocktrans %}
+
+{{ email }}
+
+{% blocktrans %}Sin embargo, ya existe una cuenta con esa dirección de correo electrónico. En caso de que lo haya olvidado, utilice el procedimiento de recuperación de contraseña olvidada para recuperar su cuenta:{% endblocktrans %}
+
+http://{{ current_site.domain }}{% url 'account_reset_password' %}
+
+{% blocktrans with site_name=current_site.name %}¡Gracias por usar {{ site_name }}!{% endblocktrans %}

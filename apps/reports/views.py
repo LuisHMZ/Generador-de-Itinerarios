@@ -4,11 +4,12 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.core.paginator import Paginator
 from .models import Report
-from apps.users.models import Notification, User
+from apps.users.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.http import JsonResponse
 import json
-
+from apps.alertas.models import Notification
+from django.urls import reverse
 # Función auxiliar admin
 def es_admin(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
@@ -120,18 +121,55 @@ def admin_report_detail(request, report_id):
             report.save()
             messages.success(request, f'Estado del reporte actualizado a {report.get_status_display()}.')
         
-        # Caso 2: Notificar al Usuario
         elif action == 'notify_user':
-            mensaje = request.POST.get('notification_message')
-            if target_user and mensaje:
+            mensaje_texto = request.POST.get('notification_message')
+            
+            if target_user and mensaje_texto:
+                
+                # Link por defecto (seguro)
+                link_destino = "/perfil/" 
+                
+                try:
+                    modelo = report.content_type.model
+                    
+                    # --- [CRUCIAL] ESTA LÍNEA DEBE IR ANTES DE LOS IF ---
+                    objeto = report.content_object 
+                    # ----------------------------------------------------
+
+                    # Verificamos que el objeto siga existiendo (que no sea None)
+                    if objeto:
+                        if modelo == 'itinerary':
+                            link_destino = reverse('itineraries:view_itinerary', args=[objeto.id])
+                        
+                        elif modelo == 'user':
+                            link_destino = reverse('profile_view', args=[objeto.username])
+
+                        elif modelo == 'post':
+                            link_destino = reverse('home') + f"?open_post={objeto.id}"
+                            
+                        elif modelo == 'comment':
+                            # Verificamos si es de post o itinerario
+                            if hasattr(objeto, 'post') and objeto.post:
+                                link_destino = reverse('home') + f"?open_post={objeto.post.id}"
+                            elif hasattr(objeto, 'itinerary') and objeto.itinerary:
+                                link_destino = reverse('view_itinerary', args=[objeto.itinerary.id])
+                    else:
+                        print("El objeto reportado parece haber sido eliminado.")
+
+                except Exception as e:
+                    print(f"No se pudo generar link específico: {e}")
+
+                # --- 2. Crear la Notificación ---
                 Notification.objects.create(
-                    user=target_user,
-                    content=f"Aviso de Moderación: {mensaje}",
-                    link="/perfil/" # Opcional: link a donde ver más info
+                    recipient=target_user,
+                    actor=request.user,
+                    message=f"Aviso de Admin: {mensaje_texto}",
+                    link=link_destino  # <--- AQUI VA EL LINK DINÁMICO
                 )
-                messages.success(request, f'Se ha enviado una notificación a {target_user.username}.')
+                messages.success(request, f'Notificación enviada a @{target_user.username}.')
             else:
-                messages.error(request, 'No se pudo enviar la notificación (usuario no encontrado o mensaje vacío).')
+                messages.error(request, 'No se pudo notificar (usuario no encontrado o mensaje vacío).')
+        # -------------------------------------------------
         
         return redirect('admin_report_detail', report_id=report.id)
 

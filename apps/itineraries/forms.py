@@ -6,7 +6,7 @@ class TouristicPlaceForm(forms.ModelForm):
         model = TouristicPlace
         fields = [
             'name', 'categories', 'description', 'address', 
-            'lat', 'long', 'website', 'phone_number', 'opening_hours'
+            'lat', 'long', 'website', 'phone_number', 'opening_hours','photo'
             # Omitimos external_api_id y rating porque esos se llenan solos o por la API
         ]
         
@@ -20,6 +20,7 @@ class TouristicPlaceForm(forms.ModelForm):
             'opening_hours': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Lun-Vie: 9am-6pm...'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'categories': forms.CheckboxSelectMultiple(), # Muestra todas las categorías como checkboxes
+            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
         
         labels = {

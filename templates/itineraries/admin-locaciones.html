@@ -253,7 +253,7 @@
                                         <i class="fas fa-trash-alt"></i>
                                     </button> -->
                                     <button type="button" class="btn-action btn-eliminar" 
-                                            data-nombre="{{ place.name|escapejs }}"
+                                            data-nombre="{{ place.name}}"
                                             data-url="{% url 'itineraries:admin_place_delete' place.id %}"
                                             onclick="confirmarEliminar(this)"> <i class="fas fa-trash-alt"></i>
                                     </button>

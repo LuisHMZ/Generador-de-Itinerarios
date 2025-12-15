@@ -36,6 +36,8 @@ from apps.posts.models import Post
 from django.core.paginator import Paginator
 from django.db.models import Q
 from .forms import TouristicPlaceForm
+from itertools import groupby
+from operator import attrgetter
 
 # --- Definimos el Modelo de User UNA SOLA VEZ ---
 User = get_user_model()
@@ -230,6 +232,46 @@ def admin_place_detail(request, place_id):
         'place': place,
         'google_api_key': os.environ.get('GOOGLE_API_KEY', '') # <--- ESTO ES NUEVO
     })
+
+@login_required
+@user_passes_test(es_admin)
+def admin_itinerary_preview(request, itinerary_id):
+    """
+    Vista exclusiva para administradores. 
+    Muestra el itinerario limpio, sin distracciones, para moderación.
+    """
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id)
+    # Reutilizamos la lógica de paradas si es necesaria
+    all_stops = itinerary.itinerarystop_set.select_related('touristic_place').order_by('day_number', 'placement')
+    
+    # Agrupamos por día para la plantilla
+    # groupby requiere que la lista ya esté ordenada por la clave de agrupación
+    stops_by_day = []
+    for day, stops in groupby(all_stops, key=attrgetter('day_number')):
+        stops_by_day.append((day, list(stops)))
+    source_report_id = request.GET.get('report_id')
+    return render(request, 'itineraries/admin-view-itinerary.html', {
+        'itinerary': itinerary,
+        'stops_by_day': stops_by_day, # <--- Variable nueva
+        'is_admin_preview': True,
+        'google_api_key': os.environ.get('GOOGLE_API_KEY', ''),
+        'source_report_id': source_report_id
+    })
+
+@login_required
+@user_passes_test(es_admin)
+def admin_toggle_itinerary_visibility(request, itinerary_id):
+    itinerary = get_object_or_404(Itinerary, id=itinerary_id)
+    
+    # Invertir el estado
+    itinerary.is_active = not itinerary.is_active
+    itinerary.save()
+    
+    estado = "visible" if itinerary.is_active else "oculto"
+    messages.success(request, f"El itinerario ahora está {estado}.")
+    
+    # Redirigir a la misma página de revisión
+    return redirect('itineraries:admin_itinerary_preview', itinerary_id=itinerary.id)
 ###################################################################################
 #     if request.user.is_authenticated:
         
@@ -323,7 +365,7 @@ def search_places_api_view(request):
 
     # --- 1. Buscar en la Base de Datos Local ---
     try:
-        local_places_query = TouristicPlace.objects.filter(name__icontains=query)
+        local_places_query = TouristicPlace.objects.filter(name__icontains=query, is_active=True)
         
         # Si el usuario proporcionó ubicación, filtrar por distancia
         if user_lat and user_lng:
@@ -408,6 +450,8 @@ def search_places_api_view(request):
                     place_obj = None
 
                     if existing_place:
+                        if not existing_place.is_active:
+                            continue
                         if existing_place.id not in place_ids_found_locally:
                             place_obj = existing_place
                     else:
@@ -472,7 +516,10 @@ def search_places_api_view(request):
                                 external_api_id=google_v1_id,
                                 defaults=defaults
                             )
-                            
+                            if not place_obj.is_active:
+                                continue  # Saltamos si está oculto en nuestra BD
+                            # ---------------------------
+
                             # --- ASIGNAR CATEGORÍAS ---
                             if created or not place_obj.categories.exists():
                                 # Mapear los tipos de Google a categorías del sistema
@@ -565,7 +612,8 @@ def nearby_places_api_view(request):
         # Obtener todos los lugares turísticos de la BD que tengan coordenadas
         all_places = TouristicPlace.objects.filter(
             lat__isnull=False, 
-            long__isnull=False
+            long__isnull=False,
+            is_active=True
         ).select_related()
         
         # Filtrar por distancia usando la función haversine
@@ -1153,7 +1201,7 @@ def rate_itinerary(request, itinerary_id):
             recipient=itinerary.user,
             actor=request.user,
             message=f"{request.user.username} calificó tu itinerario '{itinerary.title}' con {rating_val} estrellas",
-            link="#"
+            link=f"/itineraries/{itinerary.id}/view/"
         )
 
     return JsonResponse({

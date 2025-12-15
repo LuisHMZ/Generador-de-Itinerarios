@@ -104,7 +104,7 @@
 
             {% if itineraries %}
             <div class="row g-4"> {% for itinerary in itineraries %}
-                    <div class="col-12 col-md-6 col-xl-4"> <div class="card h-100 shadow-sm border-0">
+                    <div class="col-12 col-md-6 col-xl-4"> <div class="card h-100 shadow-sm {% if not itinerary.is_active %}border-danger border-2{% else %}border-0{% endif %} itinerary-card">
                             
                             <div class="position-relative">
                                 {% if itinerary.banner_pic %}
@@ -149,6 +149,16 @@
                                     <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill" title="Privado">
                                         <i class="fas fa-lock"></i>
                                     </span>
+                                {% endif %}
+                                {% if not itinerary.is_active %}
+                                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+                                        style="background: rgba(255, 255, 255, 0.85); z-index: 5;">
+                                        <div class="text-center text-danger border border-danger p-3 rounded bg-white shadow">
+                                            <i class="fas fa-ban fa-2x mb-2"></i>
+                                            <h5 class="fw-bold mb-1">Ocultado por Administración</h5>
+                                            <p class="small mb-0 text-muted">Este itinerario infringe nuestras normas<br>No es visible públicamente.</p>
+                                        </div>
+                                    </div>
                                 {% endif %}
                                 
                                 <!-- Descripción truncada -->

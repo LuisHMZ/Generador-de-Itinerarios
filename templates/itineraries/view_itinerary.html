@@ -115,6 +115,11 @@
                                         <img src="{{ stop.touristic_place.photo.url }}" alt="{{ stop.touristic_place.name }}" class="stop-image">
                                         {% endif %}
                                         <span class="stop-name">{{ stop.touristic_place.name }}</span>
+                                        {% if not stop.touristic_place.is_active %}
+                                            <span class="badge bg-danger ms-2" style="font-size: 0.6em;">
+                                                <i class="fas fa-ban me-1"></i>No disponible
+                                            </span>
+                                        {% endif %}
                                         <span class="badge tag-naturaleza">{{ stop.touristic_place.category }}</span>
                                         <div class="btn-ver-detalles">
                                             <div class="stop-actions ms-auto">

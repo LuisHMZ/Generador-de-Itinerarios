@@ -1,0 +1,49 @@
+{% load i18n %}
+{% load account %}
+
+<div style="font-family: 'Poppins', sans-serif; padding: 20px; background-color: #f8f9fa; color: #2c3e50; max-width: 100%; margin: 0 auto;">
+    <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        
+        <!-- Encabezado con Logo/Nombre -->
+        <h1 style="color: #1F3C5A; font-weight: 600; margin-top: 0; margin-bottom: 20px; font-size: 24px;">
+            <span style="color: #49a3a3;">MexTur</span>
+        </h1>
+        
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 15px;">
+            {% blocktrans with site_name=current_site.name %}¡Hola de parte de {{ site_name }}!{% endblocktrans %}
+        </p>
+        
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 15px;">
+            {% blocktrans with site_name=current_site.name %}Usted está recibiendo este correo electrónico porque usted (u otra persona) intentó registrarse para una cuenta en {{ site_name }} utilizando esta dirección de correo electrónico:{% endblocktrans %}
+        </p>
+        
+        <!-- Mostramos el email resaltado -->
+        <div style="background-color: #f1f3f5; padding: 10px; border-radius: 4px; text-align: center; margin: 20px 0; font-weight: 600; color: #1F3C5A;">
+            {{ email }}
+        </div>
+
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 15px;">
+            {% blocktrans %}Sin embargo, ya existe una cuenta con esa dirección de correo electrónico.{% endblocktrans %}
+        </p>
+
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 25px;">
+            {% blocktrans %}En caso de que lo haya olvidado, utilice el siguiente botón para recuperar su cuenta:{% endblocktrans %}
+        </p>
+        
+        <!-- Botón de Acción (Recuperar Contraseña) -->
+        <!-- Construimos la URL completa para el botón -->
+        <a href="http://{{ current_site.domain }}{% url 'account_reset_password' %}" target="_blank" style="display: inline-block; background-color: #49a3a3; color: #ffffff; padding: 12px 25px; margin: 0 auto 25px; border-radius: 5px; text-decoration: none; font-weight: 600; font-size: 16px;">
+            {% trans "Recuperar Contraseña" %}
+        </a>
+
+        <p style="color: #7d7d7d; font-size: 14px; margin: 0 0 15px;">
+            {% blocktrans %}Si tú no intentaste registrarte de nuevo, puedes ignorar este correo.{% endblocktrans %}
+        </p>
+        
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        
+        <p style="color: #7d7d7d; font-size: 12px; margin: 0;">
+            &copy; {% now "Y" %} MexTur. Todos los derechos reservados.
+        </p>
+    </div>
+</div>

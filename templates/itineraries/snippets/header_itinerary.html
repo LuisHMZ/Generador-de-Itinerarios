@@ -1,0 +1,88 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg fixed-top shadow-sm" style="background-color: #1F3C5A; height: 70px;">
+    <div class="container-fluid px-4">
+        
+        <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
+            <img src="{% static 'img/logo.png' %}" alt="MexTur Logo" class="navbar-logo" style="height: 45px;">
+            <span class="text-white fw-bold" style="letter-spacing: 1px;">MexTur</span>
+        </a>
+
+        <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarContent">
+            
+            <ul class="navbar-nav mx-auto gap-4 align-items-center">
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 fs-5 position-relative icon-hover" href="{% url 'home' %}" title="Inicio">
+                        <i class="fas fa-home"></i>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white fs-4 position-relative active-icon" href="#" title="Itinerarios">
+                        <i class="fas fa-map-signs"></i>
+                        <span class="position-absolute bottom-0 start-50 translate-middle-x bg-white rounded-pill" style="width: 20px; height: 3px;"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 fs-5 position-relative icon-hover" href="#" title="Explorar">
+                        <i class="fas fa-compass"></i>
+                    </a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto gap-3 align-items-center">
+                
+                <li class="nav-item dropdown">
+                    <a class="nav-link text-white position-relative rounded-circle bg-white bg-opacity-10 p-2 d-flex align-items-center justify-content-center" 
+                       href="#" style="width: 40px; height: 40px;" data-bs-toggle="dropdown">
+                        <i class="fas fa-bell"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                            <span class="visually-hidden">Alertas</span>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2">
+                        <li><h6 class="dropdown-header fw-bold">Notificaciones</h6></li>
+                        <li><a class="dropdown-item small" href="#">Sin novedades recientes</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link p-0 rounded-circle border border-2 border-white overflow-hidden" href="#" role="button" data-bs-toggle="dropdown" style="width: 40px; height: 40px;">
+                        {% if request.user.profile.profile_picture %}
+                            <img src="{{ request.user.profile.profile_picture.url }}" class="w-100 h-100 object-fit-cover">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" class="w-100 h-100 object-fit-cover">
+                        {% endif %}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2">
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="{% url 'profile_view' request.user.username %}">
+                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                    <i class="fas fa-user text-secondary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold small">{{ request.user.username }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">Ver tu perfil</div>
+                                </div>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger small" href="{% url 'simple_logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+    /* Efectos Hover para Iconos Centrales */
+    .icon-hover:hover { color: #fff !important; transform: translateY(-2px); transition: all 0.2s; }
+    .active-icon { color: #fff !important; }
+    
+    /* Tu estilo solicitado para la marca */
+    .navbar-brand { transition: transform 0.3s ease; }
+    .navbar-brand:hover { transform: scale(1.05); }
+</style>

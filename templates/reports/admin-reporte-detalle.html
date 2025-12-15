@@ -5,7 +5,14 @@
 
 {% block content %}
 <div class="container my-5" style="max-width: 1100px;">
-    
+    {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
     <a href="{% url 'admin_reports_list' %}" class="btn btn-outline-secondary rounded-pill mb-4 px-4">
         <i class="fas fa-arrow-left me-2"></i> Volver a Reportes
     </a>
@@ -35,7 +42,7 @@
                             <span>{{ report.created_at|date:"d F Y, H:i" }}</span>
                         </div>
                         <div class="col-md-6">
-                            <small class="text-muted fw-bold d-block">REPORTERO</small>
+                            <small class="text-muted fw-bold d-block">INFRACTOR</small>
                             {% if report.reporter %}
                                 <a href="{% url 'admin_user_detail' report.reporter.id %}" class="text-decoration-none">
                                     @{{ report.reporter.username }}
@@ -82,11 +89,23 @@
                             <div class="border rounded overflow-hidden">
                                 {% if report.content_object.banner_pic %}
                                     <img src="{{ report.content_object.banner_pic.url }}" class="w-100" style="height: 150px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-secondary w-100 d-flex align-items-center justify-content-center text-white" style="height: 150px;">
+                                        <i class="fas fa-map-signs fa-2x opacity-50"></i>
+                                    </div>
                                 {% endif %}
+
                                 <div class="p-3">
-                                    <h5 class="fw-bold">{{ report.content_object.title }}</h5>
-                                    <p class="text-muted small mb-2">{{ report.content_object.description|truncatechars:200 }}</p>
-                                    {# <a href="{% url 'itineraries:view_itinerary' report.content_object.id %}" target="_blank" class="btn btn-sm btn-primary">Ver Itinerario</a> #}
+                                    <h5 class="fw-bold mb-1">{{ report.content_object.title }}</h5>
+                                    <p class="text-muted small mb-3">
+                                        {{ report.content_object.description|default:"Sin descripción"|truncatechars:150 }}
+                                    </p>
+                                    
+                                    <a href="{% url 'itineraries:admin_itinerary_preview' report.content_object.id %}?report_id={{ report.id }}" 
+                                    target="_blank" 
+                                    class="btn btn-sm btn-outline-primary w-100 fw-bold">
+                                        <i class="fas fa-external-link-alt me-1"></i> Ver Itinerario Original
+                                    </a>
                                 </div>
                             </div>
 
@@ -139,7 +158,7 @@
                         <input type="hidden" name="action" value="notify_user">
                         
                         <div class="mb-3">
-                            <textarea name="notification_message" class="form-control" rows="3" placeholder="Ej: Tu itinerario infringe nuestras normas..." required></textarea>
+                            <textarea name="notification_message" class="form-control" rows="3" placeholder="" required></textarea>
                         </div>
                         
                         <div class="d-grid">

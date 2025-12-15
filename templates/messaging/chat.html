@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="{% static 'css/profile.css' %}">
 
     <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
+<<<<<<< HEAD
     
     <style>
         /* --- ESTILOS ESPECÍFICOS DEL CHAT --- */
@@ -115,10 +116,174 @@
         .report-option-card { display: flex; align-items: center; padding: 12px; border: 1px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: 0.2s; }
         .report-option-input:checked + .report-option-card { border-color: #dc3545; background-color: #fff5f5; color: #dc3545; }
         .custom-textarea { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; resize: none; }
+=======
+
+    <style>
+        /* --- LAYOUT GLOBAL --- */
+        html, body { 
+            height: 100%; 
+            margin: 0; 
+            overflow: hidden; /* Importante para que el scroll sea interno */
+            background-color: #f8f9fa;
+        }
+
+        /* Contenedor principal ajustado al Header */
+        .chat-wrapper {
+            height: calc(100vh - 76px); /* 76px es aprox la altura de tu header.html */
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            display: flex;
+        }
+
+        /* --- COLUMNAS --- */
+        .sidebar-col {
+            background: white;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .chat-sidebar {
+            background: #fff;
+            border-right: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-main {
+            background: #f0f2f5; /* Color tipo WhatsApp Web */
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            /* Fondo con patrón sutil */
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%239C92AC' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        /* --- LISTA DE CONVERSACIONES --- */
+        .conversations-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .conversacion-item {
+            display: flex; gap: 12px; padding: 12px;
+            border-radius: 12px; text-decoration: none; color: inherit;
+            transition: background 0.2s; border-bottom: 1px solid #f8f9fa;
+            align-items: center;
+        }
+        .conversacion-item:hover, .conversacion-item.active { background-color: #f0f2f5; }
+
+        /* --- CHAT HEADER --- */
+        .chat-header-bar {
+            padding: 0 16px;
+            background: white;
+            border-bottom: 1px solid #dee2e6;
+            display: flex; justify-content: space-between; align-items: center;
+            height: 60px; flex-shrink: 0;
+            z-index: 10;
+        }
+
+        /* --- CHAT BODY (MESSAGES) --- */
+        #chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- CHAT FOOTER (INPUT) --- */
+        .chat-footer-bar {
+            background: white;
+            border-top: 1px solid #dee2e6;
+            padding: 10px 16px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        /* --- BURBUJAS DE MENSAJE --- */
+        .burbuja-mensaje {
+            display: flex; margin-bottom: 12px; max-width: 85%;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .burbuja-mensaje.enviada {
+            margin-left: auto; justify-content: flex-end;
+        }
+        .burbuja-mensaje.enviada .texto-mensaje {
+            background-color: #dcf8c6; /* Verde WhatsApp */
+            border-radius: 12px 0 12px 12px;
+            color: #111;
+        }
+        .burbuja-mensaje.recibida .texto-mensaje {
+            background-color: white; 
+            border-radius: 0 12px 12px 12px; 
+            border: 1px solid #e5e5e5;
+        }
+        .texto-mensaje {
+            padding: 8px 12px; 
+            position: relative; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08); 
+            word-wrap: break-word;
+            min-width: 80px;
+        }
+
+        /* --- VISTA PREVIA IMAGEN --- */
+        #image-preview-container {
+            display: none;
+            padding: 8px 16px;
+            background: #f0f2f5;
+            border-top: 1px solid #dee2e6;
+            position: absolute;
+            bottom: 100%; left: 0; width: 100%;
+            z-index: 5;
+        }
+        .preview-wrapper { position: relative; display: inline-block; }
+        .btn-remove-img {
+            position: absolute; top: -5px; right: -5px;
+            background: #dc3545; color: white; border-radius: 50%;
+            width: 20px; height: 20px; font-size: 12px; line-height: 1;
+            border: none; cursor: pointer;
+        }
+
+        /* --- EMOJI PICKER --- */
+        #emoji-picker-root {
+            position: absolute; bottom: 70px; left: 10px;
+            z-index: 100; display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); border-radius: 10px;
+        }
+
+        /* --- MODO MÓVIL / RESPONSIVO --- */
+        #btn-back-mobile { display: none; cursor: pointer; margin-right: 15px; font-size: 1.2rem; }
+        
+        /* Ocultar footer global en móvil dentro del chat para ganar espacio */
+        @media (max-width: 768px) {
+            .footer-global { display: none !important; } /* Ocultar footer del sitio en página de chat */
+            .chat-wrapper { height: calc(100vh - 60px); } /* Ajustar altura sin footer */
+            
+            /* Lógica de pantallas */
+            /* Si NO hay chat activo: Mostramos lista, ocultamos main */
+            body:not(.mobile-chat-active) .chat-main { display: none !important; }
+            body:not(.mobile-chat-active) .chat-sidebar { display: flex !important; width: 100%; }
+            
+            /* Si HAY chat activo: Mostramos main, ocultamos lista y header global */
+            body.mobile-chat-active .chat-sidebar { display: none !important; }
+            body.mobile-chat-active .chat-main { display: flex !important; width: 100%; position: fixed; top: 0; left: 0; z-index: 1050; height: 100vh; }
+            body.mobile-chat-active .header-global { display: none !important; } /* Ocultar header global para full screen */
+            
+            #btn-back-mobile { display: block; }
+        }
+>>>>>>> origin/mejora-chat-admin
     </style>
 </head>
 <body data-logout-url="{% url 'simple_logout' %}" data-username="{{ user.username }}">
 
+<<<<<<< HEAD
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100" id="toastContainer"></div>
 
     <div id="site-header"></div>
@@ -161,28 +326,66 @@
                             </li>
                         </ul>
                     </div>
+=======
+    {% include 'snippets/header.html' %}
+
+    <div class="container-fluid p-0">
+        <div class="row g-0 chat-wrapper">
+            
+            <div class="col-lg-2 d-none d-lg-block sidebar-col">
+                <div class="p-3">
+                    <ul class="list-unstyled mb-0 d-grid gap-2">
+                        <li>
+                            <a href="{% url 'profile_view' user.username %}" class="btn btn-light w-100 text-start border-0">
+                                <i class="fa-solid fa-user me-2 text-muted"></i> Perfil
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'messaging:inbox' %}" class="btn btn-primary-subtle w-100 text-start border-0 fw-bold text-primary">
+                                <i class="fa-solid fa-envelope me-2"></i> Mensajes
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'itineraries:my_itineraries' %}" class="btn btn-light w-100 text-start border-0">
+                                <i class="fa-solid fa-map-location-dot me-2 text-muted"></i> Itinerarios
+                            </a>
+                        </li>
+                        <li class="mt-4 pt-3 border-top">
+                            <a href="{% url 'home' %}" class="btn btn-link w-100 text-start text-decoration-none text-muted small">
+                                <i class="fa-solid fa-arrow-left me-2"></i> Volver al Inicio
+                            </a>
+                        </li>
+                    </ul>
+>>>>>>> origin/mejora-chat-admin
                 </div>
             </div>
 
             <div class="col-md-4 col-lg-3 chat-sidebar">
-                <div class="conversations-container">
-                    <div class="conv-header">
-                        <h5 class="mb-3 fw-bold">Mensajes</h5>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
-                            <input type="text" class="form-control bg-light border-start-0" placeholder="Buscar..." id="search-conversaciones">
-                        </div>
+                <div class="p-3 border-bottom">
+                    <h4 class="fw-bold mb-3">Mensajes</h4>
+                    <div class="position-relative">
+                        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" class="form-control rounded-pill ps-5 bg-light border-0" placeholder="Buscar chat..." id="search-conversaciones">
                     </div>
+<<<<<<< HEAD
                     <div id="lista-conversaciones" class="hide-scrollbar" style="overflow-y: auto; height: calc(100vh - 160px);">
                         <div class="text-center mt-5 text-muted">
                             <div class="spinner-border spinner-border-sm" role="status"></div>
                         </div>
+=======
+                </div>
+                
+                <div id="lista-conversaciones" class="conversations-container">
+                    <div class="text-center mt-5 text-muted">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+>>>>>>> origin/mejora-chat-admin
                     </div>
                 </div>
             </div>
 
             <div class="col-md-8 col-lg-7 chat-main">
                 
+<<<<<<< HEAD
                 <div id="empty-state">
                     <i class="far fa-paper-plane fa-3x mb-3 text-secondary"></i>
                     <h5 class="text-muted">Tus mensajes</h5>
@@ -192,18 +395,31 @@
                 <div id="active-chat-interface" class="chat-interface" style="display: none !important;">
                     
                     <div class="chat-header-bar">
+=======
+                <div id="empty-state" class="d-flex flex-column align-items-center justify-content-center h-100 text-center p-4">
+                    <img src="{% static 'img/logo.png' %}" alt="MexTur" style="width: 80px; opacity: 0.5; margin-bottom: 20px;">
+                    <h5 class="text-dark fw-bold">Tus mensajes en MexTur</h5>
+                    <p class="text-muted small">Envía fotos y mensajes a tus amigos para planear viajes.</p>
+                </div>
+
+                <div id="active-chat-interface" class="h-100 flex-column" style="display: none !important;">
+                    
+                    <div class="chat-header-bar shadow-sm">
+>>>>>>> origin/mejora-chat-admin
                         <div class="d-flex align-items-center">
-                            <i class="fas fa-arrow-left" id="btn-back-mobile"></i>
-                            <a href="{% url 'profile_view' user.username %}" id="header-profile-link" class="text-decoration-none d-flex align-items-center text-dark">
-                                <img src="" id="header-avatar" width="40" height="40" class="rounded-circle object-fit-cover me-2">
-                                <div>
+                            <i class="fas fa-arrow-left text-secondary me-3" id="btn-back-mobile"></i>
+                            
+                            <a href="#" id="header-profile-link" class="d-flex align-items-center text-decoration-none text-dark">
+                                <img src="" id="header-avatar" class="rounded-circle object-fit-cover me-2 border" width="40" height="40">
+                                <div style="line-height: 1.2;">
                                     <h6 class="mb-0 fw-bold" id="header-name">Usuario</h6>
-                                    <small class="text-success d-flex align-items-center" style="font-size: 0.75rem;">
-                                        <i class="fas fa-circle me-1" style="font-size: 6px;"></i> En línea
+                                    <small class="text-success d-flex align-items-center" style="font-size: 0.7rem;">
+                                        En línea
                                     </small>
                                 </div>
                             </a>
                         </div>
+<<<<<<< HEAD
                         
                         <div class="dropdown">
                             <button class="btn btn-link text-muted" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -220,10 +436,17 @@
                     </div>
 
                     <div id="chat-container" class="hide-scrollbar">
+=======
+                        <button class="btn btn-link text-muted p-0"><i class="fas fa-ellipsis-v"></i></button>
+                    </div>
+
+                    <div id="chat-container">
+>>>>>>> origin/mejora-chat-admin
                         <div id="messages-wrapper"></div>
                     </div>
 
                     <div class="chat-footer-bar">
+<<<<<<< HEAD
                         <form id="chat-form" class="d-flex gap-2 align-items-center">
                             
                             <input type="file" id="chat-file-input" accept="image/*">
@@ -241,6 +464,32 @@
                             
                             <button class="btn btn-primary rounded-circle" type="submit" style="background-color: #e57b28; border: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                                 <i class="fas fa-paper-plane"></i>
+=======
+                        
+                        <div id="image-preview-container">
+                            <div class="preview-wrapper">
+                                <img id="img-preview" src="" style="height: 80px; border-radius: 8px; border: 1px solid #ddd;">
+                                <button type="button" class="btn-remove-img" id="btn-remove-img">&times;</button>
+                            </div>
+                        </div>
+
+                        <div id="emoji-picker-root"></div>
+
+                        <form id="chat-form" class="d-flex gap-2 align-items-center" enctype="multipart/form-data">
+                            <button class="btn btn-light text-muted rounded-circle p-2" type="button" id="emoji-trigger">
+                                <i class="far fa-smile fs-4"></i>
+                            </button>
+
+                            <input type="file" id="image-input" name="image" accept="image/*" style="display: none;">
+                            <button class="btn btn-light text-muted rounded-circle p-2" type="button" id="attachment-btn" title="Adjuntar foto">
+                                <i class="fas fa-paperclip fs-5"></i>
+                            </button>
+                            
+                            <input type="text" id="chat-input" class="form-control rounded-pill bg-light border-0 py-2 px-3" placeholder="Escribe un mensaje..." autocomplete="off">
+                            
+                            <button class="btn btn-primary rounded-circle shadow-sm p-0" type="submit" style="width: 42px; height: 42px; display: grid; place-items: center; background: #E57B28; border: none;">
+                                <i class="fas fa-paper-plane text-white"></i>
+>>>>>>> origin/mejora-chat-admin
                             </button>
                         </form>
                     </div>
@@ -372,19 +621,26 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/headerFooter.js' %}" defer></script>
+    <script src="https://unpkg.com/picmo@latest/dist/umd/index.js"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // --- CONFIGURACIÓN ---
             const API_LIST = "{% url 'messaging:api_list' %}";
             const API_MSG_BASE = "/api/messaging/api/messages/"; 
             const API_SEND_BASE = "/api/messaging/api/send/";
             const CSRF_TOKEN = "{{ csrf_token }}";
 
+<<<<<<< HEAD
             // Variables globales
+=======
+            // --- VARIABLES DE ESTADO ---
+>>>>>>> origin/mejora-chat-admin
             let activeChatId = null;
             let currentChatPartnerId = null; 
             let lastMessageId = 0;
             let pollingInterval = null;
+<<<<<<< HEAD
             let listPollingInterval = null;
 
             // Elementos UI
@@ -397,7 +653,36 @@
             const messagesWrapper = document.getElementById('messages-wrapper');
             const chatContainer = document.getElementById('chat-container'); 
             const input = document.getElementById('chat-input');
+=======
+            let picker = null; // Instancia Emoji Picker
+
+            // --- ELEMENTOS DOM ---
+            const listaUI = document.getElementById('lista-conversaciones');
+            const emptyState = document.getElementById('empty-state');
+            const chatInterface = document.getElementById('active-chat-interface');
+            const chatContainer = document.getElementById('chat-container');
+            const messagesWrapper = document.getElementById('messages-wrapper');
+            
+            // Header Chat
+            const headerName = document.getElementById('header-name');
+            const headerAvatar = document.getElementById('header-avatar');
+            const headerLink = document.getElementById('header-profile-link');
+            
+            // Inputs
+>>>>>>> origin/mejora-chat-admin
             const form = document.getElementById('chat-form');
+            const input = document.getElementById('chat-input');
+            const imageInput = document.getElementById('image-input');
+            const attachmentBtn = document.getElementById('attachment-btn');
+            const emojiTrigger = document.getElementById('emoji-trigger');
+            const emojiRoot = document.getElementById('emoji-picker-root');
+            
+            // Preview Imagen
+            const previewContainer = document.getElementById('image-preview-container');
+            const imgPreview = document.getElementById('img-preview');
+            const btnRemoveImg = document.getElementById('btn-remove-img');
+            
+            // Back Button Mobile
             const btnBack = document.getElementById('btn-back-mobile');
             
             // Archivos y Lightbox
@@ -500,6 +785,7 @@
             // Polling de lista (cada 4s) para detectar mensajes nuevos sin recargar
             listPollingInterval = setInterval(loadConversationList, 4000);
 
+<<<<<<< HEAD
             btnBack.addEventListener('click', function() {
                 document.body.classList.remove('mobile-chat-active');
                 if(pollingInterval) clearInterval(pollingInterval);
@@ -508,6 +794,62 @@
                 loadConversationList();
             });
 
+=======
+            // ==========================================
+            // 1. INICIALIZACIÓN
+            // ==========================================
+            loadConversationList();
+            checkURLForChat();
+            
+            // Configurar Picmo Emoji Picker
+            if (window.picmo) {
+                picker = picmo.createPicker({
+                    rootElement: emojiRoot,
+                    locale: 'es',
+                    showRecents: false
+                });
+                
+                picker.addEventListener('emoji:select', selection => {
+                    input.value += selection.emoji;
+                    input.focus();
+                    emojiRoot.style.display = 'none';
+                });
+
+                emojiTrigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isVisible = emojiRoot.style.display === 'block';
+                    emojiRoot.style.display = isVisible ? 'none' : 'block';
+                });
+            }
+
+            // ==========================================
+            // 2. MANEJO DE IMÁGENES (CLIP)
+            // ==========================================
+            attachmentBtn.addEventListener('click', () => imageInput.click());
+
+            imageInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imgPreview.src = e.target.result;
+                        previewContainer.style.display = 'block';
+                        input.placeholder = "Añadir un comentario...";
+                        input.focus();
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+
+            btnRemoveImg.addEventListener('click', () => {
+                imageInput.value = ''; 
+                previewContainer.style.display = 'none';
+                input.placeholder = "Escribe un mensaje...";
+            });
+
+            // ==========================================
+            // 3. NAVEGACIÓN Y CARGA DE CHATS
+            // ==========================================
+>>>>>>> origin/mejora-chat-admin
             function checkURLForChat() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const openChatId = urlParams.get('open_chat');
@@ -517,7 +859,11 @@
             function loadConversationList() {
                 fetch(API_LIST).then(res => res.json()).then(data => {
                         if(data.conversations.length === 0) {
+<<<<<<< HEAD
                             listaUI.innerHTML = '<div class="p-4 text-center text-muted small">No tienes mensajes aún.</div>';
+=======
+                            listaUI.innerHTML = '<div class="p-4 text-center text-muted small">No hay conversaciones recientes.</div>';
+>>>>>>> origin/mejora-chat-admin
                             checkURLForChatOnEmpty(data.conversations);
                             return;
                         }
@@ -525,6 +871,7 @@
                         let htmlContent = '';
                         data.conversations.forEach(chat => {
                             const activeClass = chat.id == activeChatId ? 'active' : '';
+<<<<<<< HEAD
                             
                             // CORRECCIÓN CLAVE: Si este chat está activo, forzamos is_unread a falso visualmente
                             // para que no parpadee ni se marque si el backend tarda en actualizarse
@@ -536,18 +883,26 @@
                             htmlContent += `
                                 <a href="#" class="conversacion-item ${activeClass} ${unreadClass}" onclick="loadChat(${chat.id}, '${chat.name}', '${chat.avatar}', '${chat.username}')">
                                     <img src="${chat.avatar}" alt="Avatar" width="48" height="48" class="rounded-circle object-fit-cover">
+=======
+                            const item = `
+                                <a href="#" class="conversacion-item ${activeClass}" onclick="loadChat(${chat.id}, '${chat.name}', '${chat.avatar}', '${chat.username}')">
+                                    <img src="${chat.avatar}" alt="Avatar" width="50" height="50" class="rounded-circle object-fit-cover border">
+>>>>>>> origin/mejora-chat-admin
                                     <div style="flex: 1; min-width: 0;">
                                         <div class="d-flex justify-content-between mb-1">
-                                            <h6 class="mb-0 text-truncate fw-semibold" style="font-size: 0.95rem; color: #333;">${chat.name}</h6>
-                                            <small class="text-muted ms-2" style="font-size: 0.75rem;">${chat.time}</small>
+                                            <h6 class="mb-0 text-truncate fw-bold text-dark" style="font-size: 0.95rem;">${chat.name}</h6>
+                                            <small class="text-muted" style="font-size: 0.75rem;">${chat.time}</small>
                                         </div>
-                                        <p class="mb-0 text-truncate text-muted" style="font-size: 0.85rem;">${chat.preview}</p>
+                                        <p class="mb-0 text-truncate text-muted small">${chat.preview}</p>
                                     </div>
                                 </a>
                             `;
                         });
+<<<<<<< HEAD
                         
                         listaUI.innerHTML = htmlContent;
+=======
+>>>>>>> origin/mejora-chat-admin
                         checkURLForChatOnEmpty(data.conversations);
                     });
             }
@@ -563,13 +918,16 @@
             }
 
             window.loadChat = function(chatId, name, avatar, username) {
+                // Activar modo móvil
                 document.body.classList.add('mobile-chat-active');
+                
                 if(activeChatId === chatId) return;
                 
                 activeChatId = chatId;
                 currentChatPartnerId = chatId; 
                 lastMessageId = 0;
 
+<<<<<<< HEAD
                 emptyState.style.setProperty('display', 'none', 'important');
                 chatInterface.style.setProperty('display', 'flex', 'important');
                 
@@ -581,6 +939,28 @@
                 messagesWrapper.innerHTML = '<div class="loading-overlay"><div class="spinner-border text-primary" role="status"></div></div>';
                 fetchMessages(true);
                 
+=======
+                // UI Switch
+                emptyState.style.setProperty('display', 'none', 'important');
+                chatInterface.style.setProperty('display', 'flex', 'important');
+                
+                // Set Header
+                if(name) headerName.textContent = name;
+                if(avatar) headerAvatar.src = avatar;
+                if(username) {
+                    headerLink.href = `/perfil/${username}/`;
+                    headerLink.style.pointerEvents = 'auto';
+                } else {
+                    headerLink.href = '#';
+                    headerLink.style.pointerEvents = 'none';
+                }
+
+                // Cargar mensajes
+                messagesWrapper.innerHTML = '<div class="text-center mt-5"><div class="spinner-border text-primary" role="status"></div></div>';
+                fetchMessages(true);
+
+                // Polling
+>>>>>>> origin/mejora-chat-admin
                 if(pollingInterval) clearInterval(pollingInterval);
                 pollingInterval = setInterval(() => fetchMessages(false), 3000);
                 
@@ -588,6 +968,17 @@
                 loadConversationList();
             };
 
+            btnBack.addEventListener('click', function() {
+                document.body.classList.remove('mobile-chat-active');
+                if(pollingInterval) clearInterval(pollingInterval);
+                activeChatId = null;
+                // Opcional: Recargar lista para actualizar últimos mensajes
+                loadConversationList();
+            });
+
+            // ==========================================
+            // 4. ENVÍO Y RECEPCIÓN
+            // ==========================================
             function fetchMessages(isFirstLoad) {
                 if(!activeChatId) return;
                 const url = isFirstLoad ? `${API_MSG_BASE}${activeChatId}/` : `${API_MSG_BASE}${activeChatId}/?last_id=${lastMessageId}`;
@@ -595,6 +986,7 @@
                 fetch(url).then(res => res.json()).then(data => {
                         if(isFirstLoad) messagesWrapper.innerHTML = '';
                         
+<<<<<<< HEAD
                         if (data.chat_partner && data.chat_partner.id) {
                             currentChatPartnerId = data.chat_partner.id;
                             if (isFirstLoad && (headerName.textContent === 'Nuevo Chat' || headerName.textContent === 'Usuario')) {
@@ -605,6 +997,18 @@
                                     headerLink.style.pointerEvents = 'auto';
                                 }
                             }
+=======
+                        // Actualizar info si es chat nuevo
+                        if (isFirstLoad && data.chat_partner) {
+                             if (headerName.textContent === 'Nuevo Chat' || headerName.textContent === 'Usuario') {
+                                 headerName.textContent = data.chat_partner.name;
+                                 headerAvatar.src = data.chat_partner.avatar;
+                                 if(data.chat_partner.username) {
+                                     headerLink.href = `/perfil/${data.chat_partner.username}/`;
+                                     headerLink.style.pointerEvents = 'auto';
+                                 }
+                             }
+>>>>>>> origin/mejora-chat-admin
                         }
 
                         if(data.messages.length > 0) {
@@ -613,7 +1017,26 @@
                                 const isMe = msg.is_me;
                                 const typeClass = isMe ? 'enviada' : 'recibida';
                                 
+                                // Render Badge Admin
+                                let adminBadge = '';
+                                if (msg.sender_is_staff) {
+                                    adminBadge = `<span class="badge bg-warning text-dark ms-2 fw-bold" style="font-size: 0.6em; vertical-align: middle;">ADMIN</span>`;
+                                }
+
+                                // Render Imagen
+                                let imageHtml = '';
+                                if (msg.image_url) {
+                                    imageHtml = `
+                                        <div class="mt-2 mb-1">
+                                            <a href="${msg.image_url}" target="_blank">
+                                                <img src="${msg.image_url}" class="img-fluid rounded border" style="max-width: 250px; max-height: 250px; object-fit: cover;">
+                                            </a>
+                                        </div>
+                                    `;
+                                }
+
                                 const html = `
+<<<<<<< HEAD
                                     <div class="burbuja-mensaje ${typeClass} message-group" id="msg-${msg.id}">
                                         ${!isMe ? `<img src="${msg.avatar}" class="avatar-mensaje">` : ''}
                                         
@@ -628,18 +1051,37 @@
                                                     <i class="fas fa-trash"></i>
                                                 </div>
                                             ` : ''}
+=======
+                                    <div class="burbuja-mensaje ${typeClass}" id="msg-${msg.id}">
+                                        ${!isMe ? `<img src="${msg.avatar}" class="avatar-mensaje align-self-end mb-2">` : ''}
+                                        <div class="texto-mensaje">
+                                            ${!isMe ? `<div class="fw-bold mb-1 text-primary small">${msg.sender_name} ${adminBadge}</div>` : ''}
+                                            
+                                            ${imageHtml}
+                                            
+                                            ${msg.content ? `<div>${msg.content}</div>` : ''}
+                                            
+                                            <div class="text-end mt-1" style="font-size: 0.65rem; opacity: 0.6;">${msg.time}</div>
+>>>>>>> origin/mejora-chat-admin
                                         </div>
                                     </div>
                                 `;
                                 messagesWrapper.insertAdjacentHTML('beforeend', html);
                                 lastMessageId = Math.max(lastMessageId, msg.id);
                             });
+<<<<<<< HEAD
                             chatContainer.scrollTop = chatContainer.scrollHeight;
                             
                             // Si entraron mensajes nuevos mientras veo el chat, refrescar la lista lateral
                             if(!isFirstLoad) loadConversationList(); 
+=======
+                            
+                            // Auto scroll al final
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                            if(!isFirstLoad) loadConversationList();
+>>>>>>> origin/mejora-chat-admin
                         } else if (isFirstLoad) {
-                            messagesWrapper.innerHTML = '<div class="text-center mt-5 text-muted small">Envía un mensaje para comenzar.</div>';
+                            messagesWrapper.innerHTML = '<div class="text-center mt-5 text-muted small opacity-50"><i class="far fa-comments fa-2x mb-2"></i><br>Saluda para comenzar.</div>';
                         }
                     });
             }
@@ -647,6 +1089,7 @@
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 const text = input.value.trim();
+<<<<<<< HEAD
                 const file = fileInput.files[0];
 
                 if((!text && !file) || !activeChatId) return;
@@ -658,14 +1101,49 @@
                 input.value = ''; input.focus();
                 if(file) btnCancelFile.click(); // Limpiar preview
 
+=======
+                const imageFile = imageInput.files[0];
+
+                if((!text && !imageFile) || !activeChatId) return;
+                
+                const formData = new FormData();
+                formData.append('content', text);
+                if (imageFile) {
+                    formData.append('image', imageFile);
+                }
+                
+                // UI Reset Inmediato
+                input.value = '';
+                imageInput.value = '';
+                previewContainer.style.display = 'none';
+                input.placeholder = "Escribe un mensaje...";
+                input.focus();
+                
+>>>>>>> origin/mejora-chat-admin
                 fetch(`${API_SEND_BASE}${activeChatId}/`, {
                     method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN }, body: formData
                 }).then(res => res.json()).then(data => {
                     if(data.status === 'success') {
                         fetchMessages(false);
+                        // Pequeño delay para asegurar que el server procesó antes de actualizar lista
                         setTimeout(loadConversationList, 500); 
+<<<<<<< HEAD
                     } else { alert('Error al enviar'); }
+=======
+                    } else {
+                        alert("Error al enviar: " + (data.message || "Intenta de nuevo"));
+                    }
+>>>>>>> origin/mejora-chat-admin
                 });
+            });
+
+            // Cerrar emoji picker al hacer clic fuera
+            document.addEventListener('click', (e) => {
+                if(emojiRoot && emojiRoot.style.display === 'block') {
+                    if (!emojiRoot.contains(e.target) && e.target !== emojiTrigger) {
+                        emojiRoot.style.display = 'none';
+                    }
+                }
             });
         });
     </script>
