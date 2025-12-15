@@ -30,7 +30,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 # --- MODELOS Y FORMULARIOS ---
-from .forms import SimpleSignupForm
+from .forms import SimpleSignupForm, EditProfileForm
 from .models import Profile 
 from apps.posts.forms import CreatePostForm
 from apps.alertas.models import Notification
@@ -853,3 +853,36 @@ def api_search_users(request):
         })
     
     return JsonResponse(results, safe=False)
+
+@login_required
+def edit_profile_view(request):
+    """
+    Vista para editar el perfil del usuario actual.
+    Permite modificar: username, first_name, last_name, birth_date, bio y profile_picture.
+    El email NO se puede modificar.
+    """
+    # Obtener o crear el perfil del usuario
+    profile, created = Profile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, request.FILES, instance=profile, user=request.user)
+        
+        if form.is_valid():
+            form.save()
+            messages.success(request, '¡Tu perfil ha sido actualizado exitosamente!')
+            return redirect('profile_view', username=request.user.username)
+        else:
+            # Si hay errores, mostrarlos
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{error}")
+    else:
+        form = EditProfileForm(instance=profile, user=request.user)
+    
+    context = {
+        'form': form,
+        'user': request.user,
+        'profile': profile,
+    }
+    
+    return render(request, 'users/edit_profile.html', context)

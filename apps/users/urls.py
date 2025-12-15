@@ -27,6 +27,10 @@ urlpatterns = [
     # Esta es la URL de tu página de solicitudes
     path('solicitudes/', views.friend_requests_view, name='friend_requests_view'),
 
+    # --- RUTA PARA EDITAR PERFIL (DEBE IR ANTES DE perfil/<username>/) ---
+    path('perfil/editar/', views.edit_profile_view, name='edit_profile'),
+
+    # --- RUTA PARA VER PERFIL (DEBE IR DESPUÉS DE rutas específicas) ---
     path('perfil/<str:username>/', views.profile_view, name='profile_view'),
 
     # --- RUTA PARA CREAR PUBLICACIÓN ---

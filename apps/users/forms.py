@@ -7,6 +7,7 @@ import re
 from allauth.account.models import EmailAddress
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV2Checkbox
+from .models import Profile
 class SimpleSignupForm(BaseUserCreationForm):
     # Añade los campos que UserCreationForm no tiene por defecto
     first_name = forms.CharField(max_length=30, required=True, label='Nombre(s)')
@@ -97,3 +98,115 @@ class SimpleSignupForm(BaseUserCreationForm):
             profile.save()
 
         return user
+class EditProfileForm(forms.ModelForm):
+    """
+    Formulario para editar el perfil de un usuario.
+    Permite editar: username, first_name, last_name, birth_date, bio y profile_picture.
+    El email NO es editable.
+    """
+    username = forms.CharField(
+        max_length=150, 
+        required=True, 
+        label='Nombre de usuario',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    first_name = forms.CharField(
+        max_length=30, 
+        required=True, 
+        label='Nombre(s)',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    last_name = forms.CharField(
+        max_length=150, 
+        required=True, 
+        label='Apellidos',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    birth_date = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}), 
+        label='Fecha de Nacimiento', 
+        required=False
+    )
+    bio = forms.CharField(
+        max_length=255, 
+        required=False, 
+        label='Biografía',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Cuéntanos sobre ti...'})
+    )
+    profile_picture = forms.ImageField(
+        required=False, 
+        label='Foto de perfil',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+
+    class Meta:
+        model = Profile
+        fields = ['birth_date', 'bio', 'profile_picture']
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Inicializar campos del User si existe
+        if self.user:
+            self.fields['username'].initial = self.user.username
+            self.fields['first_name'].initial = self.user.first_name
+            self.fields['last_name'].initial = self.user.last_name
+
+    def clean_username(self):
+        """
+        Valida que el username no esté en uso por otro usuario.
+        """
+        username = self.cleaned_data.get('username')
+        if not username:
+            raise forms.ValidationError("El nombre de usuario es obligatorio.")
+        
+        # Validar que solo contenga letras, números y guiones bajos
+        if not re.match(r'^[\w]+$', username):
+            raise forms.ValidationError("El nombre de usuario solo puede contener letras, números y guiones bajos.")
+        
+        # Verificar si el username ya existe (excluyendo el usuario actual)
+        if self.user:
+            if User.objects.filter(username=username).exclude(id=self.user.id).exists():
+                raise forms.ValidationError("Este nombre de usuario ya está en uso.")
+        else:
+            if User.objects.filter(username=username).exists():
+                raise forms.ValidationError("Este nombre de usuario ya está en uso.")
+        
+        return username
+
+    def clean_first_name(self):
+        """
+        Valida que el nombre solo contenga letras y espacios.
+        """
+        first_name = self.cleaned_data.get('first_name')
+        if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$", first_name):
+            raise forms.ValidationError("El nombre solo puede contener letras y espacios.")
+        return first_name
+
+    def clean_last_name(self):
+        """
+        Valida que el apellido solo contenga letras y espacios.
+        """
+        last_name = self.cleaned_data.get('last_name')
+        if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$", last_name):
+            raise forms.ValidationError("El apellido solo puede contener letras y espacios.")
+        return last_name
+
+    def save(self, commit=True):
+        """
+        Guarda tanto el Profile como los campos del User.
+        """
+        profile = super().save(commit=False)
+        
+        if self.user:
+            # Actualizar campos del User
+            self.user.username = self.cleaned_data.get('username')
+            self.user.first_name = self.cleaned_data.get('first_name')
+            self.user.last_name = self.cleaned_data.get('last_name')
+            
+            if commit:
+                self.user.save()
+                profile.save()
+        
+        return profile
