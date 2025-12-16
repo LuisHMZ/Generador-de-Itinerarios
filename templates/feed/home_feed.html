@@ -208,13 +208,13 @@
                                     </div>
                                 </header>
 
-                                <div class="post-photo" role="img">
                                     {% with pictures=post.pictures.all %}
                                         {% if pictures %}
-                                            <img src="{{ pictures.0.pic_url.url }}" alt="Foto del post">
+                                            <div class="post-photo" role="img">
+                                                <img src="{{ pictures.0.pic_url.url }}" alt="Foto del post">
+                                            </div>
                                         {% endif %}
                                     {% endwith %}
-                                </div>
                                 
                                 {% if post.title %}
                                     <h5 class="post-title" style="padding: 0 16px; margin-top: 10px; font-weight: bold;">
@@ -327,7 +327,8 @@
                                                 <i class="bi bi-star{% if user_score >= 5 %}-fill text-warning{% endif %} me-1 star-btn" data-value="5"></i>
                                             {% endwith %}
                                             <span class="small ms-2 avg-display">
-                                                {% if item.avg_rating %}{{ item.avg_rating|floatformat:1 }}/5{% else %}N/A{% endif %}
+                                                <!-- {% if item.avg_rating %}{{ item.avg_rating|floatformat:1 }}/5{% else %}N/A{% endif %} -->
+                                                {{ item.get_average_rating|floatformat:1 }}/5
                                             </span>
                                         </div>
                                     </div>
@@ -517,8 +518,9 @@
                     <div class="row h-100 g-0">
                         <div class="col-md-8 facebook-media-col" id="modalImageContainer">
                             <img src="" id="modalPostImage" alt="Image">
-                            <div id="modalNoImage" class="text-white d-none"><h4>Contenido de texto</h4></div>
+<!--                             <div id="modalNoImage" class="text-white d-none"><h4>Contenido de texto</h4></div>-->                       <div id="modalNoImage" class="text-white d-none w-100 h-100 d-flex align-items-center justify-content-center p-4 text-center"></div>
                         </div>
+                            
                         <div class="col-md-4 facebook-comments-col">
                             <div class="fb-comments-header d-flex align-items-center justify-content-between p-3 border-bottom">
                                 <div class="d-flex align-items-center">
@@ -547,73 +549,46 @@
             </div>
         </div>
     </div>
-<<<<<<< HEAD
 
     <div class="modal fade modal-report-modern" id="reportModal" tabindex="-1" aria-hidden="true">
-=======
-    <!-- <div class="modal fade" id="modalReportar" tabindex="-1" aria-hidden="true">
->>>>>>> origin/mejora-chat-admin
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header position-relative">
-                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body px-4 pb-4 pt-0">
-                    <form id="reportForm">
-                        <input type="hidden" id="reportObjectId" name="object_id">
-                        <input type="hidden" id="reportObjectType" name="object_type">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content position-relative"> <div class="modal-body px-4 pb-4 pt-4"> <button type="button" class="btn-close position-absolute top-0 end-0 m-3" 
+                        data-bs-dismiss="modal" aria-label="Close" 
+                        style="z-index: 1050;"></button>
 
-                        <div class="text-center mb-4">
-                            <div class="report-hero-icon">
-                                <i class="bi bi-shield-exclamation"></i>
-                            </div>
-                            <h4 class="fw-bold mb-1">Reportar contenido</h4>
-                            <p class="text-muted small">
-                                Tu reporte es anónimo. Gracias por mantener segura a la comunidad de MexTur.
-                            </p>
-                        </div>
-
-                        <h6 class="fw-bold mb-3" style="font-size: 0.9rem; text-transform: uppercase; color: #adb5bd; letter-spacing: 0.5px;">Selecciona un motivo</h6>
-
-                        <div class="d-flex flex-column gap-2 mb-4">
-                            <label class="report-option-label">
-                                <input class="report-option-input" type="radio" name="reason" value="spam" checked>
-                                <div class="report-option-card">
-                                    <i class="bi bi-robot report-option-icon"></i>
-                                    <span>Es spam o publicidad no deseada</span>
-                                </div>
-                            </label>
-                            <label class="report-option-label">
-                                <input class="report-option-input" type="radio" name="reason" value="offensive">
-                                <div class="report-option-card">
-                                    <i class="bi bi-emoji-angry report-option-icon"></i>
-                                    <span>Contenido ofensivo o inapropiado</span>
-                                </div>
-                            </label>
-                            <label class="report-option-label">
-                                <input class="report-option-input" type="radio" name="reason" value="false_info">
-                                <div class="report-option-card">
-                                    <i class="bi bi-info-circle report-option-icon"></i>
-                                    <span>Información falsa o engañosa</span>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="reportDescription" class="form-label fw-bold small">Detalles adicionales (Opcional)</label>
-                            <textarea class="form-control custom-textarea p-3" id="reportDescription" rows="3" placeholder="Cuéntanos un poco más para ayudarnos a entender..."></textarea>
-                        </div>
-
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-danger btn-lg rounded-pill fw-bold shadow-sm">
-                                Enviar Reporte
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                <form id="reportForm">
+                    <input type="hidden" id="reportObjectId" name="object_id">
+                    <input type="hidden" id="reportObjectType" name="object_type">
+                    <div class="text-center mb-4 mt-2"> <div class="report-hero-icon"><i class="bi bi-shield-exclamation"></i></div>
+                        <h4 class="fw-bold mb-1">Reportar contenido</h4>
+                        <p class="text-muted small">Tu reporte es anónimo.</p>
+                    </div>
+                    <h6 class="fw-bold mb-3" style="font-size: 0.9rem; text-transform: uppercase; color: #adb5bd;">Selecciona un motivo</h6>
+                    <div class="d-flex flex-column gap-2 mb-4">
+                        <label class="report-option-label">
+                            <input class="report-option-input" type="radio" name="reason" value="spam" checked>
+                            <div class="report-option-card"><i class="bi bi-robot report-option-icon"></i><span>Es spam o publicidad</span></div>
+                        </label>
+                        <label class="report-option-label">
+                            <input class="report-option-input" type="radio" name="reason" value="offensive">
+                            <div class="report-option-card"><i class="bi bi-emoji-angry report-option-icon"></i><span>Contenido ofensivo</span></div>
+                        </label>
+                        <label class="report-option-label">
+                            <input class="report-option-input" type="radio" name="reason" value="false_info">
+                            <div class="report-option-card"><i class="bi bi-info-circle report-option-icon"></i><span>Información falsa</span></div>
+                        </label>
+                    </div>
+                    <div class="mb-4">
+                        <textarea class="form-control custom-textarea p-3" id="reportDescription" rows="3" placeholder="Detalles adicionales..."></textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-danger btn-lg rounded-pill fw-bold shadow-sm">Enviar Reporte</button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div> -->
+    </div>
+</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/headerFooter.js' %}" defer></script>
@@ -732,7 +707,7 @@
                 const objectId = this.dataset.objectId; const objectType = this.dataset.objectType; 
                 cancelReply(); modalObjectIdInput.value = objectId; modalObjectTypeInput.value = objectType;
                 modalAuthor.textContent = this.dataset.author; modalAvatar.src = this.dataset.authorAvatar; modalText.textContent = this.dataset.text; 
-                if (this.dataset.imageUrl) { modalImg.src = this.dataset.imageUrl; modalImg.classList.remove('d-none'); modalNoImg.classList.add('d-none'); } else { modalImg.classList.add('d-none'); modalNoImg.classList.remove('d-none'); } 
+                if (this.dataset.imageUrl) { modalImg.src = this.dataset.imageUrl; modalImg.classList.remove('d-none'); modalNoImg.classList.add('d-none'); } else { modalImg.classList.add('d-none'); modalNoImg.classList.remove('d-none');modalNoImage.innerHTML = `<h3 class="fw-light">${this.dataset.text}</h3>`; } 
                 modalList.innerHTML = '<p class="text-center text-muted mt-4"><div class="spinner-border text-primary" role="status"></div></p>'; 
                 commentsModal.show(); 
                 let loadUrl = objectType === 'post' ? `/api/posts/comments/load/${objectId}/` : `/api/posts/itinerary/comments/load/${objectId}/`;

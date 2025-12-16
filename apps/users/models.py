@@ -25,7 +25,7 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'Perfil de {self.user.username}'
-    def esta_en_linea(self):
+    def is_online(self):
         # Consideramos "en línea" si se vio en los últimos 5 minutos
         now = timezone.now()
         return self.last_seen >= now - datetime.timedelta(minutes=5)

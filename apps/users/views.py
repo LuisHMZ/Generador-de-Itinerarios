@@ -15,6 +15,10 @@ from allauth.account.adapter import get_adapter
 from allauth.account.signals import user_signed_up # <-- ¡AÑADE ESTA!
 from django.contrib.auth import get_user_model # Necesario para el sender
 from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import render
+from django.db.models import Count
+from django.db.models.functions import TruncDate
+import json
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.views.decorators.http import require_POST
@@ -42,7 +46,8 @@ from apps.itineraries.models import Itinerary
 from apps.posts.models import Post
 User = get_user_model()
 from apps.messaging.models import Conversation, Message
-
+from apps.itineraries.models import Itinerary # Importar desde la app itineraries
+from apps.posts.models import Post, Comment
 # --- VISTAS DE AUTENTICACIÓN (Register, Login, Logout) ---
 import traceback
 from django.core.mail import send_mail
@@ -580,6 +585,101 @@ def admin_users_view(request):
     # Renderiza la plantilla personalizada que crearemos/adaptaremos
     return render(request, 'admin_custom/users.html', context)
 
+def admin_users_dashboard(request):
+    now = timezone.now()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    # --- 1. KPIs Principales ---
+    total_users = User.objects.count()
+    new_users_month = User.objects.filter(date_joined__gte=month_start).count()
+    
+    # Activos hoy (Login en las últimas 24h)
+    active_today = User.objects.filter(last_login__gte=now - timedelta(days=1)).count()
+    
+    # Inactivos (Sin login en 30 días)
+    # Excluimos a los que se registraron hace menos de 30 días para no contar a los nuevos como inactivos falsos
+    inactive_threshold = now - timedelta(days=30)
+    inactive_users_qs = User.objects.filter(last_login__lt=inactive_threshold)
+    inactive_users_count = inactive_users_qs.count()
+
+    # --- 2. Cálculos de Crecimiento (Ejemplo simple) ---
+    # Comparar mes actual vs mes anterior (lógica simplificada)
+    last_month_start = (month_start - timedelta(days=1)).replace(day=1)
+    new_users_last_month = User.objects.filter(
+        date_joined__gte=last_month_start, 
+        date_joined__lt=month_start
+    ).count()
+    
+    if new_users_last_month > 0:
+        growth_percentage = int(((new_users_month - new_users_last_month) / new_users_last_month) * 100)
+    else:
+        growth_percentage = 100 # Si no hubo nadie el mes pasado
+
+    # --- 3. Datos para la Gráfica (Últimos 30 días) ---
+    # Obtenemos usuarios agrupados por día de registro
+    thirty_days_ago = now - timedelta(days=30)
+    
+    daily_signups = User.objects.filter(date_joined__gte=thirty_days_ago)\
+        .annotate(date=TruncDate('date_joined'))\
+        .values('date')\
+        .annotate(count=Count('id'))\
+        .order_by('date')
+    
+    # Formateamos para Chart.js
+    chart_dates = [entry['date'].strftime('%d %b') for entry in daily_signups]
+    chart_counts = [entry['count'] for entry in daily_signups]
+
+    # --- 4. Listas para Tablas ---
+    # Top 5 inactivos (que alguna vez se loguearon, para evitar cuentas fantasma viejas)
+    inactive_users_list = inactive_users_qs.exclude(last_login__isnull=True).order_by('last_login')[:5]
+    
+    # Top 5 recientes
+    recent_users = User.objects.all().order_by('-date_joined')[:5]
+
+    # Datos extra para el Doughnut chart
+    active_30_days = User.objects.filter(last_login__gte=inactive_threshold).count()
+    staff_count = User.objects.filter(is_staff=True).count()
+    now = timezone.now()
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # 1. Itinerarios
+    total_itineraries = Itinerary.objects.count()
+    new_itineraries_month = Itinerary.objects.filter(created_at__gte=start_of_month).count()
+
+    # 2. Publicaciones
+    total_posts = Post.objects.count()
+    new_posts_month = Post.objects.filter(created_at__gte=start_of_month).count()
+
+    # 3. Comentarios y Calificación (Opcional)
+    total_comments = Comment.objects.count()
+    # avg_rating = Review.objects.aggregate(Avg('rating'))['rating__avg'] # Si tienes un modelo de Reviews
+
+    context = {
+        'total_users': total_users,
+        'new_users_month': new_users_month,
+        'active_today': active_today,
+        'inactive_users_count': inactive_users_count,
+        'growth_percentage': growth_percentage,
+        'current_month_name': now.strftime('%B'),
+        
+        # Listas
+        'inactive_users': inactive_users_list,
+        'recent_users': recent_users,
+        
+        # Gráficos (Json Dumps para JS)
+        'chart_dates': json.dumps(chart_dates),
+        'chart_counts': json.dumps(chart_counts),
+        'active_30_days': active_30_days,
+        'staff_count': staff_count,
+        'total_itineraries': total_itineraries,
+        'new_itineraries_month': new_itineraries_month,
+        'total_posts': total_posts,
+        'new_posts_month': new_posts_month,
+        'total_comments': total_comments,
+        'avg_rating': 4.5, # Valor dummy si no tienes modelo de reseñas aún
+    }
+    
+    return render(request, 'admin/admin_users_dashboard.html', context)
 @staff_member_required(login_url='simple_login')
 @require_POST # Solo acepta peticiones POST por seguridad
 def admin_toggle_user_status(request, user_id):

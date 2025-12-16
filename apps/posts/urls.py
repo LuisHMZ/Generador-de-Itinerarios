@@ -30,4 +30,6 @@ urlpatterns = [
     path('post/new/', views.create_post_page_view, name='create_post_page'),
 
     path('search/', views.search_view, name='search'),
+    path('admin/post/<int:post_id>/toggle/', views.admin_toggle_post_visibility, name='admin_toggle_post_visibility'),
+    path('admin/post/<int:post_id>/preview/', views.admin_post_preview, name='admin_post_preview'),
 ]

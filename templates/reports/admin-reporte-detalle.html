@@ -108,7 +108,38 @@
                                     </a>
                                 </div>
                             </div>
+                        {% elif content_type_name == 'post' %}
+                            <div class="border rounded overflow-hidden">
+                                
+                                {% with first_pic=report.content_object.pictures.first %}
+                                    {% if first_pic and first_pic.pic_url %}
+                                        <img src="{{ first_pic.pic_url.url }}" class="w-100" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-light w-100 d-flex align-items-center justify-content-center text-secondary" style="height: 200px;">
+                                            <div class="text-center">
+                                                <i class="fas fa-image fa-2x opacity-25 mb-1"></i>
+                                                <small class="d-block opacity-50" style="font-size: 0.7rem;">Sin imagen</small>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
 
+                                <div class="p-3">
+                                    <h6 class="fw-bold mb-1">
+                                        Post de @{{ report.content_object.user.username }}
+                                    </h6>
+                                    
+                                    <p class="text-muted small mb-3">
+                                        {{ report.content_object.text|default:"Sin texto"|truncatechars:150 }}
+                                    </p>
+                                    
+                                    <a href="{% url 'posts:admin_post_preview' report.content_object.id %}?report_id={{ report.id }}" 
+                                    target="_blank" 
+                                    class="btn btn-sm btn-outline-primary w-100 fw-bold">
+                                        <i class="fas fa-external-link-alt me-1"></i> Ver Post Original
+                                    </a>
+                                </div>
+                            </div>
                         {% else %}
                             <p><strong>Contenido:</strong></p>
                             <blockquote class="blockquote bg-light p-3 border-start border-4 border-primary">

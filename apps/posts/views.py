@@ -2,6 +2,7 @@
 from django.utils.timesince import timesince
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test 
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse 
 from django.views.decorators.http import require_POST, require_GET
@@ -58,7 +59,7 @@ def feed_view(request):
 
     # Posts
     posts = Post.objects.filter(
-        Q(user=user) | Q(visibility='public') | (Q(user_id__in=friend_ids) & Q(visibility='friends'))
+        Q(user=user) | Q(visibility='public') | (Q(user_id__in=friend_ids) & Q(visibility='friends')), is_active=True
     ).select_related('user', 'user__profile').prefetch_related('pictures', 'likes', 'saved_by', 'comments').distinct()
     for post in posts: post.feed_type = 'post'
 
@@ -464,3 +465,33 @@ def search_view(request):
         'itineraries': itineraries,
         'is_saved_view': False # Para reutilizar estilos si hace falta
     })
+
+def es_admin(user):
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
+
+@login_required
+@user_passes_test(es_admin)
+def admin_post_preview(request, post_id):
+    # 1. Obtenemos el post
+    post = get_object_or_404(Post, id=post_id)
+    
+    # 2. Capturamos el ID del reporte (si viene en la URL) para el botón "Volver"
+    source_report_id = request.GET.get('report_id')
+    
+    # 3. Renderizamos el template que creaste
+    return render(request, 'social/admin_post_preview.html', {
+        'post': post,
+        'source_report_id': source_report_id
+    })
+
+@login_required
+@user_passes_test(es_admin)
+def admin_toggle_post_visibility(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    
+    # Invertimos el valor: Si es True pasa a False, y viceversa
+    post.is_active = not post.is_active 
+    post.save()
+    
+    # Redirigimos a la página desde donde se hizo click (el preview)
+    return redirect(request.META.get('HTTP_REFERER', 'home'))

@@ -41,5 +41,6 @@ urlpatterns = [
 
     # --- RUTA PARA LA BÚSQUEDA (API) ---
     path('api/search-users/', views.api_search_users, name='api_search_users'),
+    path('panel/dashboard/', views.admin_users_dashboard, name='admin_users_dashboard'),
 
 ]

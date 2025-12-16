@@ -24,7 +24,9 @@ class Post(models.Model):
         default='public',
         help_text="Define quién puede ver esta publicación"
     )
-
+    # --- NUEVO CAMPO ---
+    is_active = models.BooleanField(default=True, help_text="Desactívalo para ocultar el post (Moderación)")
+    # -------------------
     likes = models.ManyToManyField(User, related_name='liked_posts', blank=True)
     saved_by = models.ManyToManyField(User, related_name='saved_posts', blank=True)
 

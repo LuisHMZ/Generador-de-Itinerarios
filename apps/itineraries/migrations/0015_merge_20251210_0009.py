@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('itineraries', '0012_itinerary_privacy'),
-        ('itineraries', '0013_touristicplace_is_active'),
+        #('itineraries', '0013_touristicplace_is_active'),
     ]
 
     operations = [

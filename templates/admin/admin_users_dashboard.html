@@ -1,0 +1,424 @@
+{% extends 'Adminbase.html' %}
+{% load static %}
+
+{% block title %}Panel de Control - Admin MexTur{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root { --brand: #1CA6A6; --dark-blue: #1F3C5A; --card-bg: #ffffff; }
+    
+    .stat-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-5px); }
+    .stat-icon {
+        width: 48px; height: 48px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+    }
+    /* Colores existentes */
+    .bg-icon-primary { background: rgba(31, 60, 90, 0.1); color: var(--dark-blue); }
+    .bg-icon-success { background: rgba(28, 166, 166, 0.1); color: var(--brand); }
+    .bg-icon-warning { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+    .bg-icon-danger { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+    
+    /* Nuevos colores para contenido */
+    .bg-icon-purple { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+    .bg-icon-orange { background: rgba(253, 126, 20, 0.1); color: #fd7e14; }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    .table-responsive { border-radius: 12px; overflow: hidden; }
+    .table thead th {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        border-bottom: 2px solid #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="max-width: 1400px;">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0" style="color: var(--dark-blue);">Panel General de Administrador</h2>
+        </div>
+        <div>
+            <a href="{% url 'admin_users' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-list me-2"></i>Ir a Funciones de Admin
+            </a>
+        </div>
+    </div>
+
+    <h5 class="text-muted fw-bold mb-3 small text-uppercase">Usuarios</h5>
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Usuarios</h6>
+                        <h3 class="fw-bold mb-0">{{ total_users }}</h3>
+                    </div>
+                    <div class="stat-icon bg-icon-primary">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="mt-3 small">
+                    <span class="text-success fw-bold"><i class="fas fa-arrow-up"></i> {{ growth_percentage }}%</span>
+                    <span class="text-muted">vs mes anterior</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stat-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Nuevos (Este Mes)</h6>
+                        <h3 class="fw-bold mb-0">{{ new_users_month }}</h3>
+                    </div>
+                    <div class="stat-icon bg-icon-success">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                </div>
+                <div class="mt-3 small text-muted">
+                    Usuarios registrados en {{ current_month_name }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stat-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Activos (24h)</h6>
+                        <h3 class="fw-bold mb-0">{{ active_today }}</h3>
+                    </div>
+                    <div class="stat-icon bg-icon-warning">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                </div>
+                <div class="mt-3 small text-muted">
+                    Login en las últimas 24 horas
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stat-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Inactivos (+30 días)</h6>
+                        <h3 class="fw-bold mb-0 text-danger">{{ inactive_users_count }}</h3>
+                    </div>
+                    <div class="stat-icon bg-icon-danger">
+                        <i class="fas fa-user-clock"></i>
+                    </div>
+                </div>
+                <div class="mt-3 small">
+                    <a href="#inactiveTable" class="text-decoration-none text-danger small fw-bold">Ver lista <i class="fas fa-chevron-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h5 class="text-muted fw-bold mb-3 small text-uppercase mt-5">Contenido y Actividad</h5>
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Itinerarios</h6>
+                        <h3 class="fw-bold mb-0">{{ total_itineraries }}</h3>
+                    </div>
+                    <div class="stat-icon bg-icon-purple">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                </div>
+                <div class="mt-3 small">
+                    <span class="text-success fw-bold"><i class="fas fa-plus"></i> {{ new_itineraries_month }}</span>
+                    <span class="text-muted">creados este mes</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stat-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Publicaciones</h6>
+                        <h3 class="fw-bold mb-0">{{ total_posts }}</h3>
+                    </div>
+                    <div class="stat-icon bg-icon-orange">
+                        <i class="fas fa-camera-retro"></i>
+                    </div>
+                </div>
+                <div class="mt-3 small">
+                    <span class="text-success fw-bold"><i class="fas fa-plus"></i> {{ new_posts_month }}</span>
+                    <span class="text-muted">subidas este mes</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stat-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Comentarios</h6>
+                        <h3 class="fw-bold mb-0">{{ total_comments }}</h3>
+                    </div>
+                    <div class="stat-icon bg-icon-primary">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                </div>
+                <div class="mt-3 small text-muted">
+                    Interacciones totales
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stat-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Calif. Promedio</h6>
+                        <h3 class="fw-bold mb-0">{{ avg_rating|default:"0" }} <i class="fas fa-star text-warning fs-6"></i></h3>
+                    </div>
+                    <div class="stat-icon bg-icon-warning">
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                </div>
+                <div class="mt-3 small text-muted">
+                    Media global de reseñas
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card stat-card h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold m-0 text-secondary">Flujo de Registros (Últimos 30 días)</h5>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <div class="chart-container">
+                        <canvas id="registrationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card stat-card h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold m-0 text-secondary">Estado de Usuarios</h5>
+                </div>
+                <div class="card-body px-4 pb-4 d-flex align-items-center justify-content-center">
+                    <div style="height: 250px; width: 250px;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6" id="inactiveTable">
+            <div class="card stat-card h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold m-0 text-danger"><i class="fas fa-bed me-2"></i>Usuarios Inactivos</h5>
+                    <small class="text-muted">Sin conexión > 30 días</small>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Usuario</th>
+                                    <th>Registrado</th>
+                                    <th>Última vez</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in inactive_users %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-light rounded-circle d-flex justify-content-center align-items-center me-2" style="width: 32px; height: 32px;">
+                                                <small class="fw-bold text-muted">{{ user.username|slice:":1"|upper }}</small>
+                                            </div>
+                                            <span class="fw-bold text-dark">{{ user.username }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="small text-muted">{{ user.date_joined|date:"d M Y" }}</td>
+                                    <td class="small text-danger fw-bold">
+                                        {{ user.last_login|timesince }}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'admin_user_detail' user.id %}" class="btn btn-sm btn-light text-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="mailto:{{ user.email }}" class="btn btn-sm btn-light text-secondary" title="Enviar recordatorio">
+                                            <i class="fas fa-envelope"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">¡Todos los usuarios están activos!</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card stat-card h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold m-0 text-secondary"><i class="fas fa-user-plus me-2"></i>Registros Recientes</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Usuario</th>
+                                    <th>Fecha Registro</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in recent_users %}
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">
+                                        <div class="d-flex align-items-center">
+                                            {% if user.profile.profile_picture %}
+                                                <img src="{{ user.profile.profile_picture.url }}" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit:cover;">
+                                            {% else %}
+                                                <i class="fas fa-user-circle text-muted fs-4 me-2"></i>
+                                            {% endif %}
+                                            {{ user.username }}
+                                        </div>
+                                    </td>
+                                    <td class="small text-muted">{{ user.date_joined|timesince }} atrás</td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Activo</span>
+                                        {% else %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">Suspendido</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'admin_user_detail' user.id %}" class="btn btn-sm btn-outline-primary">
+                                            Revisar
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #49A3A3;">
+                    <h5 class="modal-title">Notificaciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="notifications-list">
+                        <p class="text-center text-muted p-3">Cargando...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // 1. Datos para el Gráfico de Registro
+        const labels = {{ chart_dates|safe }}; 
+        const dataCounts = {{ chart_counts|safe }};
+
+        const ctxReg = document.getElementById('registrationChart').getContext('2d');
+        new Chart(ctxReg, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Nuevos Usuarios',
+                    data: dataCounts,
+                    borderColor: '#1CA6A6',
+                    backgroundColor: 'rgba(28, 166, 166, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#1CA6A6',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 2. Datos para el Gráfico de Estado
+        const ctxStatus = document.getElementById('statusChart').getContext('2d');
+        new Chart(ctxStatus, {
+            type: 'doughnut',
+            data: {
+                labels: ['Activos (30d)', 'Inactivos', 'Staff'],
+                datasets: [{
+                    data: [{{ active_30_days }}, {{ inactive_users_count }}, {{ staff_count }}],
+                    backgroundColor: ['#1CA6A6', '#e9ecef', '#1F3C5A'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -86,10 +86,7 @@
                         </button>
                         <div class="collapse" id="menuContenido">
                             <ul class="list-unstyled ps-4 py-2 bg-light rounded-bottom">
-                                <li><a href="admin-publicaciones.html" class="d-block py-1 text-decoration-none text-secondary small">Publicaciones</a></li>
-                                <li><a href="admin-itinerarios.html" class="d-block py-1 text-decoration-none text-secondary small">Itinerarios</a></li>
-                                <li><a href="admin-notificaciones.html" class="d-block py-1 text-decoration-none text-secondary small">Envío de notificaciones</a></li>
-                                <li><a href="admin-resenas.html" class="d-block py-1 text-decoration-none text-secondary small">Reseñas</a></li>
+                                <li><a href="{% url 'admin_communications' %}" class="d-block py-1 text-decoration-none text-secondary small">Envío de notificaciones</a></li>
                             </ul>
                         </div>
                     </div>
@@ -221,7 +218,11 @@
             </div>
 
             {% include "includes/pagination.html" with page_obj=reports %}
-            
+            <div class="mt-5 pt-3 border-top">
+                    <a href="{% url 'admin_users_dashboard' %}" class="btn btn-outline-secondary px-4 rounded-pill">
+                        <i class="fas fa-arrow-left me-2"></i> Regresar al Panel Principal
+                    </a>
+            </div>
         </section>
     </div>
 </main>
@@ -255,6 +256,41 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="notificationsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #49A3A3;">
+                    <h5 class="modal-title">Notificaciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="notifications-list">
+                        <p class="text-center text-muted p-3">Cargando...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalCerrarSesion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold text-danger"><i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <p class="lead mb-0 text-muted">¿Estás seguro de que deseas salir del panel de administración?</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4">
+                    <button type="button" class="btn btn-light px-4 rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                    <a href="{% url 'simple_logout' %}" class="btn btn-danger px-4 rounded-pill">Sí, salir</a>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}
