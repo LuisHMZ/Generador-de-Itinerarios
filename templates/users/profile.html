@@ -113,12 +113,9 @@
                             <a href="{% url 'saved_posts_view' %}" class="btn btn-mextur w-100 mb-2">
                                 <i class="bi bi-bookmark-fill me-2"></i>Favoritos
                             </a>
-                            <a href="#" class="btn btn-mextur w-100">
-                                <i class="bi bi-gear-fill me-2"></i>Configuración
-                            </a>
                         {% else %}
                             {% if friendship_status == 'FRIENDS' %}
-                                <a href="#" class="btn btn-primary w-100 mb-2"><i class="bi bi-envelope-fill me-2"></i>Enviar Mensaje</a>
+                                <a href="{% url 'messaging:start_conversation' profile_user.id %}" class="btn btn-primary w-100 mb-2"><i class="bi bi-envelope-fill me-2"></i>Enviar Mensaje</a>
                                 <a href="{% url 'remove_friend' profile_user.id %}" class="btn btn-outline-danger w-100 mb-2"><i class="bi bi-person-dash-fill me-2"></i>Eliminar Amigo</a>
                             {% elif friendship_status == 'PENDING_SENT' %}
                                 <a href="{% url 'cancel_friend_request' pending_request_id %}" class="btn btn-warning w-100 mb-2"><i class="bi bi-hourglass-split me-2"></i>Cancelar Solicitud</a>
