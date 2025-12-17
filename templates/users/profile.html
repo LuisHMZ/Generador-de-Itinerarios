@@ -8,6 +8,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
@@ -140,132 +141,28 @@
 
             <div class="col-lg-6 col-md-8">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="mb-0">Publicaciones</h3>
+                    <h3 class="mb-0">Contenido</h3>
                 </div>
-                {% if user_posts %}
-                    <div id="profile-posts-container">
-                        {% for post in user_posts %}
-                            {% if post.is_active or request.user == post.user %}
-                            
-                                <article class="post-card mb-4 position-relative {% if not post.is_active %}border border-danger border-2 bg-light{% endif %}" 
-                                        style="transition: all 0.3s; {% if not post.is_active %}opacity: 0.9;{% endif %}">
-                                    
-                                    {% if not post.is_active %}
-                                        <div class="alert alert-danger m-0 rounded-0 rounded-top p-2 text-center small fw-bold border-0">
-                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                            Esta publicación ha sido ocultada por un administrador.
-                                        </div>
-                                    {% endif %}
 
-                                    <div class="{% if not post.is_active %}opacity-50 grayscale-filter{% endif %}" {% if not post.is_active %}style="pointer-events: none;"{% endif %}>
-                                        
-                                        <header class="post-header d-flex justify-content-between align-items-start" style="padding: 16px;">
-                                            <div class="d-flex align-items-center">
-                                                {% if post.user.profile.profile_picture %}
-                                                    <img src="{{ post.user.profile.profile_picture.url }}" class="avatar" alt="{{ post.user.username }}">
-                                                {% else %}
-                                                    <img src="{% static 'img/default-avatar.png' %}" class="avatar" alt="Avatar por defecto">
-                                                {% endif %}
-                                                <div>
-                                                    <strong>{{ post.user.username }}</strong>
-                                                    {% if post.location %}
-                                                        <p class="location mb-0">{{ post.location }}</p>
-                                                    {% endif %}
-                                                    <small class="text-muted">
-                                                        {% if post.visibility == 'public' %}
-                                                            <i class="bi bi-globe" title="Público"></i>
-                                                        {% elif post.visibility == 'friends' %}
-                                                            <i class="bi bi-people-fill" title="Solo Amigos"></i>
-                                                        {% endif %}
-                                                    </small>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="dropdown" {% if not post.is_active %}style="pointer-events: auto !important;"{% endif %}>
-                                                <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="bi bi-three-dots-vertical fs-5"></i>
-                                                </button>
-                                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                                                    <li>
-                                                        <a class="dropdown-item text-danger report-trigger" 
-                                                        href="#" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#reportModal"
-                                                        data-id="{{ post.id }}"
-                                                        data-type="post">
-                                                            <i class="bi bi-flag-fill me-2"></i> Reportar
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </header>
+                <div class="d-flex mb-4 gap-2">
+                    <a href="?content_type=all" 
+                    class="btn {% if current_filter == 'all' %}btn-secondary{% else %}btn-outline-secondary{% endif %} fw-semibold flex-fill">
+                        <i class="bi bi-collection me-2"></i>Todos
+                    </a>
+                    <a href="?content_type=posts" 
+                    class="btn {% if current_filter == 'posts' %}btn-primary{% else %}btn-outline-primary{% endif %} fw-semibold flex-fill">
+                        <i class="bi bi-chat-left-text me-2"></i>Posts
+                    </a>
+                    <a href="?content_type=itineraries" 
+                    class="btn {% if current_filter == 'itineraries' %}btn-success{% else %}btn-outline-success{% endif %} fw-semibold flex-fill">
+                        <i class="bi bi-map me-2"></i>Itinerarios
+                    </a>
+                </div>
 
-                                        {% with pictures=post.pictures.all %}
-                                            {% if pictures %}
-                                                <div class="post-photo" role="img">
-                                                    <img src="{{ pictures.0.pic_url.url }}" alt="Foto del post">
-                                                </div>
-                                            {% endif %}
-                                        {% endwith %}
-                                        
-                                        {% if post.title %}
-                                            <h5 class="post-title" style="padding: 0 16px; margin-top: 10px; font-weight: bold;">
-                                                {{ post.title }}
-                                            </h5>
-                                        {% endif %}
-                                        <p class="post-desc">{{ post.text }}</p>
+                <div id="content-container">
+                    {% include 'users/snippets/profile_loop.html' %}
+                </div>
 
-                                        <footer class="post-actions">
-                                            <div class="action-btn like-btn" data-url="{% url 'posts:toggle_like' post.id %}" style="cursor: pointer;">
-                                                {% if request.user in post.likes.all %}
-                                                    <i class="bi bi-heart-fill text-danger"></i>
-                                                {% else %}
-                                                    <i class="bi bi-heart"></i>
-                                                {% endif %}
-                                                <span class="like-count ms-1">{{ post.likes.count }}</span>
-                                            </div>
-                                            
-                                            <div class="action-btn comment-btn" 
-                                                style="cursor: pointer;"
-                                                data-object-id="{{ post.id }}"
-                                                data-object-type="post" 
-                                                {% if post.pictures.all %}
-                                                    data-image-url="{{ post.pictures.all.0.pic_url.url }}"
-                                                {% else %}
-                                                    data-image-url="" 
-                                                {% endif %}
-                                                data-author="{{ post.user.username }}"
-                                                data-author-avatar="{% if post.user.profile.profile_picture %}{{ post.user.profile.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
-                                                data-text="{{ post.text }}">
-                                                
-                                                <i class="bi bi-chat"></i> 
-                                                <span class="comment-count">{{ post.comments.count|default:0 }}</span>
-                                            </div>
-
-                                            <div class="action-btn save-btn ms-auto" data-url="{% url 'posts:toggle_save' post.id %}" style="cursor: pointer;">
-                                                {% if request.user in post.saved_by.all %}
-                                                    <i class="bi bi-bookmark-fill text-primary"></i>
-                                                {% else %}
-                                                    <i class="bi bi-bookmark"></i>
-                                                {% endif %}
-                                            </div>
-                                        </footer>
-                                    </div> 
-                                </article>
-                            
-                            {% endif %}
-
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="alert alert-secondary text-center">
-                        {% if is_self %}
-                            Aún no tienes publicaciones.
-                        {% else %}
-                            Este usuario aún no tiene publicaciones.
-                        {% endif %}
-                    </div>
-                {% endif %}
                 <!-- POST ANTERIOR -->
                 <!-- {% if user_posts %}
                     <div id="profile-posts-container">
@@ -623,10 +520,39 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'js/headerFooter.js' %}" defer></script>
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- LÓGICA DE FILTROS DE CONTENIDO ---
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const contentContainer = document.getElementById('content-container');
+        const contentItems = document.querySelectorAll('.content-item');
+
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Actualizar estado visual de los botones
+                filterButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                // Obtener el filtro
+                const filter = this.getAttribute('data-filter');
+                
+                // Mostrar/ocultar items
+                contentItems.forEach(item => {
+                    const itemType = item.getAttribute('data-type');
+                    if (filter === 'all' || itemType === filter) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+
         // --- 1. CONFIGURACIÓN DE TOASTS ---
         [...document.querySelectorAll('.toast')].map(toastEl => new bootstrap.Toast(toastEl, { delay: 4000 }).show());
 
@@ -719,6 +645,93 @@
                 .catch(error => { console.error('Error:', error); showToast('Error al enviar: ' + error.message, 'error'); });
             });
         }
+
+        // =========================================================
+        // FUNCIONES PARA CAMBIAR PRIVACIDAD Y ELIMINAR POSTS
+        // =========================================================
+        window.cambiarPrivacidad = async function(id, nuevaPrivacidad) {
+            try {
+                const response = await fetch(`/api/itineraries/${id}/privacy/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ privacy: nuevaPrivacidad })
+                });
+                
+                if (response.ok) {
+                    showToast('Privacidad del itinerario actualizada.', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast('Error al actualizar la privacidad.', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Error al actualizar la privacidad.', 'error');
+            }
+        };
+
+        window.cambiarPrivacidadPost = async function(postId, nuevaPrivacidad) {
+            try {
+                const response = await fetch(`/api/posts/${postId}/privacy/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ visibility: nuevaPrivacidad })
+                });
+                
+                if (response.ok) {
+                    showToast('Privacidad actualizada correctamente.', 'success');
+                    // Recargar para actualizar los iconos
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast('Error al actualizar la privacidad.', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Error al actualizar la privacidad.', 'error');
+            }
+        };
+
+        window.abrirModalBorrarPost = function(postId, title) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                html: `¿Deseas eliminar la publicación <strong>${title}</strong>?<br><small class="text-danger">Esta acción no se puede deshacer.</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/api/posts/${postId}/delete/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken,
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            showToast('Post eliminado correctamente.', 'success');
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            showToast('Error al eliminar el post.', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        showToast('Error al eliminar el post.', 'error');
+                    });
+                }
+            });
+        };
 
         // =========================================================
         // 3. EL "ATRAPADOR" DE NOTIFICACIONES (AGREGADO AQUÍ)

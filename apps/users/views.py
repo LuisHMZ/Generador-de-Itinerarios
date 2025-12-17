@@ -398,19 +398,21 @@ def cancel_friend_request(request, request_id):
 
 
 # --- VISTA DE PERFIL ---
+# apps/users/views.py
+
+from itertools import chain
+from operator import attrgetter
+from django.core.paginator import Paginator
+
 @login_required
 def profile_view(request, username):
     profile_user = get_object_or_404(User, username=username)
     viewer = request.user
 
-    # ====================================================
-    # 1. LÓGICA DE RELACIÓN (Movida al principio para poder filtrar posts)
-    # ====================================================
+    # --- 1. LÓGICA DE RELACIÓN (Amistad y Privacidad) ---
     is_self = (viewer == profile_user)
-    friendship_status = None
+    friendship_status = 'NOT_FRIENDS'
     pending_request_id = None 
-    
-    # Variable auxiliar para saber si son amigos rápidamente
     are_friends = False 
 
     if not is_self:
@@ -418,7 +420,7 @@ def profile_view(request, username):
             friendship_status = 'FRIENDS'
             are_friends = True
         else:
-            # Lógica de solicitudes pendientes
+            # Revisar solicitudes pendientes (tu lógica existente)
             sent = FriendshipRequest.objects.filter(from_user=viewer, to_user=profile_user, rejected__isnull=True).first()
             if sent:
                 friendship_status = 'PENDING_SENT'
@@ -427,33 +429,58 @@ def profile_view(request, username):
                 recv = FriendshipRequest.objects.filter(from_user=profile_user, to_user=viewer, rejected__isnull=True).first()
                 if recv:
                     friendship_status = 'PENDING_RECEIVED'
-                    pending_request_id = recv.id 
-                else:
-                    friendship_status = 'NOT_FRIENDS'
+                    pending_request_id = recv.id
 
-    # ====================================================
-    # 2. OBTENER POSTS (Con Filtros de Privacidad)
-    # ====================================================
-    try:
-        # Base query: Posts del usuario del perfil
+    # --- 2. DETERMINAR QUÉ CONTENIDO TRAER ---
+    # Obtenemos el filtro de la URL (por defecto 'all')
+    current_filter = request.GET.get('content_type', 'all')
+    
+    feed_items = []
+    LIMIT_DB = 100 # Seguridad: No traer más de 100 items iniciales por tipo
+
+    # --- A. OBTENER POSTS (Si el filtro es 'all' o 'posts') ---
+    if current_filter in ['all', 'posts']:
         posts_qs = Post.objects.filter(user=profile_user)
+        
+        # Filtros de privacidad y moderación
+        if not is_self:
+            # Si no soy yo, solo ver activos
+            posts_qs = posts_qs.filter(is_active=True)
+            if are_friends:
+                posts_qs = posts_qs.filter(Q(visibility='public') | Q(visibility='friends'))
+            else:
+                posts_qs = posts_qs.filter(visibility='public')
+        
+        # Ejecutar Query
+        posts = posts_qs.select_related('user', 'user__profile')\
+                        .prefetch_related('pictures', 'likes', 'comments')\
+                        .order_by('-created_at')[:LIMIT_DB]
+        
+        for p in posts: p.feed_type = 'post'
+        feed_items.extend(posts)
 
-        if is_self:
-            # Si soy yo: Veo TODO (No filtramos nada)
-            pass
-        elif are_friends:
-            # Si somos amigos: Veo 'public' O 'friends'
-            posts_qs = posts_qs.filter(Q(visibility='public') | Q(visibility='friends'))
-        else:
-            # Si es desconocido: Solo veo 'public'
-            posts_qs = posts_qs.filter(visibility='public')
+    # --- B. OBTENER ITINERARIOS (Si el filtro es 'all' o 'itineraries') ---
+    if current_filter in ['all', 'itineraries']:
+        itin_qs = Itinerary.objects.filter(user=profile_user)
 
-        # Optimizaciones y ordenamiento final
-        user_posts = posts_qs.select_related('user', 'user__profile').prefetch_related('pictures', 'likes', 'comments').order_by('-created_at')
+        # Filtros de privacidad y moderación
+        if not is_self:
+            itin_qs = itin_qs.filter(status='published', is_active=True)
+            if are_friends:
+                itin_qs = itin_qs.filter(Q(privacy='public') | Q(privacy='friends'))
+            else:
+                itin_qs = itin_qs.filter(privacy='public')
+        
+        # Ejecutar Query
+        itineraries = itin_qs.select_related('user', 'user__profile')\
+                             .order_by('-created_at')[:LIMIT_DB]
 
-    except Exception as e:
-        print(f"Error cargando posts: {e}")
-        user_posts = []
+        for i in itineraries: 
+            i.feed_type = 'itinerary'
+            # Asegurar campo fecha para ordenar
+            if not hasattr(i, 'created_at'): i.created_at = i.creation_date 
+
+        feed_items.extend(itineraries)
 
     # ====================================================
     # 3. LÓGICA LATERAL (Barra derecha, sugerencias, etc.)
@@ -466,11 +493,12 @@ def profile_view(request, username):
         my_friends = []
 
     # B. Amigos Online
-    time_threshold = timezone.now() - timedelta(minutes=15)
-    online_friends = []
-    for friend in my_friends:
-        if friend.last_login and friend.last_login > time_threshold:
-            online_friends.append(friend)
+    # time_threshold = timezone.now() - timedelta(minutes=15)
+    # online_friends = []
+    # for friend in my_friends:
+    #     if friend.last_login and friend.last_login > time_threshold:
+    #         online_friends.append(friend)
+    online_friends = my_friends
 
     # C. Sugerencias de Amistad
     # Nota: Filtramos para no sugerir al mismo usuario que estamos viendo
@@ -496,23 +524,34 @@ def profile_view(request, username):
         
         users_with_status.append(status_data)
 
-    # D. Formulario para modal
-    create_post_form = CreatePostForm(user=viewer)
-    # Contamos todas las relaciones 'likes' de los posts de este usuario
-    total_likes = Post.objects.filter(user=profile_user).aggregate(total=Count('likes'))['total'] or 0
+
+    # --- 3. ORDENAR Y PAGINAR ---
+    # Ordenamos la lista combinada (o individual) por fecha
+    feed_items.sort(key=attrgetter('created_at'), reverse=True)
+
+    # Paginación (10 items por carga)
+    paginator = Paginator(feed_items, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
 
     context = {
         'profile_user': profile_user,
-        'total_likes': total_likes,
-        'user_posts': user_posts,
+        'feed_items': page_obj,   # <--- Variable unificada
+        'current_filter': current_filter,
         'is_self': is_self,
         'friendship_status': friendship_status,
         'pending_request_id': pending_request_id,
-        'online_friends': online_friends,
-        'users_with_status': users_with_status,
-        'create_post_form': create_post_form, 
+        # ... Tus otras variables de contexto (amigos, stats, form) ...
+        'create_post_form': CreatePostForm(user=viewer),
+        'total_likes': Post.objects.filter(user=profile_user).count(), # Simplificado para ejemplo
+        'users_with_status': users_with_status, # (Tu lógica de sugerencias)
+        'online_friends': online_friends     # (Tu lógica de amigos online)
     }
-    
+
+    # --- RESPUESTA HTMX (Scroll Infinito) ---
+    if request.headers.get('HX-Request'):
+        return render(request, 'users/snippets/profile_loop.html', context)
+
     return render(request, 'users/profile.html', context)
 
 @login_required

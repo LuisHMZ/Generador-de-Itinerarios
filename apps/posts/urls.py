@@ -32,4 +32,8 @@ urlpatterns = [
     path('search/', views.search_view, name='search'),
     path('admin/post/<int:post_id>/toggle/', views.admin_toggle_post_visibility, name='admin_toggle_post_visibility'),
     path('admin/post/<int:post_id>/preview/', views.admin_post_preview, name='admin_post_preview'),
+    
+    # --- RUTAS PARA CAMBIAR PRIVACIDAD Y ELIMINAR POSTS ---
+    path('<int:post_id>/privacy/', views.update_post_privacy_view, name='update_post_privacy'),
+    path('<int:post_id>/delete/', views.delete_post_view, name='delete_post'),
 ]

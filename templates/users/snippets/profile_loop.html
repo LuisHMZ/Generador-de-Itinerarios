@@ -1,0 +1,197 @@
+{% load static %}
+
+{% for item in feed_items %}
+    <div class="fade-in-item mb-4"
+         {% if forloop.last and feed_items.has_next %}
+            hx-get="?content_type={{ current_filter }}&page={{ feed_items.next_page_number }}"
+            hx-trigger="revealed"
+            hx-swap="afterend"
+         {% endif %}>
+
+        {% if item.feed_type == 'post' %}
+            <article class="post-card position-relative {% if not item.is_active %}border border-danger border-2 bg-light{% endif %}">
+                
+                {% if not item.is_active %}
+                    <div class="alert alert-danger m-0 rounded-0 rounded-top p-2 text-center small fw-bold border-0">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> Oculto por admin
+                    </div>
+                {% endif %}
+
+                <header class="post-header d-flex justify-content-between align-items-start p-3">
+                    <div class="d-flex align-items-center">
+                        <img src="{% if item.user.profile.profile_picture %}{{ item.user.profile.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" class="avatar me-2">
+                        <div>
+                            <strong>{{ item.user.username }}</strong>
+                            {% if item.location %}<p class="location mb-0 text-muted small">{{ item.location }}</p>{% endif %}
+                            <small class="text-muted">
+                                {% if item.visibility == 'public' %}<i class="bi bi-globe"></i>
+                                {% elif item.visibility == 'friends' %}<i class="bi bi-people-fill"></i>
+                                {% else %}<i class="bi bi-lock-fill"></i>{% endif %}
+                                {{ item.created_at|date:"d M" }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-link text-dark p-0" data-bs-toggle="dropdown"><i class="bi bi-three-dots-vertical"></i></button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                            {% if request.user == item.user %}
+                                <li><a class="dropdown-item text-danger" href="#" onclick="abrirModalBorrarPost({{ item.id }}, '{{ item.title|escapejs }}'); return false;">Eliminar</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </header>
+
+                {% with pictures=item.pictures.all %}
+                    {% if pictures %}
+                        <div class="post-photo">
+                            <img src="{{ pictures.0.pic_url.url }}" alt="Post image" class="img-fluid w-100">
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <div class="p-3 pb-0">
+                    {% if item.title %}<h5 class="fw-bold">{{ item.title }}</h5>{% endif %}
+                    <p>{{ item.text }}</p>
+                </div>
+
+                <footer class="post-actions p-3 d-flex align-items-center">
+                    <div class="action-btn like-btn me-3" data-url="{% url 'posts:toggle_like' item.id %}" style="cursor: pointer;">
+                        {% if request.user in item.likes.all %}
+                            <i class="bi bi-heart-fill text-danger"></i>
+                        {% else %}
+                            <i class="bi bi-heart"></i>
+                        {% endif %}
+                        <span class="like-count ms-1">{{ item.likes.count }}</span>
+                    </div>
+                    </footer>
+            </article>
+
+        {% elif item.feed_type == 'itinerary' %}
+            <article class="post-card mb-4" style="border-left: 5px solid #E57B28;"> 
+                                <header class="post-header d-flex justify-content-between align-items-start" style="padding: 16px;">
+                                    <div class="d-flex align-items-center">
+                                    <a href="{% url 'profile_view' item.user.username %}">
+                                        {% if item.user.profile.profile_picture %}
+                                            <img src="{{ item.user.profile.profile_picture.url }}" class="avatar">
+                                        {% else %}
+                                            <img src="{% static 'img/default-avatar.png' %}" class="avatar">
+                                        {% endif %}
+                                    </a>
+                                        <div>
+                                        <a href="{% url 'profile_view' item.user.username %}">
+                                            <strong style="color: #000000;">{{ item.user.username }}</strong>
+                                        </a>
+                                            <p class="location mb-0">
+                                                <span class="badge bg-warning text-dark me-1">Itinerario</span>
+                                                {{ item.location|default:"" }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="dropdown">
+                                        <button class="btn btn-link text-dark text-decoration-none p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical fs-5"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                                            <li>
+                                                <a class="dropdown-item text-danger report-trigger" 
+                                                   href="#" 
+                                                   data-bs-toggle="modal" 
+                                                   data-bs-target="#reportModal"
+                                                   data-id="{{ item.id }}"
+                                                   data-type="itinerary">
+                                                   <i class="bi bi-flag-fill me-2"></i> Reportar
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <!-- <button class="btn btn-outline-danger btn-trigger-report" 
+                                            data-type="itinerary" 
+                                            data-id="{{ item.id }}">
+                                        <i class="fas fa-flag"></i> Reportar Itinerario
+                                    </button> -->
+                                </header>
+
+                                <div class="post-photo position-relative">
+                                    {% if item.banner_pic %}
+                                        <img src="{{ item.banner_pic.url }}" alt="Banner Itinerario" style="height: 250px; object-fit: cover; width: 100%;">
+                                    {% else %}
+                                        <div class="bg-light text-center py-5 text-muted" style="height: 200px; display:grid; place-items:center;">
+                                            <div><i class="bi bi-map fs-1"></i><br>Sin portada</div>
+                                        </div>
+                                    {% endif %}
+                                    <div class="position-absolute bottom-0 start-0 w-100 p-2" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); color: white;">
+                                        <h5 class="m-0">{{ item.title }}</h5>
+                                        <div class="d-flex align-items-center star-rating-widget" data-itinerary-id="{{ item.id }}">
+                                            {% with user_score=item.user_rating|default:0 %}
+                                                <i class="bi bi-star{% if user_score >= 1 %}-fill text-warning{% endif %} me-1 star-btn" data-value="1"></i>
+                                                <i class="bi bi-star{% if user_score >= 2 %}-fill text-warning{% endif %} me-1 star-btn" data-value="2"></i>
+                                                <i class="bi bi-star{% if user_score >= 3 %}-fill text-warning{% endif %} me-1 star-btn" data-value="3"></i>
+                                                <i class="bi bi-star{% if user_score >= 4 %}-fill text-warning{% endif %} me-1 star-btn" data-value="4"></i>
+                                                <i class="bi bi-star{% if user_score >= 5 %}-fill text-warning{% endif %} me-1 star-btn" data-value="5"></i>
+                                            {% endwith %}
+                                            <span class="small ms-2 avg-display">
+                                                <!-- {% if item.avg_rating %}{{ item.avg_rating|floatformat:1 }}/5{% else %}N/A{% endif %} -->
+                                                {{ item.get_average_rating|floatformat:1 }}/5
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-3">
+                                    <p class="text-muted small mb-2">
+                                        <i class="bi bi-calendar-event"></i> 
+                                        {% if item.start_date and item.end_date %}
+                                            {{ item.start_date|date:"d M" }} - {{ item.end_date|date:"d M Y" }}
+                                        {% else %}
+                                            Fecha abierta
+                                        {% endif %}
+                                    </p>
+                                    <p class="post-desc">{{ item.description|truncatewords:30 }}</p>
+                                    
+                                    <div class="d-flex align-items-center mt-3 pt-2 border-top">
+                                        <div class="action-btn comment-btn me-4" 
+                                             style="cursor: pointer; color: #555;"
+                                             data-object-id="{{ item.id }}"
+                                             data-object-type="itinerary"
+                                             data-image-url="{% if item.banner_pic %}{{ item.banner_pic.url }}{% endif %}"
+                                             data-author="{{ item.user.username }}"
+                                             data-author-avatar="{% if item.user.profile.profile_picture %}{{ item.user.profile.profile_picture.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
+                                             data-text="{{ item.description }}">
+                                            <i class="bi bi-chat"></i>
+                                            <span class="ms-1 comment-count">{{ item.comments_count_val|default:0 }}</span>
+                                        </div>
+
+                                        <div class="action-btn save-itinerary-btn ms-auto" 
+                                             data-url="{% url 'posts:toggle_save_itinerary' item.id %}" 
+                                             style="cursor: pointer; color: #555;">
+                                            {% if item.is_saved_by_user %}
+                                                <i class="bi bi-bookmark-fill text-primary"></i>
+                                            {% else %}
+                                                <i class="bi bi-bookmark"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <a href="{% url 'itineraries:view_itinerary' item.id %}" class="btn btn-sm w-100 btn-mextur-outline mt-3" style="border: 1px solid #E57B28; color: #E57B28;">
+                                        Ver Detalles
+                                    </a>
+                                </div>
+                            </article>
+        {% endif %}
+
+    </div>
+{% empty %}
+    <div class="text-center py-5">
+        <div class="mb-3"><i class="bi bi-inbox fs-1 text-muted"></i></div>
+        <p class="text-muted">No hay contenido para mostrar en esta sección.</p>
+    </div>
+{% endfor %}
+
+{% if feed_items.has_next %}
+    <div class="htmx-indicator text-center py-3">
+        <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+    </div>
+{% endif %}

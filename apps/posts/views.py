@@ -495,3 +495,47 @@ def admin_toggle_post_visibility(request, post_id):
     
     # Redirigimos a la página desde donde se hizo click (el preview)
     return redirect(request.META.get('HTTP_REFERER', 'home'))
+
+# ==========================================
+# VISTAS PARA CAMBIAR PRIVACIDAD Y ELIMINAR POSTS
+# ==========================================
+
+@login_required
+@require_POST
+def update_post_privacy_view(request, post_id):
+    """Cambia la privacidad de un post"""
+    import json
+    post = get_object_or_404(Post, id=post_id)
+    
+    # Verificar que el usuario es el propietario del post
+    if post.user != request.user:
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para editar este post'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        new_visibility = data.get('visibility')
+        
+        if new_visibility in ['public', 'friends', 'private']:
+            post.visibility = new_visibility
+            post.save()
+            return JsonResponse({'status': 'success', 'visibility': new_visibility})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Privacidad inválida'}, status=400)
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Datos inválidos'}, status=400)
+
+@login_required
+@require_POST
+def delete_post_view(request, post_id):
+    """Elimina un post"""
+    post = get_object_or_404(Post, id=post_id)
+    
+    # Verificar que el usuario es el propietario del post
+    if post.user != request.user:
+        return JsonResponse({'status': 'error', 'message': 'No tienes permiso para eliminar este post'}, status=403)
+    
+    try:
+        post.delete()
+        return JsonResponse({'status': 'success', 'message': 'Post eliminado correctamente'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)

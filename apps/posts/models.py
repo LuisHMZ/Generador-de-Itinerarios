@@ -10,6 +10,7 @@ class Post(models.Model):
     VISIBILITY_CHOICES = (
         ('public', 'Público'),
         ('friends', 'Solo Amigos'),
+        ('private', 'Solo Yo'),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
