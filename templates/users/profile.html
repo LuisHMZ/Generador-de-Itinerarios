@@ -85,7 +85,7 @@
                     </div>
                     <h4 class="profile-username mb-1">{{ profile_user.get_full_name|default:profile_user.username }}</h4>
                     <p class="profile-handle text-muted">@{{ profile_user.username }}</p>
-                    <p class="profile-location text-muted"><i class="bi bi-geo-alt-fill me-1"></i>Ciudad de México</p>
+                    <p class="profile-bio" style="word-wrap: break-word; word-break: break-word; max-height: 100px; overflow-y: auto; display: block;">{{ profile_user.profile.bio }}</p>
 
                     <div class="profile-stats row mt-4 mb-4">
                         <div class="col">
