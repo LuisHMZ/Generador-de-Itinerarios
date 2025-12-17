@@ -18,6 +18,7 @@
 
     <!-- ASUMIENDO que tienes un archivo index.css en static/css/ -->
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'css/header-footer.css' %}">
     <link rel="icon" href="{% static 'img/logo.png' %}" type="image/png">
     
 
@@ -25,35 +26,11 @@
 <body>
     <!-- Header (Adaptado con URLs de Django si es necesario) -->
     <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <!-- Asume que tienes logo.png en static/img/ -->
-            <img class="navbar-logo" src="{% static 'img/logo.png' %}" alt="Logo">
-            <a class="navbar-brand" href="{% url 'home' %}">MEX<span>TUR</span></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">Inicio</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">Destinos</a>
-                    </li> 
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">Contacto</a>
-                    </li>
-                    {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'simple_logout' %}">Cerrar Sesión</a>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'simple_login' %}">Iniciar Sesión</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
+        <div class="container" style="justify-content: center;">
+            <a href="{% url 'home' %}" class="logo-link">
+                <img src="{% static 'img/logo.png' %}" alt="Logo MexTur" class="logo-img">
+                <div class="logo-texto"><span class="logo-mex">MEX</span><span class="logo-tur">TUR</span></div>
+            </a>
         </div>
     </nav>
 
@@ -222,19 +199,10 @@
                     <p>Explora los destinos más increíbles de México con nosotros.</p>
                 </div>
                 <div class="col-md-3">
-                    <h5>Enlaces</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="{% url 'simple_login' %}">Inicio</a></li>
-                        <li><a href="{% url 'simple_login' %}">Destinos</a></li>
-                        <li><a href="{% url 'simple_login' %}">Paquetes</a></li>
-                        <li><a href="{% url 'simple_login' %}">Contacto</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-3">
                     <h5>Contacto</h5>
                     <ul class="list-unstyled">
                         <li><i class="fas fa-phone me-2"></i> +52 55 1234 5678</li>
-                        <li><i class="fas fa-envelope me-2"></i> info@mextur.com</li>
+                        <li><i class="fas fa-envelope me-2"></i> mextur.soporte@gmail.com</li>
                         <li><i class="fas fa-map-marker-alt me-2"></i> Ciudad de México</li>
                     </ul>
                 </div>
