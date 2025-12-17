@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     <span id="notification-badge-wrapper"
       hx-get="/api/alertas/badge/"   
-      hx-trigger="load, every 2s" 
+      hx-trigger="load, every 7s" 
       hx-swap="innerHTML">
 </span>
 </span>
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="footer-seccion footer-contacto">
                     <h3>Contacto</h3>
                     <p>+525572345678</p>
-                    <p>info@mextur.com</p>
+                    <p>mextur.soporte@gmail.com</p>
                     <p>Ciudad de México</p>
                 </div>
             </div>
