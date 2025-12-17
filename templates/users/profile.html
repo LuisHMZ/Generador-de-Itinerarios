@@ -658,7 +658,7 @@
                 const objectId = this.dataset.objectId; const objectType = this.dataset.objectType; 
                 cancelReply(); modalObjectIdInput.value = objectId; modalObjectTypeInput.value = objectType;
                 modalAuthor.textContent = this.dataset.author; modalAvatar.src = this.dataset.authorAvatar; modalText.textContent = this.dataset.text; 
-                if (this.dataset.imageUrl) { modalImg.src = this.dataset.imageUrl; modalImg.classList.remove('d-none'); modalNoImg.classList.add('d-none'); } else { modalImg.classList.add('d-none'); modalNoImg.classList.remove('d-none'); modalNoImage.innerHTML = `<h3 class="fw-light">${this.dataset.text}</h3>`;} 
+                if (this.dataset.imageUrl) { modalImg.src = this.dataset.imageUrl; modalImg.classList.remove('d-none'); modalNoImg.classList.add('d-none'); } else { modalImg.classList.add('d-none'); modalNoImg.classList.remove('d-none'); } 
                 modalList.innerHTML = '<p class="text-center text-muted mt-4"><div class="spinner-border text-primary" role="status"></div></p>'; 
                 commentsModal.show(); 
                 let loadUrl = objectType === 'post' ? `/api/posts/comments/load/${objectId}/` : `/api/posts/itinerary/comments/load/${objectId}/`;
