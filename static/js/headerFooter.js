@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- 1. LECTURA DE URLs DE DJANGO (Variables dinámicas) ---
     const logoutUrl = document.body.dataset.logoutUrl || '#';
     const homeUrl = '/'; 
+    const configURL = '/perfil/editar/';
     // Leemos el username del body para el enlace de perfil
     const currentUsername = document.body.dataset.username || '';
     const profileUrl = currentUsername ? `/perfil/${currentUsername}/` : '#';
@@ -67,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         </button>
                         
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Configuración</a></li>
+                            <li><a class="dropdown-item" href="${configURL}"><i class="bi bi-gear me-2"></i>Configuración</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="${logoutUrl}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
                         </ul>
