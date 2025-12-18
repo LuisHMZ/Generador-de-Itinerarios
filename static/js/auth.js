@@ -74,6 +74,7 @@ const alertErrorDivReg = document.getElementById('alert-error');
 const successMessageSpanReg = document.getElementById('success-message');
 const errorMessageSpanReg = document.getElementById('error-message');
 
+
 function showAlert(alertElement, message) {
         alertElement.style.display = 'block';
         if (alertElement === alertSuccessDivReg) {
@@ -161,6 +162,8 @@ if (formSimpleRegister && alertSuccessDivReg && alertErrorDivReg) { // Verifica 
         alertErrorDivReg.style.display = 'none';
         errorMessageSpanReg.textContent = '';
 
+        // (Prueba desactivada) Aquí iría lógica de demo forzada si se necesitara
+
         let formValid = true;
         // Necesitamos obtener los inputs aquí DENTRO del listener
         const inputs = formSimpleRegister.querySelectorAll('.form-control');
@@ -211,11 +214,21 @@ if (formSimpleRegister && alertSuccessDivReg && alertErrorDivReg) { // Verifica 
         .then(data => {
             // Procesa la respuesta JSON de éxito
             if (data.status === 'success') {
-                if (successMessageSpanReg) successMessageSpanReg.textContent = data.message || '¡Registro exitoso!'; // Mensaje Backend
-                if (alertSuccessDivReg) alertSuccessDivReg.style.display = 'block';
+                // Ocultar alertas
                 if (alertErrorDivReg) alertErrorDivReg.style.display = 'none';
+                if (alertSuccessDivReg) alertSuccessDivReg.style.display = 'none';
+                
+                // Mostrar modal de éxito
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+                
+                // Resetear formulario
                 formSimpleRegister.reset();
-                //setTimeout(() => { window.location.href = '/login/'; }, 3000);
+                
+                // Redirigir a login después de 3 segundos
+                setTimeout(() => { 
+                    window.location.href = '/login/'; 
+                }, 3000);
             } else {
                 if (errorMessageSpanReg) errorMessageSpanReg.textContent = data.message || 'Ocurrió un error inesperado.';
                 if (alertErrorDivReg) alertErrorDivReg.style.display = 'block';

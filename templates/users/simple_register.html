@@ -169,6 +169,8 @@
                     <span>Unirse</span>
                 </button>
 
+                
+
                 <!-- Separador y Botones Sociales (Funcionalidad no implementada aún) -->
                 <div class="text-center mt-3 mb-2"><span class="text-muted">O continúa con</span></div>
                     {% providers_media_js %} <!-- Carga el JS necesario para popups sociales -->
@@ -213,6 +215,25 @@
             </div>
         </div>
     </footer>
+
+    <!-- Modal de Registro Exitoso -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4 class="mb-3">¡Registro exitoso!</h4>
+                    <p class="text-muted">Por favor confirme su correo electrónico para activar su cuenta.</p>
+                    <p class="text-muted"><small>Será redirigido a la página de inicio de sesión en breve...</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Bootstrap JS (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
