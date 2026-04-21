@@ -1,5 +1,5 @@
 # MexTur
-* Proyecto integrado con SonarCloud para análisis de calidad.
+* Proyecto integrado con SonarCloud para análisis de calidad c
 
 ## Tecnologías Principales
 
