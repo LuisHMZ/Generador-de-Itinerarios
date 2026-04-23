@@ -207,9 +207,22 @@ def admin_place_delete(request, place_id):
     nombre = place.name
     place.delete()
     messages.success(request, f'El lugar "{nombre}" ha sido eliminado.')
+    
+    # 1. Obtenemos la URL
     next_url = request.GET.get('next') or request.POST.get('next')
-    if next_url:
+    
+    # 2. Validamos que sea segura (mismo dominio)
+    url_is_safe = url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure()
+    )
+    
+    # 3. Redirigimos solo si existe y es segura
+    if next_url and url_is_safe:
         return redirect(next_url)
+        
+    # Si no es segura o no existe, va a la lista por defecto
     return redirect('itineraries:admin_places_list')
 
 @login_required
