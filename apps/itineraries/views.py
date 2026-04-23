@@ -234,9 +234,21 @@ def admin_place_toggle_visibility(request, place_id):
     place.save()
     estado = "visible" if place.is_active else "oculto"
     messages.success(request, f'El lugar "{place.name}" ahora está {estado}.')
+    
+    # 1. Capturamos la URL
     next_url = request.GET.get('next') or request.POST.get('next')
-    if next_url:
+    
+    # 2. Validamos que sea segura
+    url_is_safe = url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure()
+    )
+    
+    # 3. Redirigimos de forma segura
+    if next_url and url_is_safe:
         return redirect(next_url)
+        
     return redirect('itineraries:admin_places_list')
 
 """ @login_required
