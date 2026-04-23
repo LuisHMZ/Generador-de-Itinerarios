@@ -11,6 +11,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test  # Para requerir login en vistas basadas en funciones
 from django.core.exceptions import PermissionDenied # Importante para manejo de permisos
 
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.shortcuts import get_object_or_404, redirect
+
 # --- NUEVAS IMPORTACIONES (NECESARIAS PARA QUE FUNCIONE) ---
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -161,6 +164,7 @@ def admin_place_create(request):
         'titulo': 'Nuevo Lugar Turístico'
     })
 
+# nuevas modificaciones solucion de seguridad critica
 @login_required
 @user_passes_test(es_admin)
 def admin_place_edit(request, place_id):
@@ -168,22 +172,29 @@ def admin_place_edit(request, place_id):
     
     # 1. CAPTURAR: Obtenemos la url 'next' si viene en la URL o en el POST
     next_url = request.GET.get('next') or request.POST.get('next')
-
+    
     if request.method == 'POST':
         form = TouristicPlaceForm(request.POST, request.FILES, instance=place)
         if form.is_valid():
             form.save()
             messages.success(request, f'Lugar "{place.name}" actualizado correctamente.')
             
-            # 2. REDIRIGIR: Si existe next_url, vamos ahí. Si no, a la lista.
-            if next_url:
+            # 2. REDIRIGIR: Validamos que la URL sea segura antes de redirigir
+            url_is_safe = url_has_allowed_host_and_scheme(
+                url=next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure()
+            )
+            
+            if next_url and url_is_safe:
                 return redirect(next_url)
+                
             return redirect('itineraries:admin_places_list') # Asegúrate del namespace correcto
     else:
         form = TouristicPlaceForm(instance=place)
-    
+        
     return render(request, 'itineraries/admin-locaciones-form.html', {
-        'form': form, 
+        'form': form,
         'titulo': f'Editar {place.name}',
         'next_url': next_url # 3. PASAR A PLANTILLA: Vital para el botón cancelar
     })
